@@ -29,7 +29,8 @@ const GameContent = () => {
     'luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'
   ];
   
-  if (gamePhase === 'setup') {
+  // Show setup screen only during the initial setup phase
+  if (gamePhase === 'setup' && state.setupPhase === 'initial') {
     return <SetupScreen />;
   }
   
@@ -44,6 +45,9 @@ const GameContent = () => {
           <div className="mt-6 flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
               Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
+              {gamePhase === 'setup' && (
+                <span className="ml-2 text-xs">({state.setupPhase})</span>
+              )}
             </div>
             
             <Button 

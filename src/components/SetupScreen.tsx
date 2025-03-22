@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
@@ -35,6 +34,9 @@ const SetupScreen: React.FC = () => {
         gameMode,
       },
     });
+    
+    // Show a toast notification to confirm the game has started
+    toast.success(`Game started with ${playerCount} players!`);
   };
   
   const handlePlayerNameChange = (index: number, name: string) => {
