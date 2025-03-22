@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
+import { toast } from '@/utils/toast';
 
 const SetupScreen: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -14,11 +15,23 @@ const SetupScreen: React.FC = () => {
   const [gameMode, setGameMode] = useState<'classic' | 'tycoon'>(state.gameMode);
   
   const handleStartGame = () => {
+    // Validate that we have at least basic names for players
+    const filledNames = playerNames.slice(0, playerCount).map((name, i) => 
+      name.trim() || `Player ${i + 1}`
+    );
+    
+    // Log the action for debugging
+    console.log('Starting game with:', { 
+      playerCount, 
+      playerNames: filledNames, 
+      gameMode 
+    });
+    
     dispatch({
       type: 'START_GAME',
       payload: {
         playerCount,
-        playerNames,
+        playerNames: filledNames,
         gameMode,
       },
     });
@@ -89,7 +102,7 @@ const SetupScreen: React.FC = () => {
                 <motion.div key={index} variants={item}>
                   <Input
                     placeholder={`Player ${index + 1}`}
-                    value={playerNames[index]}
+                    value={playerNames[index] || ''}
                     onChange={(e) => handlePlayerNameChange(index, e.target.value)}
                     className="w-full"
                   />

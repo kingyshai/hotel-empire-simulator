@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -166,9 +167,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     
     case 'START_GAME': {
       const { playerCount, playerNames, gameMode } = action.payload;
+      
+      // Validate player names and fill in defaults if needed
+      const validatedNames = playerNames.slice(0, playerCount).map((name, i) => 
+        name.trim() ? name.trim() : `Player ${i + 1}`
+      );
+      
       const players: Player[] = Array.from({ length: playerCount }, (_, i) => ({
         id: i,
-        name: playerNames[i] || `Player ${i + 1}`,
+        name: validatedNames[i],
         money: 6000,
         stocks: {
           luxor: 0,
@@ -182,12 +189,26 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [],
       }));
       
+      // Log for debugging
+      console.log('Starting game with:', { playerCount, playerNames: validatedNames, gameMode });
+      
+      toast.success(`Game started with ${playerCount} players!`);
+      
       return {
         ...state,
         players,
         gameMode,
-        tilePool: shuffleArray(generateBoard()),
+        gamePhase: 'setup',
         setupPhase: 'drawInitialTile',
+        tilePool: shuffleArray(generateBoard()),
+        currentPlayerIndex: 0,
+      };
+    }
+    
+    case 'SET_CURRENT_PLAYER': {
+      return {
+        ...state,
+        currentPlayerIndex: action.payload.playerIndex,
       };
     }
     
