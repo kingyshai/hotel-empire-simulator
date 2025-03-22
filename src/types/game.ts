@@ -53,6 +53,17 @@ export type GamePhase =
   | 'tradeStock' 
   | 'gameEnd';
 
+export type SetupPhase =
+  | 'initial'
+  | 'drawInitialTile'
+  | 'dealTiles'
+  | 'complete';
+
+export type InitialTile = {
+  playerId: number;
+  coordinate: Coordinate;
+};
+
 export type GameState = {
   players: Player[];
   currentPlayerIndex: number;
@@ -62,11 +73,13 @@ export type GameState = {
   stockMarket: Record<HotelChainName, number>;
   gameMode: GameMode;
   gamePhase: GamePhase;
+  setupPhase: SetupPhase;
   availableHeadquarters: HotelChainName[];
   mergerInfo: MergerInfo | null;
   tilePool: Coordinate[];
   gameEnded: boolean;
   winner: Player | null;
+  initialTiles: InitialTile[];
 };
 
 export type Action = {

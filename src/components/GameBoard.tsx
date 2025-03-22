@@ -5,10 +5,11 @@ import BuildingTile from './BuildingTile';
 import { toast } from '@/utils/toast';
 import { motion } from 'framer-motion';
 import type { Coordinate } from '@/types/game';
+import { Button } from '@/components/ui/button';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const { placedTiles, gamePhase, currentPlayerIndex, players } = state;
+  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles } = state;
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -31,6 +32,38 @@ const GameBoard: React.FC = () => {
       },
     });
   };
+
+  const handleInitialTileDraw = () => {
+    if (gamePhase !== 'setup' || setupPhase !== 'drawInitialTile') {
+      return;
+    }
+
+    // Check if current player has already drawn an initial tile
+    if (initialTiles.some(tile => tile.playerId === currentPlayer.id)) {
+      // Move to next player for initial drawing
+      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      dispatch({ 
+        type: 'SET_CURRENT_PLAYER', 
+        payload: { playerIndex: nextPlayerIndex } 
+      });
+      return;
+    }
+
+    dispatch({
+      type: 'DRAW_INITIAL_TILE',
+      payload: {
+        playerId: currentPlayer.id,
+      },
+    });
+  };
+
+  const handleDealStartingTiles = () => {
+    if (gamePhase !== 'setup' || setupPhase !== 'dealTiles') {
+      return;
+    }
+
+    dispatch({ type: 'DEAL_STARTING_TILES' });
+  };
   
   // Generate board coordinates
   const generateBoard = () => {
@@ -50,6 +83,12 @@ const GameBoard: React.FC = () => {
                 coordinate={coordinate}
                 isPlaced
                 belongsToChain={placedTile.belongsToChain}
+              />
+            ) : currentPlayer?.tiles.includes(coordinate) ? (
+              <BuildingTile
+                coordinate={coordinate}
+                isPlaced={false}
+                onClick={() => handleTileClick(coordinate)}
               />
             ) : (
               <motion.div 
@@ -76,6 +115,54 @@ const GameBoard: React.FC = () => {
     
     return rows;
   };
+
+  // Render setup phase UI
+  const renderSetupControls = () => {
+    if (gamePhase !== 'setup') return null;
+
+    switch (setupPhase) {
+      case 'drawInitialTile':
+        // Check if current player has already drawn
+        const hasDrawn = initialTiles.some(tile => tile.playerId === currentPlayer?.id);
+        const nextPlayer = hasDrawn ? 
+          players[(currentPlayerIndex + 1) % players.length] : 
+          currentPlayer;
+        
+        return (
+          <div className="mt-4 p-4 bg-secondary/20 rounded-lg text-center">
+            <h3 className="text-lg font-medium mb-2">Initial Tile Draw</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Each player draws one tile to determine turn order.
+              {hasDrawn ? 
+                ` ${nextPlayer.name}'s turn to draw.` : 
+                ` ${currentPlayer?.name}'s turn to draw.`}
+            </p>
+            <Button 
+              onClick={handleInitialTileDraw}
+              disabled={hasDrawn && initialTiles.length < players.length}
+            >
+              Draw Initial Tile
+            </Button>
+          </div>
+        );
+      
+      case 'dealTiles':
+        return (
+          <div className="mt-4 p-4 bg-secondary/20 rounded-lg text-center">
+            <h3 className="text-lg font-medium mb-2">Turn Order Determined</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {players[0].name} will go first based on initial tile placement.
+            </p>
+            <Button onClick={handleDealStartingTiles}>
+              Deal Starting Tiles (6 per player)
+            </Button>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
   
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
@@ -88,6 +175,7 @@ const GameBoard: React.FC = () => {
       
       <div className="p-3">
         {generateBoard()}
+        {renderSetupControls()}
       </div>
     </div>
   );

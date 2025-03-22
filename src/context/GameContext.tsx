@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -55,11 +54,13 @@ const initialGameState: GameState = {
   },
   gameMode: 'tycoon',
   gamePhase: 'setup',
+  setupPhase: 'initial',
   availableHeadquarters: ['luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'],
   mergerInfo: null,
   tilePool: shuffleArray(generateBoard()),
   gameEnded: false,
   winner: null,
+  initialTiles: [],
 };
 
 const gameReducer = (state: GameState, action: Action): GameState => {
@@ -68,7 +69,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return {
         ...state,
         players: action.payload.players,
-        gamePhase: 'placeTile',
+        setupPhase: 'drawInitialTile',
       };
       
     case 'SET_GAME_MODE':
@@ -77,6 +78,92 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         gameMode: action.payload.mode,
       };
       
+    case 'DRAW_INITIAL_TILE': {
+      const { playerId } = action.payload;
+      const tilePool = [...state.tilePool];
+      const coordinate = tilePool.pop()!;
+      
+      const players = [...state.players];
+      const playerIndex = players.findIndex(p => p.id === playerId);
+      
+      const placedTiles = { 
+        ...state.placedTiles, 
+        [coordinate]: { 
+          coordinate, 
+          isPlaced: true 
+        } 
+      };
+      
+      const initialTiles = [
+        ...state.initialTiles,
+        { playerId, coordinate }
+      ];
+      
+      let newGamePhase = state.gamePhase;
+      let newSetupPhase = state.setupPhase;
+      let sortedPlayers = [...players];
+      let currentPlayerIndex = state.currentPlayerIndex;
+      
+      if (initialTiles.length === players.length) {
+        const sortedInitialTiles = [...initialTiles].sort((a, b) => {
+          const rowA = parseInt(a.coordinate.charAt(0));
+          const colA = a.coordinate.charCodeAt(1) - 65;
+          const distanceA = rowA + colA;
+          
+          const rowB = parseInt(b.coordinate.charAt(0));
+          const colB = b.coordinate.charCodeAt(1) - 65;
+          const distanceB = rowB + colB;
+          
+          return distanceA - distanceB;
+        });
+        
+        sortedPlayers = sortedInitialTiles.map(tile => 
+          players.find(p => p.id === tile.playerId)!
+        );
+        
+        currentPlayerIndex = 0;
+        
+        newSetupPhase = 'dealTiles';
+        
+        toast.success(`${sortedPlayers[0].name} goes first!`);
+      }
+      
+      return {
+        ...state,
+        tilePool,
+        placedTiles,
+        initialTiles,
+        setupPhase: newSetupPhase,
+        players: sortedPlayers,
+        currentPlayerIndex,
+      };
+    }
+    
+    case 'DEAL_STARTING_TILES': {
+      const tilePool = [...state.tilePool];
+      const players = [...state.players].map(player => ({
+        ...player,
+        tiles: []
+      }));
+      
+      players.forEach(player => {
+        for (let i = 0; i < 6; i++) {
+          if (tilePool.length > 0) {
+            const coordinate = tilePool.pop()!;
+            player.tiles.push(coordinate);
+          }
+        }
+      });
+      
+      return {
+        ...state,
+        players,
+        tilePool,
+        gamePhase: 'placeTile',
+        setupPhase: 'complete',
+      };
+    }
+    
     case 'START_GAME': {
       const { playerCount, playerNames, gameMode } = action.payload;
       const players: Player[] = Array.from({ length: playerCount }, (_, i) => ({
@@ -95,30 +182,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [],
       }));
       
-      // Deal 6 tiles to each player
-      const tilePool = [...state.tilePool];
-      const availableTiles: BuildingTile[] = [];
-      
-      players.forEach(player => {
-        for (let i = 0; i < 6; i++) {
-          if (tilePool.length > 0) {
-            const coordinate = tilePool.pop()!;
-            player.tiles.push(coordinate);
-            availableTiles.push({
-              coordinate,
-              isPlaced: false,
-            });
-          }
-        }
-      });
-      
       return {
         ...state,
         players,
         gameMode,
-        availableTiles,
-        tilePool,
-        gamePhase: 'placeTile',
+        tilePool: shuffleArray(generateBoard()),
+        setupPhase: 'drawInitialTile',
       };
     }
     
@@ -133,7 +202,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const player = { ...state.players[playerIndex] };
       
-      // Remove tile from player's hand
       const tileIndex = player.tiles.indexOf(coordinate);
       if (tileIndex === -1) {
         toast.error("You don't have this tile!");
@@ -142,7 +210,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       player.tiles.splice(tileIndex, 1);
       
-      // Add tile to placed tiles
       const placedTiles = { 
         ...state.placedTiles, 
         [coordinate]: { 
@@ -151,12 +218,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         } 
       };
       
-      // Update player in state
       const players = [...state.players];
       players[playerIndex] = player;
-      
-      // Check if the tile connects any existing hotel chains or founds a new one
-      // This is a placeholder - the real implementation would be more complex
       
       return {
         ...state,
@@ -177,7 +240,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         return state;
       }
       
-      // Calculate price (simplified)
       const pricePerStock = 100 * chain.tiles.length;
       const totalPrice = pricePerStock * quantity;
       
@@ -191,15 +253,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         return state;
       }
       
-      // Update player's money and stocks
       player.money -= totalPrice;
       player.stocks[chainName] += quantity;
       
-      // Update stock market
       const stockMarket = { ...state.stockMarket };
       stockMarket[chainName] -= quantity;
       
-      // Update player in state
       const players = [...state.players];
       players[playerIndex] = player;
       
@@ -213,7 +272,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'END_TURN': {
       const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       
-      // Draw a tile for the current player
       const player = { ...state.players[state.currentPlayerIndex] };
       const tilePool = [...state.tilePool];
       
@@ -222,7 +280,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         player.tiles.push(coordinate);
       }
       
-      // Update player in state
       const players = [...state.players];
       players[state.currentPlayerIndex] = player;
       
@@ -238,13 +295,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'FOUND_HOTEL': {
       const { chainName, tileCoordinate } = action.payload;
       
-      // Check if there are still headquarters available
       if (!state.availableHeadquarters.includes(chainName)) {
         toast.error(`${chainName} headquarters is not available!`);
         return state;
       }
       
-      // Update hotel chain
       const hotelChains = { ...state.hotelChains };
       hotelChains[chainName] = {
         ...hotelChains[chainName],
@@ -252,18 +307,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [...hotelChains[chainName].tiles, tileCoordinate],
       };
       
-      // Remove headquarters from available list
       const availableHeadquarters = state.availableHeadquarters.filter(hq => hq !== chainName);
       
-      // Give founder's bonus
       const player = { ...state.players[state.currentPlayerIndex] };
       player.stocks[chainName] += 1;
       
-      // Update stock market
       const stockMarket = { ...state.stockMarket };
       stockMarket[chainName] -= 1;
       
-      // Update player in state
       const players = [...state.players];
       players[state.currentPlayerIndex] = player;
       
@@ -278,15 +329,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'END_GAME': {
-      // Calculate final scores and determine winner
       const players = state.players.map(player => {
         let totalMoney = player.money;
         
-        // Sell all stocks
         Object.entries(player.stocks).forEach(([chainName, quantity]) => {
           const chain = state.hotelChains[chainName as HotelChainName];
           if (chain.isActive) {
-            // Simplified price calculation
             const pricePerStock = 100 * chain.tiles.length;
             totalMoney += pricePerStock * quantity;
           }
@@ -298,7 +346,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Find winner
       const winner = [...players].sort((a, b) => b.money - a.money)[0];
       
       return {
