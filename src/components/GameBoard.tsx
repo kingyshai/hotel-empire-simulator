@@ -1,15 +1,17 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
 import { toast } from '@/utils/toast';
 import { motion } from 'framer-motion';
-import type { Coordinate } from '@/types/game';
+import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
+import { getAdjacentTiles, findPotentialMergers } from '@/utils/gameLogic';
+import HotelChainSelector from './HotelChainSelector';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles } = state;
+  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters } = state;
+  const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -24,13 +26,61 @@ const GameBoard: React.FC = () => {
       return;
     }
     
+    // Check if the placed tile is adjacent to any existing tiles
+    const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
+    
+    if (adjacentTiles.length > 0) {
+      // Check if any of the adjacent tiles belong to hotel chains
+      const adjacentChains = findPotentialMergers(coordinate, state);
+      
+      if (adjacentChains.length > 0) {
+        // Existing hotel chains are adjacent
+        // For now, just place the tile - merger logic will be handled separately
+        dispatch({
+          type: 'PLACE_TILE',
+          payload: {
+            coordinate,
+            playerId: currentPlayer.id,
+          },
+        });
+      } else if (adjacentTiles.length > 0 && adjacentChains.length === 0 && availableHeadquarters.length > 0) {
+        // Adjacent to tiles but not to hotel chains - opportunity to found a hotel
+        setTileToFoundHotel(coordinate);
+        toast.info("Choose a hotel chain to establish");
+      } else {
+        // Just place the tile
+        dispatch({
+          type: 'PLACE_TILE',
+          payload: {
+            coordinate,
+            playerId: currentPlayer.id,
+          },
+        });
+      }
+    } else {
+      // No adjacent tiles, just place it
+      dispatch({
+        type: 'PLACE_TILE',
+        payload: {
+          coordinate,
+          playerId: currentPlayer.id,
+        },
+      });
+    }
+  };
+
+  const handleFoundHotel = (chainName: HotelChainName) => {
+    if (!tileToFoundHotel) return;
+    
     dispatch({
-      type: 'PLACE_TILE',
+      type: 'FOUND_HOTEL',
       payload: {
-        coordinate,
-        playerId: currentPlayer.id,
+        chainName,
+        tileCoordinate: tileToFoundHotel,
       },
     });
+    
+    setTileToFoundHotel(null);
   };
 
   const handleInitialTileDraw = () => {
@@ -116,6 +166,18 @@ const GameBoard: React.FC = () => {
     return rows;
   };
 
+  // Function to play for any player during testing
+  const handlePlayAsAnyPlayer = (playerIndex: number) => {
+    if (playerIndex === currentPlayerIndex) return;
+    
+    dispatch({ 
+      type: 'SET_CURRENT_PLAYER', 
+      payload: { playerIndex } 
+    });
+    
+    toast.info(`Now playing as ${players[playerIndex].name}`);
+  };
+
   // Render setup phase UI
   const renderSetupControls = () => {
     if (gamePhase !== 'setup') return null;
@@ -164,6 +226,30 @@ const GameBoard: React.FC = () => {
     }
   };
   
+  // Render test controls for switching between players
+  const renderTestControls = () => {
+    if (players.length === 0) return null;
+    
+    return (
+      <div className="mt-4 p-3 border border-yellow-500/30 bg-yellow-500/5 rounded-lg">
+        <h3 className="text-sm font-medium text-yellow-500/80 mb-2">Testing Controls</h3>
+        <div className="flex flex-wrap gap-2">
+          {players.map((player, index) => (
+            <Button 
+              key={player.id}
+              variant="outline"
+              size="sm"
+              className={currentPlayerIndex === index ? "border-yellow-500/50 bg-yellow-500/10" : ""}
+              onClick={() => handlePlayAsAnyPlayer(index)}
+            >
+              Play as {player.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
       <div className="p-3 bg-secondary/50 border-b border-border/50 flex items-center justify-between">
@@ -176,6 +262,24 @@ const GameBoard: React.FC = () => {
       <div className="p-3">
         {generateBoard()}
         {renderSetupControls()}
+        {renderTestControls()}
+        
+        {/* Hotel chain selector dialog */}
+        {tileToFoundHotel && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h3 className="text-lg font-medium mb-4">Found a Hotel Chain</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Choose a hotel chain to establish at {tileToFoundHotel}
+              </p>
+              <HotelChainSelector 
+                availableChains={availableHeadquarters}
+                onSelect={handleFoundHotel}
+                onCancel={() => setTileToFoundHotel(null)}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

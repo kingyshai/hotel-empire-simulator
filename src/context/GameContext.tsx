@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -168,7 +167,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'START_GAME': {
       const { playerCount, playerNames, gameMode } = action.payload;
       
-      // Validate player names and fill in defaults if needed
       const validatedNames = playerNames.slice(0, playerCount).map((name, i) => 
         name.trim() ? name.trim() : `Player ${i + 1}`
       );
@@ -189,7 +187,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [],
       }));
       
-      // Log for debugging
       console.log('Starting game with:', { playerCount, playerNames: validatedNames, gameMode });
       
       toast.success(`Game started with ${playerCount} players!`);
@@ -339,12 +336,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const players = [...state.players];
       players[state.currentPlayerIndex] = player;
       
+      const placedTiles = { ...state.placedTiles };
+      placedTiles[tileCoordinate] = {
+        ...placedTiles[tileCoordinate],
+        belongsToChain: chainName,
+      };
+      
+      toast.success(`Founded ${chainName} hotel chain! Received 1 free stock.`);
+      
       return {
         ...state,
         hotelChains,
         availableHeadquarters,
         players,
         stockMarket,
+        placedTiles,
         gamePhase: 'buyStock',
       };
     }
