@@ -9,7 +9,7 @@ import HotelChain from '@/components/HotelChain';
 import SetupScreen from '@/components/SetupScreen';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/utils/toast';
 
 const GameContent = () => {
   const { state, dispatch } = useGame();

@@ -2,8 +2,9 @@
 import React from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/utils/toast';
 import { motion } from 'framer-motion';
+import type { Coordinate } from '@/types/game';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -11,7 +12,7 @@ const GameBoard: React.FC = () => {
   
   const currentPlayer = players[currentPlayerIndex];
   
-  const handleTileClick = (coordinate: string) => {
+  const handleTileClick = (coordinate: Coordinate) => {
     if (gamePhase !== 'placeTile') {
       toast("It's not time to place a tile yet");
       return;
@@ -39,7 +40,7 @@ const GameBoard: React.FC = () => {
       const cols = [];
       
       for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-        const coordinate = `${row}${col}`;
+        const coordinate = `${row}${col}` as Coordinate;
         const placedTile = placedTiles[coordinate];
         
         cols.push(

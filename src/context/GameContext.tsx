@@ -9,13 +9,13 @@ import {
   Action,
   Coordinate
 } from '@/types/game';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/utils/toast';
 
 const generateBoard = (): Coordinate[] => {
   const tiles: Coordinate[] = [];
   for (let row = 1; row <= 9; row++) {
     for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-      tiles.push(`${row}${col}`);
+      tiles.push(`${row}${col}` as Coordinate);
     }
   }
   return tiles;
