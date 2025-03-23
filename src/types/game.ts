@@ -1,3 +1,4 @@
+
 export type Coordinate = `${number}${string}`;
 
 export type HotelChainName = 'luxor' | 'tower' | 'american' | 'festival' | 'worldwide' | 'continental' | 'imperial';
@@ -119,6 +120,15 @@ export type Action =
         tileCoordinate: Coordinate;
         connectedTiles: Coordinate[];
       } 
+    }
+  | {
+      type: 'HANDLE_MERGER';
+      payload: {
+        coordinate: Coordinate;
+        playerId: number;
+        survivingChain: HotelChainName;
+        acquiredChains: HotelChainName[];
+      }
     }
   | { type: 'END_GAME_MANUALLY' }
   | { type: 'END_GAME' }

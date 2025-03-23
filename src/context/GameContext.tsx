@@ -14,7 +14,8 @@ import {
   endGame, 
   getAdjacentTiles, 
   findPotentialMergers,
-  findConnectedTiles 
+  findConnectedTiles,
+  distributeStockholderBonus
 } from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
@@ -468,6 +469,82 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return {
         ...state,
         players: updatedPlayers
+      };
+    }
+    
+    case 'HANDLE_MERGER': {
+      const { coordinate, playerId, survivingChain, acquiredChains } = action.payload;
+      
+      if (acquiredChains.length === 0) {
+        toast.error("No chains to merge!");
+        return state;
+      }
+      
+      const playerIndex = state.players.findIndex(p => p.id === playerId);
+      const player = { ...state.players[playerIndex] };
+      
+      const tileIndex = player.tiles.indexOf(coordinate);
+      if (tileIndex === -1) {
+        toast.error("You don't have this tile!");
+        return state;
+      }
+      player.tiles.splice(tileIndex, 1);
+      
+      const hotelChains = { ...state.hotelChains };
+      const placedTiles = { ...state.placedTiles };
+      
+      placedTiles[coordinate] = { 
+        coordinate, 
+        isPlaced: true,
+        belongsToChain: survivingChain
+      };
+      
+      hotelChains[survivingChain] = {
+        ...hotelChains[survivingChain],
+        tiles: [...hotelChains[survivingChain].tiles, coordinate]
+      };
+      
+      let updatedState = { ...state, placedTiles, hotelChains };
+      
+      for (const chainName of acquiredChains) {
+        updatedState = distributeStockholderBonus(updatedState, chainName);
+        
+        for (const tile of hotelChains[chainName].tiles) {
+          placedTiles[tile] = {
+            ...placedTiles[tile],
+            belongsToChain: survivingChain
+          };
+          
+          if (!hotelChains[survivingChain].tiles.includes(tile)) {
+            hotelChains[survivingChain].tiles.push(tile);
+          }
+        }
+        
+        hotelChains[chainName] = {
+          ...hotelChains[chainName],
+          tiles: [],
+          isActive: false,
+          isSafe: false
+        };
+        
+        updatedState.availableHeadquarters.push(chainName);
+      }
+      
+      hotelChains[survivingChain].isSafe = hotelChains[survivingChain].tiles.length >= 11;
+      
+      updatedState.availableHeadquarters.sort();
+      
+      const updatedPlayers = [...updatedState.players];
+      updatedPlayers[playerIndex] = player;
+      
+      toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
+      
+      return {
+        ...updatedState,
+        hotelChains,
+        placedTiles,
+        players: updatedPlayers,
+        gamePhase: 'buyStock'
       };
     }
     

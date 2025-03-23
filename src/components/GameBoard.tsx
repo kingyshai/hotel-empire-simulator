@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
@@ -7,12 +8,17 @@ import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { getAdjacentTiles, findPotentialMergers, findConnectedTiles } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
+import MergerDialog from './MergerDialog';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
   const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters } = state;
   const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
   const [connectedTiles, setConnectedTiles] = useState<Coordinate[]>([]);
+  const [mergerInfo, setMergerInfo] = useState<{
+    coordinate: Coordinate;
+    potentialMergers: HotelChainName[];
+  } | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -44,7 +50,15 @@ const GameBoard: React.FC = () => {
     if (adjacentTiles.length > 0) {
       const adjacentChains = findPotentialMergers(coordinate, state);
       
-      if (adjacentChains.length > 0) {
+      // Check for merger scenario (multiple chains)
+      if (adjacentChains.length > 1) {
+        // Set merger info and show merger dialog
+        setMergerInfo({
+          coordinate,
+          potentialMergers: adjacentChains
+        });
+        return;
+      } else if (adjacentChains.length === 1) {
         dispatch({
           type: 'PLACE_TILE',
           payload: {
@@ -107,6 +121,31 @@ const GameBoard: React.FC = () => {
     
     setTileToFoundHotel(null);
     setConnectedTiles([]);
+  };
+
+  const handleMerger = (survivingChain: HotelChainName) => {
+    if (!mergerInfo) return;
+    
+    const { coordinate, potentialMergers } = mergerInfo;
+    
+    // Filter out the surviving chain from the list of chains being acquired
+    const acquiredChains = potentialMergers.filter(chain => chain !== survivingChain);
+    
+    dispatch({
+      type: 'HANDLE_MERGER',
+      payload: {
+        coordinate,
+        playerId: currentPlayer.id,
+        survivingChain,
+        acquiredChains
+      }
+    });
+    
+    setMergerInfo(null);
+  };
+
+  const handleCancelMerger = () => {
+    setMergerInfo(null);
   };
 
   const handleInitialTileDraw = () => {
@@ -297,6 +336,16 @@ const GameBoard: React.FC = () => {
               />
             </div>
           </div>
+        )}
+        
+        {mergerInfo && (
+          <MergerDialog
+            open={!!mergerInfo}
+            potentialMergers={mergerInfo.potentialMergers}
+            tileCoordinate={mergerInfo.coordinate}
+            onComplete={handleMerger}
+            onCancel={handleCancelMerger}
+          />
         )}
       </div>
     </div>
