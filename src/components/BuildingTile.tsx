@@ -48,7 +48,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
-        isAvailable ? "bg-gray-300 cursor-pointer" : 
+        isAvailable ? "bg-gray-300 cursor-pointer hover:bg-gray-400" : 
         isDrawPhase ? "cursor-pointer hover:bg-primary/20" :
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
@@ -91,6 +91,10 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       
       {isSelectable && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-green-500" />
+      )}
+      
+      {isAvailable && !isUnplayable && !isPlaced && (
+        <div className="absolute inset-0 opacity-30 rounded-md bg-gray-400" />
       )}
     </motion.button>
   );

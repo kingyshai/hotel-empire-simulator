@@ -83,9 +83,10 @@ const GameBoard = () => {
       
       if (adjacentChains.length === 0) {
         // Found new hotel chain
+        const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
         setSelectedFoundingTile({
           coordinate,
-          connectedTiles: [coordinate]
+          connectedTiles
         });
       } else {
         dispatch({ 
@@ -104,8 +105,7 @@ const GameBoard = () => {
   const handleHotelSelection = (chainName: HotelChainName) => {
     if (!selectedFoundingTile) return;
     
-    const { coordinate } = selectedFoundingTile;
-    const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
+    const { coordinate, connectedTiles } = selectedFoundingTile;
     
     dispatch({
       type: 'FOUND_HOTEL',
@@ -152,7 +152,6 @@ const GameBoard = () => {
   if (selectedFoundingTile) {
     return (
       <HotelChainSelector 
-        coordinate={selectedFoundingTile.coordinate}
         availableChains={availableHeadquarters}
         onSelect={handleHotelSelection}
       />
@@ -169,16 +168,14 @@ const GameBoard = () => {
         
         <div className="p-6 text-center">
           <p className="mb-4 text-lg">
-            {currentPlayer?.name}, click anywhere on the board to draw your initial tile
+            {currentPlayer?.name}, click anywhere on the board to draw your initial tile randomly
           </p>
           
-          <div className="grid grid-cols-12 gap-1 max-w-3xl mx-auto p-2 bg-accent/30 rounded-lg">
+          <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
             {generateAllBoardCoordinates().map(coord => (
               <motion.div
                 key={coord}
-                className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
-                           text-xs font-medium uppercase bg-secondary/30 border border-border/50
-                           cursor-pointer hover:opacity-75 transition-opacity"
+                className="relative aspect-square flex items-center justify-center"
                 onClick={() => handleTileClick(coord)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -186,10 +183,15 @@ const GameBoard = () => {
                 <BuildingTile
                   coordinate={coord}
                   isSelectable={true}
+                  isAvailable={true}
                 />
               </motion.div>
             ))}
           </div>
+          
+          <p className="mt-4 text-sm text-muted-foreground">
+            (The app will randomly select a tile for you, regardless of which tile you click)
+          </p>
         </div>
       </div>
     );
@@ -201,12 +203,13 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 sm:max-h-[80vh] overflow-auto">
+      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 aspect-[2/1] overflow-auto">
         {generateAllBoardCoordinates().map(coord => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;
           const isSelectable = isTilePlaceable(coord);
           const isUnplayable = wouldCauseIllegalMerger(coord);
+          const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
           
           return (
             <div
@@ -219,8 +222,8 @@ const GameBoard = () => {
                 belongsToChain={belongsToChain}
                 isPlaced={isPlaced}
                 isSelectable={isSelectable}
+                isAvailable={isAvailable}
                 isUnplayable={isUnplayable}
-                onClick={() => handleTileClick(coord)}
               />
             </div>
           );
