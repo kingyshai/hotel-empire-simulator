@@ -119,6 +119,10 @@ const GameBoard = () => {
     setSelectedFoundingTile(null);
   };
   
+  const handleCancelHotelSelection = () => {
+    setSelectedFoundingTile(null);
+  };
+  
   const handleDealStartingTiles = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
   };
@@ -154,6 +158,7 @@ const GameBoard = () => {
       <HotelChainSelector 
         availableChains={availableHeadquarters}
         onSelect={handleHotelSelection}
+        onCancel={handleCancelHotelSelection}
       />
     );
   }
@@ -172,9 +177,9 @@ const GameBoard = () => {
           </p>
           
           <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
-            {generateAllBoardCoordinates().map(coord => (
+            {generateAllBoardCoordinates().map((coord, index) => (
               <motion.div
-                key={coord}
+                key={`draw-${coord}-${index}`}
                 className="relative aspect-square flex items-center justify-center"
                 onClick={() => handleTileClick(coord)}
                 whileHover={{ scale: 1.1 }}
@@ -204,7 +209,7 @@ const GameBoard = () => {
       </div>
       
       <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 aspect-[2/1] overflow-auto">
-        {generateAllBoardCoordinates().map(coord => {
+        {generateAllBoardCoordinates().map((coord, index) => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;
           const isSelectable = isTilePlaceable(coord);
@@ -213,7 +218,7 @@ const GameBoard = () => {
           
           return (
             <div
-              key={coord}
+              key={`board-${coord}-${index}`}
               className="aspect-square w-full h-full"
               onClick={() => handleTileClick(coord)}
             >
@@ -275,7 +280,7 @@ const GameBoard = () => {
           <Button 
             size="lg" 
             onClick={handleDealStartingTiles}
-            className="w-full max-w-lg mx-auto text-lg py-6"
+            className="w-full max-w-lg mx-auto text-lg py-6 animate-pulse bg-emerald-600 hover:bg-emerald-700"
           >
             Deal Starting Tiles to All Players
           </Button>
