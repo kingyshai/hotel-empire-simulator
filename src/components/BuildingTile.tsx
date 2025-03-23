@@ -12,9 +12,9 @@ interface BuildingTileProps {
   onClick?: () => void;
   disabled?: boolean;
   isSelectable?: boolean;
-  isAvailable?: boolean;  // Prop to indicate available tile
-  isUnplayable?: boolean; // New prop for illegal moves
-  isInitialTile?: boolean; // New prop for initial tiles
+  isAvailable?: boolean;
+  isUnplayable?: boolean;
+  isInitialTile?: boolean;
 }
 
 const BuildingTile: React.FC<BuildingTileProps> = ({ 
@@ -25,24 +25,21 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   disabled = false,
   isSelectable = false,
   isAvailable = false,
-  isUnplayable = false, // Default to false
-  isInitialTile = false // Default to false
+  isUnplayable = false,
+  isInitialTile = false
 }) => {
   const { state } = useGame();
-  const { hotelChains, gamePhase, setupPhase } = state;
+  const { hotelChains } = state;
   
-  // Define colors for hotel chains
-  const chainColorMap: Record<string, string> = {
-    american: '#0ea5e9',  // blue
-    worldwide: '#a1855c', // brown
-    festival: '#10b981',  // green
-    imperial: '#ec4899',  // pink
-    continental: '#0f766e', // turquoise
-    luxor: '#ef4444',     // red
-    tower: '#fbbf24'      // yellow
+  // Get the chain's color directly from the hotelChains state
+  const getChainBackground = () => {
+    if (belongsToChain) {
+      return {
+        backgroundColor: hotelChains[belongsToChain]?.color || '#6b7280'
+      };
+    }
+    return {};
   };
-  
-  const isDrawPhase = gamePhase === 'setup' && setupPhase === 'drawInitialTile';
   
   return (
     <motion.button
@@ -50,33 +47,27 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
-        isAvailable ? "bg-white cursor-pointer hover:bg-gray-100" : // Changed to white background
-        isDrawPhase ? "cursor-pointer hover:bg-primary/20" :
+        isAvailable ? "bg-white cursor-pointer hover:bg-gray-100" : 
+        state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer hover:bg-primary/20" :
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
-        belongsToChain 
-          ? `border-${belongsToChain}` 
-          : isPlaced 
-            ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" 
-            : "bg-white hover:bg-gray-100", // Changed to white background
+        !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
         isInitialTile ? "bg-yellow-200 border-2 border-yellow-500" : ""
       )}
-      onClick={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!disabled && !isPlaced)) ? onClick : undefined}
+      onClick={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!disabled && !isPlaced)) ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!isPlaced && !disabled)) ? { scale: 1.05 } : {}}
-      whileTap={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
+      whileHover={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!isPlaced && !disabled)) ? { scale: 1.05 } : {}}
+      whileTap={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      <span className="text-xs md:text-sm font-medium">{coordinate}</span>
+      <span className="text-xs md:text-sm font-medium z-10">{coordinate}</span>
       
       {belongsToChain && (
         <div 
-          className="absolute inset-0 opacity-50 rounded-md"
-          style={{ 
-            backgroundColor: chainColorMap[belongsToChain] || hotelChains[belongsToChain]?.color || '#6b7280'
-          }}
+          className="absolute inset-0 opacity-70 rounded-md"
+          style={getChainBackground()}
         />
       )}
       
@@ -88,7 +79,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         <div className="absolute inset-0 opacity-40 rounded-md bg-red-500" />
       )}
       
-      {isDrawPhase && (
+      {state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' && (
         <div className="absolute inset-0 opacity-10 rounded-md bg-primary hover:opacity-20 transition-opacity" />
       )}
       
