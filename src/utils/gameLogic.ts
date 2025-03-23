@@ -1,4 +1,3 @@
-
 import { 
   GameState, 
   Player, 
@@ -97,6 +96,24 @@ export const findPotentialMergers = (coord: Coordinate, state: GameState): Hotel
   }
   
   return adjacentChains;
+};
+
+/**
+ * Determines if a tile would create an illegal merger between safe chains
+ * @param coord The coordinate to check
+ * @param state The current game state
+ * @returns True if the tile is "burned" (would create illegal merger)
+ */
+export const isTileBurned = (coord: Coordinate, state: GameState): boolean => {
+  const adjacentChains = findPotentialMergers(coord, state);
+  
+  // Count safe chains (11+ tiles)
+  const safeChains = adjacentChains.filter(chainName => 
+    state.hotelChains[chainName].tiles.length >= 11
+  );
+  
+  // A tile is burned if it would merge 2 or more safe chains
+  return safeChains.length >= 2;
 };
 
 export const calculateStockPrice = (chainName: HotelChainName, chainSize: number): { buy: number, sell: number } => {

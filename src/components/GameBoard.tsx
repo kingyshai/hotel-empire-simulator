@@ -4,7 +4,7 @@ import { useGame } from '@/context/GameContext';
 import { motion } from 'framer-motion';
 import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, shouldEndGame } from '@/utils/gameLogic';
+import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, isTileBurned } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 import { toast } from '@/utils/toast';
@@ -64,17 +64,9 @@ const GameBoard = () => {
     if (placedTiles[coordinate]) return false;
     if (currentPlayer.tiles.indexOf(coordinate) === -1) return false;
     
-    const adjacents = getAdjacentTiles(coordinate, placedTiles);
+    if (isTileBurned(coordinate, state)) return false;
     
-    if (adjacents.length === 0) return true;
-    
-    const adjacentChains = findPotentialMergers(coordinate, state);
-    
-    const safeChains = adjacentChains.filter(chain => 
-      state.hotelChains[chain].tiles.length >= 11
-    );
-    
-    return safeChains.length < 2;
+    return true;
   };
   
   const handleTileClick = (coordinate: Coordinate) => {
@@ -122,7 +114,11 @@ const GameBoard = () => {
           } 
         });
       } else {
-        toast.error("You can't place a tile here!");
+        if (isTileBurned(coordinate, state)) {
+          toast.error("This tile is burned and cannot be placed. It would create an illegal merger between safe hotel chains.");
+        } else {
+          toast.error("You can't place a tile here!");
+        }
       }
     }
   };
@@ -227,11 +223,7 @@ const GameBoard = () => {
   };
   
   const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
-    const adjacentChains = findPotentialMergers(coordinate, state);
-    const safeChains = adjacentChains.filter(chain => 
-      state.hotelChains[chain].tiles.length >= 11
-    );
-    return safeChains.length >= 2;
+    return isTileBurned(coordinate, state);
   };
   
   const isInitialTile = (coordinate: Coordinate): boolean => {

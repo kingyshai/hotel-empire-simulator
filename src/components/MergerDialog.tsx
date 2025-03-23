@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { HotelChainName } from '@/types/game';
 import { useGame } from '@/context/GameContext';
 import { calculateStockPrice } from '@/utils/gameLogic';
-import { Info, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Info, ArrowRight, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 interface MergerDialogProps {
   potentialMergers: HotelChainName[];
@@ -25,6 +25,14 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
   const { state } = useGame();
   const { hotelChains } = state;
   const [selectedChain, setSelectedChain] = useState<HotelChainName | null>(null);
+
+  // Check for safe chains (11+ tiles)
+  const safeChains = potentialMergers.filter(chain => 
+    hotelChains[chain].tiles.length >= 11
+  );
+  
+  // Determine if this would be an illegal merger between safe chains
+  const isIllegalMerger = safeChains.length >= 2;
 
   // Sort chains by size (largest first)
   const sortedChains = [...potentialMergers].sort((a, b) => 
@@ -60,6 +68,51 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
     }
   };
   
+  if (isIllegalMerger) {
+    return (
+      <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <ShieldAlert className="h-5 w-5" />
+              Illegal Merger Detected
+            </DialogTitle>
+            <DialogDescription>
+              The tile at {tileCoordinate} would connect multiple safe hotel chains.
+              This is not allowed by the rules. This tile is now "burned" and cannot be placed.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="text-sm bg-red-50 p-4 rounded-md border border-red-200">
+              <p className="font-medium text-red-700">Safe chains cannot be merged:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                {safeChains.map(chain => (
+                  <li key={chain} className="text-red-600">
+                    {chain} ({hotelChains[chain].tiles.length} tiles)
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-red-700">
+                According to the rules, hotel chains with 11 or more tiles are considered "safe" 
+                and cannot be absorbed by another chain.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              onClick={onCancel}
+              className="w-full"
+            >
+              I Understand (Tile Burned)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
@@ -89,6 +142,7 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
               const chainColor = hotelChains[chain]?.color || '#6b7280';
               const isLargest = hotelChains[chain].tiles.length === largestSize;
               const isSelectable = needsUserSelection && isLargest;
+              const isSafe = hotelChains[chain].tiles.length >= 11;
               
               return (
                 <div key={chain} className={`flex items-center justify-between border p-3 rounded-md ${isLargest ? 'border-primary/50' : ''}`}>
@@ -98,7 +152,14 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
                       style={{ backgroundColor: chainColor }}
                     />
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium capitalize">{chain}</p>
+                      <div className="flex items-center">
+                        <p className="text-sm font-medium capitalize">{chain}</p>
+                        {isSafe && (
+                          <span className="ml-2 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-sm">
+                            Safe
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{hotelChains[chain].tiles.length} tiles</p>
                       <p className="text-xs text-muted-foreground">Stock price: ${stockPrice.buy}</p>
                       <p className="text-xs text-muted-foreground">Primary bonus: ${primaryBonus}</p>
