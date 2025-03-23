@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
@@ -137,6 +138,8 @@ const StockMarket: React.FC = () => {
   }, 0);
   const canAfford = currentPlayer?.money >= totalCost;
   
+  const hasActiveChains = Object.values(hotelChains).some(chain => chain.isActive);
+  
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
       <div className="p-3 bg-secondary/50 border-b border-border/50 flex justify-between items-center">
@@ -217,7 +220,7 @@ const StockMarket: React.FC = () => {
         </div>
         
         {/* Only show the buy button and totals during the buyStock phase */}
-        {gamePhase === 'buyStock' && totalStocksBought > 0 && (
+        {gamePhase === 'buyStock' && (
           <div className="flex flex-col p-3 bg-secondary/30 rounded-md mt-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm">Total Stocks:</span>
@@ -229,14 +232,31 @@ const StockMarket: React.FC = () => {
               <span className={`font-medium ${!canAfford ? 'text-red-500' : ''}`}>${totalCost}</span>
             </div>
             
-            <Button 
-              className="w-full"
-              size="sm"
-              disabled={totalStocksBought === 0 || !canAfford}
-              onClick={handleBuyStocks}
-            >
-              Buy Stocks
-            </Button>
+            {hasActiveChains ? (
+              <Button 
+                className="w-full"
+                size="sm"
+                disabled={totalStocksBought === 0 || !canAfford}
+                onClick={handleBuyStocks}
+              >
+                Buy Stocks
+              </Button>
+            ) : (
+              <div className="text-center text-xs text-muted-foreground py-2">
+                No active hotel chains to buy stocks from
+              </div>
+            )}
+            
+            {!hasActiveChains && (
+              <Button 
+                className="w-full mt-2"
+                size="sm"
+                variant="secondary"
+                onClick={() => dispatch({ type: 'END_TURN' })}
+              >
+                Skip Stock Purchase
+              </Button>
+            )}
           </div>
         )}
       </div>
