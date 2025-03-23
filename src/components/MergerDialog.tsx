@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { HotelChainName } from '@/types/game';
 import { useGame } from '@/context/GameContext';
 import { calculateStockPrice } from '@/utils/gameLogic';
+import { Info, ArrowRight, AlertTriangle } from 'lucide-react';
 
 interface MergerDialogProps {
   potentialMergers: HotelChainName[];
@@ -65,7 +66,10 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
     <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Surviving Hotel Chain</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            Select Surviving Hotel Chain
+          </DialogTitle>
           <DialogDescription>
             The tile at {tileCoordinate} would connect {potentialMergers.length} hotel chains.
             {needsUserSelection 
@@ -75,10 +79,16 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="text-sm font-medium mb-2">Available Chains:</div>
+          <div className="text-sm font-medium mb-2 flex items-center gap-2">
+            <Info className="h-4 w-4 text-blue-500" />
+            <span>Available Chains:</span>
+          </div>
           <div className="grid gap-4">
             {sortedChains.map(chain => {
               const stockPrice = calculateStockPrice(chain, hotelChains[chain].tiles.length);
+              const primaryBonus = stockPrice.buy * 10;
+              const secondaryBonus = stockPrice.buy * 5;
+              
               return (
                 <div key={chain} className="flex items-center justify-between border p-3 rounded-md">
                   <div className="flex items-center gap-3">
@@ -90,6 +100,8 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
                       <p className="text-sm font-medium capitalize">{chain}</p>
                       <p className="text-xs text-muted-foreground">{hotelChains[chain].tiles.length} tiles</p>
                       <p className="text-xs text-muted-foreground">Stock price: ${stockPrice.buy}</p>
+                      <p className="text-xs text-muted-foreground">Primary bonus: ${primaryBonus}</p>
+                      <p className="text-xs text-muted-foreground">Secondary bonus: ${secondaryBonus}</p>
                     </div>
                   </div>
                   
@@ -105,15 +117,21 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
             })}
           </div>
 
-          <div className="text-sm text-muted-foreground mt-4">
-            <p><strong>Important:</strong> The selected chain will survive, and the others will be merged into it.</p>
-            <p>This decision impacts stock values and bonuses for all players.</p>
+          <div className="text-sm text-muted-foreground mt-4 bg-secondary/20 p-3 rounded-md">
+            <p className="flex items-center gap-2"><Info className="h-4 w-4" /> <strong>Important:</strong> The selected chain will survive, and the others will be merged into it.</p>
+            <p className="mt-1">This decision impacts stock values and bonuses:</p>
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>Majority stockholder receives 10× stock price</li>
+              <li>Second largest stockholder receives 5× stock price</li>
+              <li>If one player holds most stocks, they get both bonuses (15× price)</li>
+            </ul>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
           <Button onClick={handleConfirm} disabled={!selectedChain}>
+            <ArrowRight className="mr-2 h-4 w-4" />
             Confirm Merger
           </Button>
         </DialogFooter>
