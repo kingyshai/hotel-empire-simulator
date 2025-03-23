@@ -14,7 +14,6 @@ export const isAdjacent = (coord1: Coordinate, coord2: Coordinate): boolean => {
   const row2 = parseInt(coord2.charAt(0));
   const col2 = coord2.charAt(1);
   
-  // Check if they're orthogonally adjacent
   return (
     (row1 === row2 && Math.abs(col1.charCodeAt(0) - col2.charCodeAt(0)) === 1) ||
     (col1 === col2 && Math.abs(row1 - row2) === 1)
@@ -25,7 +24,6 @@ export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordina
   const row = parseInt(coord.charAt(0));
   const col = coord.charAt(1).charCodeAt(0);
   
-  // Generate potential adjacent coordinates
   const potentialAdjacents: Coordinate[] = [
     `${row - 1}${String.fromCharCode(col)}` as Coordinate, // Above
     `${row + 1}${String.fromCharCode(col)}` as Coordinate, // Below
@@ -33,15 +31,12 @@ export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordina
     `${row}${String.fromCharCode(col + 1)}` as Coordinate, // Right
   ];
   
-  // Filter out invalid coordinates and those without placed tiles
   return potentialAdjacents.filter(c => {
     const r = parseInt(c.charAt(0));
     const c1 = c.charAt(1);
     
-    // Check if coordinate is valid
     if (r < 1 || r > 9 || c1 < 'A' || c1 > 'L') return false;
     
-    // Check if there's a tile placed at this coordinate
     return placedTiles[c] !== undefined;
   });
 };
@@ -56,7 +51,6 @@ export const findConnectedTiles = (startCoord: Coordinate, placedTiles: Record<C
     visited[coord] = true;
     connected.push(coord);
     
-    // Find adjacent tiles and continue DFS
     const adjacents = getAdjacentTiles(coord, placedTiles);
     for (const adj of adjacents) {
       dfs(adj);
@@ -70,10 +64,8 @@ export const findConnectedTiles = (startCoord: Coordinate, placedTiles: Record<C
 export const findPotentialMergers = (coord: Coordinate, state: GameState): HotelChainName[] => {
   const { placedTiles, hotelChains } = state;
   
-  // Get adjacent tiles
   const adjacents = getAdjacentTiles(coord, placedTiles);
   
-  // Find which hotel chains these tiles belong to
   const adjacentChains: HotelChainName[] = [];
   
   for (const adj of adjacents) {
@@ -89,20 +81,15 @@ export const findPotentialMergers = (coord: Coordinate, state: GameState): Hotel
 };
 
 export const calculateStockPrice = (chainName: HotelChainName, chainSize: number): { buy: number, sell: number } => {
-  // Base price calculation based on chain type and size
   let basePrice = 0;
   
-  // Determine tier based on chain name
-  const tier = getChainTier(chainName);
-  
-  // Calculate base price based on tiles
-  if (chainSize >= 38) {
+  if (chainSize >= 41) {
     basePrice = 1000;
-  } else if (chainSize >= 28) {
+  } else if (chainSize >= 31) {
     basePrice = 900;
-  } else if (chainSize >= 18) {
+  } else if (chainSize >= 21) {
     basePrice = 800;
-  } else if (chainSize >= 8) {
+  } else if (chainSize >= 11) {
     basePrice = 700;
   } else if (chainSize >= 6) {
     basePrice = 600;
@@ -115,10 +102,10 @@ export const calculateStockPrice = (chainName: HotelChainName, chainSize: number
   } else if (chainSize === 2) {
     basePrice = 200;
   } else {
-    basePrice = 0; // Inactive chains
+    basePrice = 0;
   }
   
-  // Apply tier modifiers
+  const tier = getChainTier(chainName);
   if (tier === 'medium') {
     basePrice += 100;
   } else if (tier === 'expensive') {
@@ -137,7 +124,7 @@ const getChainTier = (chainName: HotelChainName): 'cheap' | 'medium' | 'expensiv
   } else if (chainName === 'american' || chainName === 'festival' || chainName === 'worldwide') {
     return 'medium';
   } else {
-    return 'expensive'; // Continental and Imperial
+    return 'expensive';
   }
 };
 
@@ -148,14 +135,10 @@ export const calculateStockholderBonus = (
 ): StockholderBonus => {
   const { buy } = calculateStockPrice(chainName, chainSize);
   
-  // Calculate bonuses based on price chart in the image
-  // Primary bonus is 10 times stock price
   const primary = buy * 10;
-  // Secondary bonus is 5 times stock price
   const secondary = buy * 5;
-  // Tertiary bonus is provided in classic mode for completeness, though not used in classic mode
-  const tertiary = Math.ceil(buy * 3.3); // Approximately 1/3 of primary bonus
-
+  const tertiary = Math.ceil(buy * 3.3);
+  
   return {
     primary,
     secondary,
@@ -167,26 +150,20 @@ export const determineStockholders = (
   players: Player[],
   chainName: HotelChainName
 ): { primary: Player[], secondary: Player[], tertiary: Player[] } => {
-  // Create a map of player to stock count
   const playerStocks: [Player, number][] = players.map(player => [player, player.stocks[chainName]]);
   
-  // Sort by stock count in descending order
   playerStocks.sort((a, b) => b[1] - a[1]);
   
-  // Filter out players with no stocks
   const playersWithStocks = playerStocks.filter(([_, count]) => count > 0);
   
-  // Initialize result
   const result = {
     primary: [] as Player[],
     secondary: [] as Player[],
     tertiary: [] as Player[],
   };
   
-  // No stockholders
   if (playersWithStocks.length === 0) return result;
   
-  // First, determine primary stockholders
   const primaryStockCount = playersWithStocks[0][1];
   const primaryStockholders = playersWithStocks
     .filter(([_, count]) => count === primaryStockCount)
@@ -194,10 +171,8 @@ export const determineStockholders = (
   
   result.primary = primaryStockholders;
   
-  // If all players are tied for primary, no secondary or tertiary
   if (primaryStockholders.length === playersWithStocks.length) return result;
   
-  // Determine secondary stockholders
   const remainingPlayers = playersWithStocks.filter(([_, count]) => count !== primaryStockCount);
   const secondaryStockCount = remainingPlayers[0][1];
   const secondaryStockholders = remainingPlayers
@@ -206,10 +181,8 @@ export const determineStockholders = (
   
   result.secondary = secondaryStockholders;
   
-  // If all remaining players are tied for secondary, no tertiary
   if (secondaryStockholders.length === remainingPlayers.length) return result;
   
-  // Determine tertiary stockholders
   const tertiaryPlayers = remainingPlayers.filter(([_, count]) => count !== secondaryStockCount);
   const tertiaryStockCount = tertiaryPlayers[0][1];
   const tertiaryStockholders = tertiaryPlayers
@@ -228,31 +201,23 @@ export const distributeStockholderBonus = (
   const { players, hotelChains, gameMode } = state;
   const chain = hotelChains[chainName];
   
-  // Calculate bonuses
   const bonus = calculateStockholderBonus(chainName, chain.tiles.length, gameMode);
   
-  // Determine stockholders
   const { primary, secondary, tertiary } = determineStockholders(players, chainName);
   
-  // Clone players array to modify
   const updatedPlayers = [...players];
   
-  // Handle special cases based on the rules in the image:
-  
-  // SINGLE STOCKHOLDER CASE
   if (primary.length === 1 && secondary.length === 0) {
     const singleStockholder = primary[0];
     const playerIndex = players.findIndex(p => p.id === singleStockholder.id);
     
-    // In Classic mode: single stockholder gets primary + secondary
-    // In Tycoon mode: single stockholder gets primary + tertiary
     const totalBonus = gameMode === 'classic' 
       ? bonus.primary + bonus.secondary
       : bonus.primary + bonus.tertiary;
     
     updatedPlayers[playerIndex] = {
       ...singleStockholder,
-      money: singleStockholder.money + Math.ceil(totalBonus / 100) * 100, // Round up to nearest 100
+      money: singleStockholder.money + Math.ceil(totalBonus / 100) * 100,
     };
     
     return {
@@ -261,10 +226,9 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // TIE FOR PRIMARY STOCKHOLDER
   if (primary.length > 1) {
     const splitBonus = (bonus.primary + bonus.secondary) / primary.length;
-    const roundedBonus = Math.ceil(splitBonus / 100) * 100; // Round up to nearest 100
+    const roundedBonus = Math.ceil(splitBonus / 100) * 100;
     
     primary.forEach(player => {
       const playerIndex = players.findIndex(p => p.id === player.id);
@@ -274,9 +238,6 @@ export const distributeStockholderBonus = (
       };
     });
     
-    // No secondary bonus in this case
-    
-    // Handle tertiary in Tycoon mode (if applicable)
     if (gameMode === 'tycoon' && tertiary.length > 0) {
       const tertiaryBonus = Math.ceil(bonus.tertiary / tertiary.length / 100) * 100;
       
@@ -295,9 +256,7 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // TIE FOR SECONDARY STOCKHOLDER
   if (secondary.length > 1) {
-    // Primary gets normal bonus
     const primaryPlayer = primary[0];
     const primaryIndex = players.findIndex(p => p.id === primaryPlayer.id);
     updatedPlayers[primaryIndex] = {
@@ -305,7 +264,6 @@ export const distributeStockholderBonus = (
       money: primaryPlayer.money + bonus.primary,
     };
     
-    // Secondary shareholders split the secondary bonus
     const splitSecondary = (bonus.secondary + (gameMode === 'tycoon' ? bonus.tertiary : 0)) / secondary.length;
     const roundedSecondary = Math.ceil(splitSecondary / 100) * 100;
     
@@ -323,8 +281,6 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // NORMAL CASE - NO TIES
-  // Handle primary stockholder
   if (primary.length === 1) {
     const player = primary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -334,7 +290,6 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // Handle secondary stockholder
   if (secondary.length === 1) {
     const player = secondary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -344,7 +299,6 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // Handle tertiary stockholder in Tycoon mode
   if (gameMode === 'tycoon' && tertiary.length > 0) {
     const tertiaryBonus = Math.ceil(bonus.tertiary / tertiary.length / 100) * 100;
     
@@ -360,5 +314,68 @@ export const distributeStockholderBonus = (
   return {
     ...state,
     players: updatedPlayers,
+  };
+};
+
+export const shouldEndGame = (state: GameState): boolean => {
+  const { hotelChains, placedTiles, availableHeadquarters } = state;
+  
+  for (const chainName in hotelChains) {
+    const chain = hotelChains[chainName as HotelChainName];
+    if (chain.isActive && chain.tiles.length >= 41) {
+      return true;
+    }
+  }
+  
+  const activeChains = Object.values(hotelChains).filter(chain => chain.isActive);
+  if (activeChains.length > 0 && activeChains.every(chain => chain.tiles.length >= 11)) {
+    return true;
+  }
+  
+  if (availableHeadquarters.length === 0) {
+    return true;
+  }
+  
+  return false;
+};
+
+export const endGame = (state: GameState): GameState => {
+  let updatedState = { ...state };
+  
+  for (const chainName in state.hotelChains) {
+    const chain = state.hotelChains[chainName as HotelChainName];
+    if (chain.isActive) {
+      updatedState = distributeStockholderBonus(updatedState, chainName as HotelChainName);
+    }
+  }
+  
+  const updatedPlayers = updatedState.players.map(player => {
+    let totalMoney = player.money;
+    
+    for (const chainName in player.stocks) {
+      const chain = updatedState.hotelChains[chainName as HotelChainName];
+      if (chain.isActive) {
+        const stockCount = player.stocks[chainName as HotelChainName];
+        const { sell } = calculateStockPrice(chainName as HotelChainName, chain.tiles.length);
+        totalMoney += sell * stockCount;
+      }
+    }
+    
+    return {
+      ...player,
+      money: totalMoney
+    };
+  });
+  
+  const sortedPlayers = [...updatedPlayers].sort((a, b) => b.money - a.money);
+  const highestMoney = sortedPlayers[0].money;
+  const winners = sortedPlayers.filter(player => player.money === highestMoney);
+  
+  return {
+    ...updatedState,
+    players: updatedPlayers,
+    gameEnded: true,
+    winner: winners.length === 1 ? winners[0] : null,
+    winners: winners.length > 1 ? winners : undefined
   };
 };

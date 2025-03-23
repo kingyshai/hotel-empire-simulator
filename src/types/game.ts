@@ -79,6 +79,7 @@ export type GameState = {
   tilePool: Coordinate[];
   gameEnded: boolean;
   winner: Player | null;
+  winners?: Player[];
   initialTiles: InitialTile[];
 };
 

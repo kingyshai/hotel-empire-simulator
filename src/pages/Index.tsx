@@ -10,10 +10,11 @@ import SetupScreen from '@/components/SetupScreen';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
+import { shouldEndGame } from '@/utils/gameLogic';
 
 const GameContent = () => {
   const { state, dispatch } = useGame();
-  const { players, currentPlayerIndex, gamePhase, hotelChains } = state;
+  const { players, currentPlayerIndex, gamePhase, hotelChains, gameEnded, winner, winners } = state;
   
   const handleEndTurn = () => {
     if (gamePhase !== 'buyStock') {
@@ -22,7 +23,14 @@ const GameContent = () => {
     }
     
     dispatch({ type: 'END_TURN' });
-    toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
+    
+    if (!shouldEndGame(state)) {
+      toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
+    }
+  };
+  
+  const handleEndGame = () => {
+    dispatch({ type: 'END_GAME_MANUALLY' });
   };
   
   const chainNames: HotelChainName[] = [
@@ -32,6 +40,53 @@ const GameContent = () => {
   // Show setup screen only during the initial setup phase
   if (gamePhase === 'setup' && state.setupPhase === 'initial') {
     return <SetupScreen />;
+  }
+  
+  // Show game results if the game has ended
+  if (gameEnded) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <Header />
+        <div className="max-w-2xl mx-auto mt-16 glass-panel rounded-xl p-8 text-center">
+          <h2 className="text-2xl font-bold mb-8">Game Over!</h2>
+          
+          {winner ? (
+            <div className="mb-6">
+              <h3 className="text-xl mb-2">Winner: {winner.name}</h3>
+              <p className="text-lg font-medium">${winner.money}</p>
+            </div>
+          ) : winners && winners.length > 0 ? (
+            <div className="mb-6">
+              <h3 className="text-xl mb-2">It's a tie!</h3>
+              <div className="space-y-2 mt-4">
+                {winners.map(player => (
+                  <div key={player.id} className="flex justify-between items-center p-2 bg-secondary/20 rounded">
+                    <span>{player.name}</span>
+                    <span className="font-medium">${player.money}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {players.map(player => (
+              <div key={player.id} className="p-4 border border-border rounded-lg">
+                <h4 className="font-medium mb-2">{player.name}</h4>
+                <p className="text-lg font-bold">${player.money}</p>
+              </div>
+            ))}
+          </div>
+          
+          <Button 
+            className="mt-8"
+            onClick={() => window.location.reload()}
+          >
+            New Game
+          </Button>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -50,13 +105,23 @@ const GameContent = () => {
               )}
             </div>
             
-            <Button 
-              size="lg"
-              onClick={handleEndTurn}
-              disabled={gamePhase !== 'buyStock'}
-            >
-              End Turn
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={handleEndGame}
+                disabled={gamePhase === 'setup'}
+              >
+                End Game
+              </Button>
+              
+              <Button 
+                size="lg"
+                onClick={handleEndTurn}
+                disabled={gamePhase !== 'buyStock'}
+              >
+                End Turn
+              </Button>
+            </div>
           </div>
         </div>
         

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -10,6 +9,7 @@ import {
   Coordinate
 } from '@/types/game';
 import { toast } from '@/utils/toast';
+import { shouldEndGame, endGame } from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
   const tiles: Coordinate[] = [];
@@ -53,7 +53,7 @@ const initialGameState: GameState = {
     continental: 25,
     imperial: 25,
   },
-  gameMode: 'classic', // Changed default from 'tycoon' to 'classic'
+  gameMode: 'classic',
   gamePhase: 'setup',
   setupPhase: 'initial',
   availableHeadquarters: ['luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'],
@@ -61,6 +61,7 @@ const initialGameState: GameState = {
   tilePool: shuffleArray(generateBoard()),
   gameEnded: false,
   winner: null,
+  winners: undefined,
   initialTiles: [],
 };
 
@@ -76,7 +77,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'SET_GAME_MODE':
       return {
         ...state,
-        gameMode: action.payload.mode,
+        gameMode: 'classic',
       };
       
     case 'DRAW_INITIAL_TILE': {
@@ -203,12 +204,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER': {
+    case 'SET_CURRENT_PLAYER':
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
       };
-    }
     
     case 'PLACE_TILE': {
       const { coordinate, playerId } = action.payload;
@@ -289,12 +289,16 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'END_TURN': {
+      if (shouldEndGame(state)) {
+        return endGame(state);
+      }
+      
       const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       
       const player = { ...state.players[state.currentPlayerIndex] };
       const tilePool = [...state.tilePool];
       
-      if (tilePool.length > 0) {
+      if (tilePool.length > 0 && player.tiles.length < 6) {
         const coordinate = tilePool.pop()!;
         player.tiles.push(coordinate);
       }
@@ -356,7 +360,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'END_GAME': {
+    case 'END_GAME_MANUALLY': {
+      toast.success("Game has ended!");
+      return endGame(state);
+    }
+    
+    case 'END_GAME':
       const players = state.players.map(player => {
         let totalMoney = player.money;
         
@@ -382,9 +391,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         gameEnded: true,
         winner,
       };
-    }
     
-    case 'ADD_TILE_TO_PLAYER_HAND': {
+    case 'ADD_TILE_TO_PLAYER_HAND':
       const { playerId, coordinate } = action.payload;
       const players = [...state.players];
       const playerIndex = players.findIndex(p => p.id === playerId);
@@ -415,7 +423,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         players
       };
-    }
     
     default:
       return state;

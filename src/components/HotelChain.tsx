@@ -21,7 +21,7 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
   
   // Calculate stockholder bonuses
   const bonuses = chain.isActive
-    ? calculateStockholderBonus(chainName, chain.tiles.length, gameMode)
+    ? calculateStockholderBonus(chainName, chain.tiles.length, 'classic') // Always classic mode
     : { primary: 0, secondary: 0, tertiary: 0 };
   
   // Determine if chain is safe (11 or more tiles)
@@ -81,13 +81,6 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
                 <span className="text-xs text-muted-foreground">Secondary Bonus</span>
                 <span className="font-medium text-sm">${bonuses.secondary}</span>
               </div>
-              
-              {gameMode === 'tycoon' && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Tertiary Bonus</span>
-                  <span className="font-medium text-sm">${bonuses.tertiary}</span>
-                </div>
-              )}
             </div>
           </>
         )}
