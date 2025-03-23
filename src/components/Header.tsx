@@ -29,13 +29,19 @@ const Header: React.FC = () => {
       return;
     }
     
-    // Record any stock purchases that happened this turn
+    // Record any stock purchases that happened this turn or if a hotel was founded
     if (currentPlayer) {
+      const foundedHotel = state.lastFoundedHotel;
       const purchases: Record<HotelChainName, number> = state.lastStockPurchase?.stocks || {
         luxor: 0, tower: 0, american: 0, festival: 0, worldwide: 0, continental: 0, imperial: 0
       };
       
-      // Even if no stocks were purchased, we'll show the banner
+      // If a hotel was founded, ensure the free stock is reflected
+      if (foundedHotel) {
+        purchases[foundedHotel] = Math.max(purchases[foundedHotel], 1);
+      }
+      
+      // Show the banner for founded hotels or stock purchases
       dispatch({ 
         type: 'RECORD_STOCK_PURCHASE', 
         payload: { 

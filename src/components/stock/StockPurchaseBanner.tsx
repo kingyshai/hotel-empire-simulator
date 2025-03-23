@@ -55,7 +55,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
               <h3 className="text-lg font-semibold">
                 <span className="text-blue-900">{purchaseInfo.playerName}</span> 
                 {hasFoundedHotel 
-                  ? ` founded ${purchaseInfo.foundedHotel} hotel!` 
+                  ? ` founded ${purchaseInfo.foundedHotel} hotel chain!` 
                   : (totalStocks > 0 ? " purchased stocks!" : " ended turn without purchasing stocks.")}
               </h3>
               <div className="text-sm">
@@ -73,7 +73,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                         <span className="capitalize">{chain}</span>
                         <span className="font-bold">×{count}</span>
                         {hasFoundedHotel && chain === purchaseInfo.foundedHotel && (
-                          <span className="text-xs ml-1">(Free)</span>
+                          <span className="text-xs ml-1">(Free founder stock)</span>
                         )}
                       </div>
                     ))}
@@ -85,6 +85,11 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   </div>
                 ) : (
                   !hasFoundedHotel && <span>No stocks purchased</span>
+                )}
+                {hasFoundedHotel && (
+                  <div className="mt-1 font-medium text-white bg-green-500/30 px-2 py-1 rounded-full inline-block">
+                    Received 1 free founder stock!
+                  </div>
                 )}
               </div>
             </div>
