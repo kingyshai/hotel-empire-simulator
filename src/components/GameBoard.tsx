@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -9,6 +10,7 @@ import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 import { toast } from '@/utils/toast';
 import TileDestinationDialog from './TileDestinationDialog';
+import { ArrowRight } from 'lucide-react';
 
 const GameBoard = () => {
   const { state, dispatch } = useGame();
@@ -222,6 +224,10 @@ const GameBoard = () => {
     setTileDestinationInfo(null);
   };
   
+  const handleEndTurn = () => {
+    dispatch({ type: 'END_TURN' });
+  };
+  
   const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
     return isTileBurned(coordinate, state);
   };
@@ -395,6 +401,20 @@ const GameBoard = () => {
               ))}
             </div>
           </div>
+          
+          {gamePhase !== 'setup' && (
+            <div className="flex justify-end">
+              <Button 
+                variant="default"
+                size="lg"
+                onClick={handleEndTurn}
+                className="px-6 bg-primary/80 hover:bg-primary flex items-center gap-2"
+              >
+                End Turn
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       
