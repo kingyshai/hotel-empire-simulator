@@ -79,15 +79,17 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
             } 
           : isInitialTile 
             ? {
-                backgroundColor: "#FFC107",  // Bright yellow
-                color: "#333333",  // Dark gray for contrast
-                borderColor: "#FFA000"  // Amber for border
+                backgroundColor: "#FFEB3B",  // Bright vibrant yellow
+                color: "#000000",  // Black text for maximum contrast
+                borderColor: "#FBC02D",  // Darker yellow border
+                boxShadow: "0 0 0 2px #FBC02D",  // Add an extra outer glow
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
-                  backgroundColor: "#333333",  // Dark gray
+                  backgroundColor: "#212121",  // Very dark gray, almost black
                   color: "#FFFFFF",  // White text
-                  borderColor: "#555555"  // Slightly lighter gray border
+                  borderColor: "#000000",  // Black border
+                  boxShadow: "0 0 0 2px #000000",  // Add an extra outer glow
                 }
               : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
                 ? {
@@ -131,13 +133,13 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
       
       {isInitialTile && (
-        <div className="absolute w-5 h-5 top-0 right-0 rounded-full bg-yellow-500 -mt-1 -mr-1 shadow-md border-2 border-yellow-600 flex items-center justify-center">
+        <div className="absolute w-6 h-6 top-0 right-0 rounded-full bg-yellow-500 -mt-2 -mr-2 shadow-md border-2 border-yellow-600 flex items-center justify-center z-20">
           <span className="text-[10px] text-white font-bold">★</span>
         </div>
       )}
       
       {isRecentlyPlaced && !isInitialTile && (
-        <div className="absolute w-5 h-5 bottom-0 left-0 rounded-full bg-gray-700 -mb-1 -ml-1 shadow-md border-2 border-gray-600 flex items-center justify-center">
+        <div className="absolute w-6 h-6 bottom-0 left-0 rounded-full bg-black -mb-2 -ml-2 shadow-md border-2 border-gray-700 flex items-center justify-center z-20">
           <span className="text-[10px] text-white font-bold">✓</span>
         </div>
       )}
