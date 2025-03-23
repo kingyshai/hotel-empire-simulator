@@ -152,12 +152,14 @@ const StockMarket: React.FC = () => {
         />
         
         <div className="space-y-4">
-          <AvailableStocks
-            chainNames={chainNames}
-            hotelChains={hotelChains}
-            stockMarket={stockMarket}
-            hideAvailableStocks={hideAvailableStocks}
-          />
+          {!hideAvailableStocks && (
+            <AvailableStocks
+              chainNames={chainNames}
+              hotelChains={hotelChains}
+              stockMarket={stockMarket}
+              hideAvailableStocks={hideAvailableStocks}
+            />
+          )}
           
           {gamePhase === 'buyStock' && (
             <StockBuyingInterface

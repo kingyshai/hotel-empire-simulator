@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -181,7 +182,7 @@ const GameBoard = () => {
             Draw Initial Tile
           </Button>
           
-          <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
+          <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
             {generateAllBoardCoordinates().map((coord) => {
               const tileInitial = isInitialTile(coord);
               const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
@@ -189,9 +190,9 @@ const GameBoard = () => {
               return (
                 <motion.div
                   key={`initial-tile-${coord}-${currentPlayerIndex}`}
-                  className="relative aspect-square flex items-center justify-center"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="relative aspect-square flex items-center justify-center scale-75"
+                  whileHover={{ scale: 0.85 }}
+                  whileTap={{ scale: 0.7 }}
                 >
                   <BuildingTile
                     coordinate={coord}
@@ -235,7 +236,7 @@ const GameBoard = () => {
           return (
             <div
               key={`board-${coord}-${currentPlayerIndex}`}
-              className="aspect-square min-w-0 min-h-0" 
+              className="aspect-square min-w-0 min-h-0 scale-75 transform-origin-center" 
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 
