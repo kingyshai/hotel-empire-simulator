@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
@@ -59,20 +58,16 @@ const Header: React.FC = () => {
         purchases[foundedHotel] = Math.max(purchases[foundedHotel], 1);
       }
       
-      // Show the banner for founded hotels or stock purchases
-      const hasStockActivity = Object.values(purchases).some(count => count > 0) || foundedHotel;
-      
-      if (hasStockActivity) {
-        dispatch({ 
-          type: 'RECORD_STOCK_PURCHASE', 
-          payload: { 
-            playerName: currentPlayer.name, 
-            stocks: purchases,
-            totalCost,
-            foundedHotel: state.lastFoundedHotel
-          } 
-        });
-      }
+      // Always show the banner at the end of turn, regardless of stock activity
+      dispatch({ 
+        type: 'RECORD_STOCK_PURCHASE', 
+        payload: { 
+          playerName: currentPlayer.name, 
+          stocks: purchases,
+          totalCost,
+          foundedHotel: state.lastFoundedHotel
+        } 
+      });
     }
     
     dispatch({ type: 'END_TURN' });

@@ -64,7 +64,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   : (hasPurchasedStocks 
                     ? " purchased stocks" 
                     : " ended turn without purchasing stocks")}
-                {hasFoundedHotel && hasPurchasedStocks ? " and purchased stocks!" : "!"}
+                {hasFoundedHotel && hasPurchasedStocks ? " and purchased additional stocks!" : "!"}
               </h3>
               <div className="text-sm">
                 {hasFoundedHotel && (
@@ -76,7 +76,10 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                 {purchasedStocksList.length > 0 ? (
                   <div className="flex flex-wrap gap-2 mt-1">
                     {purchasedStocksList
-                      .filter(({ chain }) => chain !== purchaseInfo.foundedHotel || purchaseInfo.stocks[chain] > 1)
+                      .filter(({ chain, count }) => 
+                        // Only show purchased stocks, excluding the free founder stock if that's all they got
+                        !(chain === purchaseInfo.foundedHotel && count === 1)
+                      )
                       .map(({ chain, count, isFreeFounderStock }) => {
                         // If this is the founded hotel and has more than 1 stock, reduce count by 1 for display
                         const displayCount = (chain === purchaseInfo.foundedHotel) ? count - 1 : count;
@@ -96,7 +99,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                           </div>
                         );
                       })}
-                    {purchaseInfo.totalCost > 0 && (
+                    {purchaseInfo.totalCost > 0 && hasPurchasedStocks && (
                       <div className="bg-white/20 px-2 py-1 rounded-full">
                         Total: ${purchaseInfo.totalCost}
                       </div>
