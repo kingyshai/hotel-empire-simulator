@@ -281,7 +281,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER':
+    case 'SET_CURRENT_PLAYER'
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
@@ -435,7 +435,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return {
         ...state,
         showStockPurchaseBanner: false,
-        lastFoundedHotel: undefined
+        lastStockPurchase: null
       };
     }
     
@@ -638,7 +638,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
       
       const mergerPlayer = updatedPlayers[playerIndex];
-      const currentPlayerStocks = mergerPlayer.stocks[currentMergerChain as HotelChainName];
+      const currentPlayerStocks = currentMergerChain ? mergerPlayer.stocks[currentMergerChain] : 0;
       
       if (currentMergerChain && currentPlayerStocks > 0) {
         return {
@@ -655,7 +655,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             survivingChain,
             stocksHeld: currentPlayerStocks,
             playersWithStocks: updatedPlayers
-              .filter(p => p.id !== mergerPlayer.id && p.stocks[currentMergerChain as HotelChainName] > 0)
+              .filter(p => p.id !== mergerPlayer.id && p.stocks[currentMergerChain] > 0)
               .map(p => p.id)
           }
         };

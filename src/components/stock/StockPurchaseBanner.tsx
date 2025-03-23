@@ -99,17 +99,15 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
             </div>
           </div>
           
-          {currentPlayer && (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={onAcknowledge}
-              className="bg-white text-blue-700 hover:bg-blue-50"
-            >
-              <Check size={16} className="mr-1" />
-              OK
-            </Button>
-          )}
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={onAcknowledge}
+            className="bg-white text-blue-700 hover:bg-blue-50"
+          >
+            <Check size={16} className="mr-1" />
+            OK
+          </Button>
         </div>
       </motion.div>
     </AnimatePresence>
