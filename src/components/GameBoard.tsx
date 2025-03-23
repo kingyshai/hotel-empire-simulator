@@ -337,6 +337,19 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
+      {setupPhase === 'dealTiles' && (
+        <div className="p-6 bg-secondary/20 border-b border-border/50 text-center">
+          <p className="mb-4 text-lg">Ready to start the game!</p>
+          <Button 
+            size="lg" 
+            onClick={handleDealStartingTiles}
+            className="w-full max-w-lg mx-auto text-lg py-6 animate-pulse bg-emerald-600 hover:bg-emerald-700"
+          >
+            Deal Starting Tiles to All Players
+          </Button>
+        </div>
+      )}
+      
       {renderGameBoard()}
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
@@ -363,19 +376,6 @@ const GameBoard = () => {
           </div>
         </div>
       </div>
-      
-      {setupPhase === 'dealTiles' && (
-        <div className="p-6 bg-secondary/20 border-t border-border/50 text-center">
-          <p className="mb-4 text-lg">Ready to start the game!</p>
-          <Button 
-            size="lg" 
-            onClick={handleDealStartingTiles}
-            className="w-full max-w-lg mx-auto text-lg py-6 animate-pulse bg-emerald-600 hover:bg-emerald-700"
-          >
-            Deal Starting Tiles to All Players
-          </Button>
-        </div>
-      )}
       
       {/* Merger Dialog */}
       {mergeDialogInfo && (
