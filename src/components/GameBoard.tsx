@@ -325,11 +325,8 @@ const GameBoard: React.FC = () => {
   
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
-      <div className="p-3 bg-secondary/50 border-b border-border/50 flex items-center justify-between">
+      <div className="p-3 bg-secondary/50 border-b border-border/50">
         <h2 className="text-sm font-medium">Game Board</h2>
-        <div className="text-xs text-muted-foreground">
-          {Object.keys(placedTiles).length} / 108 tiles placed
-        </div>
       </div>
       
       <div className="min-h-[500px] flex flex-col">
@@ -353,18 +350,6 @@ const GameBoard: React.FC = () => {
           <div className="flex justify-between p-2 bg-background/50 rounded">
             <span>Current Player:</span>
             <span className="font-medium">{currentPlayer?.name}</span>
-          </div>
-          <div className="flex justify-between p-2 bg-background/50 rounded">
-            <span>Tiles Placed:</span>
-            <span className="font-medium">{Object.keys(placedTiles).length}</span>
-          </div>
-          <div className="flex justify-between p-2 bg-background/50 rounded">
-            <span>Active Chains:</span>
-            <span className="font-medium">
-              {Object.keys(hotelChains).filter(chain => 
-                hotelChains[chain as HotelChainName].tiles && hotelChains[chain as HotelChainName].tiles.length > 0
-              ).length}
-            </span>
           </div>
         </div>
       </div>
