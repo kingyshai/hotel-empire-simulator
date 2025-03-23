@@ -16,6 +16,8 @@ const GameContent = () => {
   const { state, dispatch } = useGame();
   const { players, currentPlayerIndex, gamePhase, hotelChains, gameEnded, winner, winners } = state;
   
+  const canEndGame = shouldEndGame(state);
+  
   const handleEndTurn = () => {
     if (gamePhase !== 'buyStock') {
       toast.error("You must complete your current actions before ending your turn");
@@ -109,7 +111,8 @@ const GameContent = () => {
               <Button 
                 variant="outline"
                 onClick={handleEndGame}
-                disabled={gamePhase === 'setup'}
+                disabled={gamePhase === 'setup' || !canEndGame}
+                title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
               >
                 End Game
               </Button>
