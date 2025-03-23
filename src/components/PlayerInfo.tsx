@@ -3,6 +3,14 @@ import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName, Player } from '@/types/game';
 import { motion } from 'framer-motion';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHead,
+  TableRow,
+} from '@/components/ui/table';
 
 interface PlayerInfoProps {
   player: Player;
@@ -49,30 +57,45 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({ player, isCurrentPlayer }) => {
             </span>
           </div>
           
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(player.stocks).map(([chainName, quantity]) => {
-              const chain = hotelChains[chainName as HotelChainName];
-              if (quantity === 0) return null;
-              
-              return (
-                <div 
-                  key={chainName}
-                  className="flex items-center px-2 py-1.5 rounded border text-xs"
-                  style={{ 
-                    borderColor: `${chain.color}30`,
-                    backgroundColor: `${chain.color}05`  
-                  }}
-                >
-                  <div 
-                    className="w-2 h-2 rounded-full mr-1.5"
-                    style={{ backgroundColor: chain.color }}
-                  />
-                  <span className="capitalize">{chainName}:</span>
-                  <span className="ml-auto font-medium">{quantity}</span>
-                </div>
-              );
-            })}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-7 p-0 pl-2">Chain</TableHead>
+                <TableHead className="h-7 p-0 text-right pr-2">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(player.stocks)
+                .filter(([_, quantity]) => quantity > 0)
+                .map(([chainName, quantity]) => {
+                  const chain = hotelChains[chainName as HotelChainName];
+                  
+                  return (
+                    <TableRow key={chainName} className="hover:bg-transparent">
+                      <TableCell 
+                        className="py-1 px-2 flex items-center"
+                      >
+                        <div 
+                          className="w-2 h-2 rounded-full mr-1.5"
+                          style={{ backgroundColor: chain.color }}
+                        />
+                        <span className="capitalize text-xs">{chainName}</span>
+                      </TableCell>
+                      <TableCell className="py-1 px-2 text-right text-xs font-medium">
+                        {quantity}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              {getTotalStocks() === 0 && (
+                <TableRow>
+                  <TableCell colSpan={2} className="py-2 text-center text-xs text-muted-foreground">
+                    No stocks
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
         
         <div className="space-y-2">
@@ -83,7 +106,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({ player, isCurrentPlayer }) => {
             </span>
           </div>
           
-          {isCurrentPlayer && (
+          {isCurrentPlayer && player.tiles.length > 0 && (
             <div className="grid grid-cols-6 gap-1">
               {player.tiles.map(tile => (
                 <div 
@@ -96,6 +119,12 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({ player, isCurrentPlayer }) => {
             </div>
           )}
           
+          {isCurrentPlayer && player.tiles.length === 0 && (
+            <div className="text-xs text-center py-2 text-muted-foreground">
+              No tiles available
+            </div>
+          )}
+          
           {!isCurrentPlayer && (
             <div className="flex flex-wrap gap-1">
               {Array.from({ length: player.tiles.length }).map((_, i) => (
@@ -104,6 +133,11 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({ player, isCurrentPlayer }) => {
                   className="w-4 h-5 rounded bg-secondary"
                 />
               ))}
+              {player.tiles.length === 0 && (
+                <div className="text-xs py-2 text-muted-foreground">
+                  No tiles
+                </div>
+              )}
             </div>
           )}
         </div>

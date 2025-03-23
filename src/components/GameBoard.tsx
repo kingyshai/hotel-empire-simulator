@@ -236,7 +236,7 @@ const GameBoard = () => {
           return (
             <div
               key={`board-${coord}-${currentPlayerIndex}`}
-              className="aspect-square min-w-0 min-h-0 scale-75 transform-origin-center" 
+              className="aspect-square min-w-0 min-h-0 scale-[0.6] transform-origin-center" 
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 
