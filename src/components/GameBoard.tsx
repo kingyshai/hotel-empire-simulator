@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -143,9 +144,9 @@ const GameBoard = () => {
   if (selectedFoundingTile) {
     return (
       <HotelChainSelector 
-        coordinate={selectedFoundingTile.coordinate}
-        availableHeadquarters={availableHeadquarters}
-        onHotelSelected={handleHotelSelection}
+        tileCoordinate={selectedFoundingTile.coordinate}
+        availableChains={availableHeadquarters}
+        onSelect={handleHotelSelection}
       />
     );
   }
@@ -156,13 +157,13 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12">
+      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30">
         {generateAllBoardCoordinates().map(coord => (
           <motion.div
             key={coord}
             className={`
               relative
-              w-8 h-8
+              w-10 h-10 md:w-12 md:h-12
               flex items-center justify-center
               text-xs font-medium uppercase
               border border-border/50
@@ -180,7 +181,7 @@ const GameBoard = () => {
       </div>
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
             <h3 className="text-sm font-medium mb-3">Game Status</h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -223,7 +224,7 @@ const GameBoard = () => {
           <Button 
             size="lg" 
             onClick={handleDealStartingTiles}
-            className="w-full"
+            className="w-full text-lg py-6"
           >
             Deal Starting Tiles
           </Button>

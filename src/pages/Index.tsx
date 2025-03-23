@@ -12,7 +12,6 @@ import MergerStockOptions from '@/components/MergerStockOptions';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
-import { shouldEndGame } from '@/utils/gameLogic';
 import { Save, ArrowRight } from 'lucide-react';
 
 const GameContent = () => {
@@ -116,7 +115,7 @@ const GameContent = () => {
   }
   
   return (
-    <div className="container mx-auto px-4 pb-16">
+    <div className="container max-w-full mx-auto px-2 pb-16">
       <Header />
       
       {showWinnerBanner && (
@@ -131,32 +130,11 @@ const GameContent = () => {
         <MergerStockOptions />
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+        <div className="lg:col-span-9">
           <GameBoard />
-        </div>
-        
-        <div className="lg:col-span-1">
-          <div className="glass-panel rounded-xl overflow-hidden">
-            <div className="p-3 bg-secondary/50 border-b border-border/50">
-              <h2 className="text-sm font-medium">Players</h2>
-            </div>
-            <div className="space-y-4 p-4">
-              {players.map((player, index) => (
-                <PlayerInfo 
-                  key={player.id} 
-                  player={player}
-                  isCurrentPlayer={index === currentPlayerIndex}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <div className="flex justify-between items-center mb-4">
+          
+          <div className="mt-4 flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
               Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
               {gamePhase === 'setup' && (
@@ -175,18 +153,37 @@ const GameContent = () => {
             </Button>
           </div>
           
-          <StockMarket />
+          <div className="mt-4">
+            <StockMarket />
+          </div>
         </div>
         
-        <div className="lg:col-span-2 glass-panel rounded-xl overflow-hidden">
-          <div className="p-3 bg-secondary/50 border-b border-border/50">
-            <h2 className="text-sm font-medium">Hotel Chains</h2>
+        <div className="lg:col-span-3 space-y-4">
+          <div className="glass-panel rounded-xl overflow-hidden">
+            <div className="p-3 bg-secondary/50 border-b border-border/50">
+              <h2 className="text-sm font-medium">Players</h2>
+            </div>
+            <div className="space-y-4 p-4">
+              {players.map((player, index) => (
+                <PlayerInfo 
+                  key={player.id} 
+                  player={player}
+                  isCurrentPlayer={index === currentPlayerIndex}
+                />
+              ))}
+            </div>
           </div>
           
-          <div className="p-4 grid grid-cols-2 gap-4">
-            {chainNames.map(chainName => (
-              <HotelChain key={chainName} chainName={chainName} />
-            ))}
+          <div className="glass-panel rounded-xl overflow-hidden">
+            <div className="p-3 bg-secondary/50 border-b border-border/50">
+              <h2 className="text-sm font-medium">Hotel Chains</h2>
+            </div>
+            
+            <div className="p-4 grid grid-cols-1 gap-4">
+              {chainNames.map(chainName => (
+                <HotelChain key={chainName} chainName={chainName} />
+              ))}
+            </div>
           </div>
         </div>
       </div>

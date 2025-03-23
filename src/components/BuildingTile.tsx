@@ -43,7 +43,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   return (
     <motion.button
       className={cn(
-        "building-tile relative",
+        "building-tile relative w-full h-full flex items-center justify-center",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
         isAvailable ? "bg-gray-300 cursor-pointer" : 
@@ -63,7 +63,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       whileTap={!isUnplayable && (isSelectable || isAvailable || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      <span className="text-xs font-medium">{coordinate}</span>
+      <span className="text-xs md:text-sm font-medium">{coordinate}</span>
       
       {belongsToChain && (
         <>
