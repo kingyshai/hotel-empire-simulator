@@ -212,6 +212,8 @@ const StockMarket: React.FC = () => {
               totalStocksBought={totalStocksBought}
               totalCost={totalCost}
               canAfford={canAfford}
+              hideAvailableStocks={hideAvailableStocks}
+              setHideAvailableStocks={setHideAvailableStocks}
             />
           )}
         </div>
