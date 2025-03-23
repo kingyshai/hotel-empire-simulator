@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -145,7 +144,8 @@ const GameBoard = () => {
     dispatch({ type: 'END_TURN' });
     
     if (!shouldEndGame(state)) {
-      toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
+      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      toast.success(`${players[nextPlayerIndex].name}'s turn`);
     }
   };
   
@@ -206,7 +206,7 @@ const GameBoard = () => {
               
               return (
                 <motion.div
-                  key={coord}
+                  key={`initial-${coord}`}
                   className="relative aspect-square flex items-center justify-center"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -252,7 +252,7 @@ const GameBoard = () => {
           
           return (
             <div
-              key={coord}
+              key={`board-${coord}`}
               className="aspect-square w-full h-full"
               onClick={() => handleTileClick(coord)}
             >

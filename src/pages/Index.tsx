@@ -116,7 +116,7 @@ const GameContent = () => {
   
   return (
     <div className="container max-w-full mx-auto px-2 pb-16">
-      <Header />
+      <Header key={`header-${currentPlayerIndex}`} />
       
       {showWinnerBanner && (
         <WinnerBanner 
@@ -132,7 +132,7 @@ const GameContent = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
         <div className="lg:col-span-9">
-          <GameBoard />
+          <GameBoard key={`board-${currentPlayerIndex}`} />
           
           <div className="mt-4 flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
@@ -166,7 +166,7 @@ const GameContent = () => {
             <div className="space-y-4 p-4">
               {players.map((player, index) => (
                 <PlayerInfo 
-                  key={player.id} 
+                  key={`player-${player.id}`} 
                   player={player}
                   isCurrentPlayer={index === currentPlayerIndex}
                 />
