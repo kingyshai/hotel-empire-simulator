@@ -31,15 +31,15 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const { state } = useGame();
   const { hotelChains } = state;
   
-  // Get the chain's color directly from the hotelChains state
-  const getChainBackground = () => {
+  // Get the chain's color from the hotelChains state
+  const getChainColor = () => {
     if (belongsToChain) {
-      return {
-        backgroundColor: hotelChains[belongsToChain]?.color || '#6b7280'
-      };
+      return hotelChains[belongsToChain]?.color || '#6b7280';
     }
-    return {};
+    return '';
   };
+  
+  const chainColor = getChainColor();
   
   return (
     <motion.button
@@ -54,6 +54,11 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
         isInitialTile ? "bg-yellow-200 border-2 border-yellow-500" : ""
       )}
+      style={belongsToChain ? {
+        backgroundColor: chainColor,
+        color: getContrastYIQ(chainColor),
+        borderColor: chainColor
+      } : {}}
       onClick={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!disabled && !isPlaced)) ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -64,14 +69,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
     >
       <span className="text-xs md:text-sm font-medium z-10">{coordinate}</span>
       
-      {belongsToChain && (
-        <div 
-          className="absolute inset-0 opacity-70 rounded-md"
-          style={getChainBackground()}
-        />
-      )}
-      
-      {isPlaced && !belongsToChain && !isInitialTile && (
+      {!belongsToChain && isPlaced && !isInitialTile && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
       )}
       
@@ -96,6 +94,31 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
     </motion.button>
   );
+};
+
+// Helper function to determine whether to use light or dark text based on background color
+const getContrastYIQ = (hexcolor: string) => {
+  // Default to black if no color is provided
+  if (!hexcolor) return '#000000';
+  
+  // Remove hash if present
+  hexcolor = hexcolor.replace('#', '');
+  
+  // If color is shorthand, expand it
+  if (hexcolor.length === 3) {
+    hexcolor = hexcolor.split('').map(c => c + c).join('');
+  }
+  
+  // Handle invalid color format
+  if (hexcolor.length !== 6) return '#000000';
+  
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  
+  return (yiq >= 128) ? '#000000' : '#ffffff';
 };
 
 export default BuildingTile;
