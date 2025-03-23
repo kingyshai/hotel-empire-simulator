@@ -28,6 +28,14 @@ const GameContent = () => {
     showStockPurchaseBanner
   } = state;
   
+  // Generate a key that changes when hotel chain ownership changes
+  const getGameBoardKey = () => {
+    const chainStates = Object.entries(hotelChains)
+      .map(([name, chain]) => `${name}:${chain.tiles.length}:${chain.isActive ? 1 : 0}`)
+      .join('|');
+    return `board-${currentPlayerIndex}-${chainStates}-${gamePhase}`;
+  };
+  
   const handleLoadGame = () => {
     dispatch({ type: 'LOAD_SAVED_GAME' });
   };
@@ -137,7 +145,7 @@ const GameContent = () => {
       
       <div className="flex flex-col gap-3 mt-2">
         <div className="w-full">
-          <GameBoard key={`board-${currentPlayerIndex}`} />
+          <GameBoard key={getGameBoardKey()} />
         </div>
         
         <div>

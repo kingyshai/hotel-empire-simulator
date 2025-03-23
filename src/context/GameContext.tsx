@@ -581,22 +581,33 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const hotelChains = { ...state.hotelChains };
       const placedTiles = { ...state.placedTiles };
       
+      // Add the played tile to the board and assign it to the surviving chain
       placedTiles[coordinate] = { 
         coordinate, 
         isPlaced: true,
         belongsToChain: survivingChain
       };
       
+      // Find any connected tiles that don't belong to a chain and add them to the surviving chain
       const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
       
-      hotelChains[survivingChain] = {
-        ...hotelChains[survivingChain],
-        tiles: [...hotelChains[survivingChain].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)]
-      };
+      // Add the placed tile and any connected free tiles to the surviving chain
+      if (!hotelChains[survivingChain].tiles.includes(coordinate)) {
+        hotelChains[survivingChain].tiles.push(coordinate);
+      }
       
       connectedFreeTiles.forEach(tile => {
         if (tile !== coordinate && placedTiles[tile] && !placedTiles[tile].belongsToChain) {
-          placedTiles[tile].belongsToChain = survivingChain;
+          // Update the placed tile to belong to the surviving chain
+          placedTiles[tile] = {
+            ...placedTiles[tile],
+            belongsToChain: survivingChain
+          };
+          
+          // Add the tile to the surviving chain's tile list if it's not already there
+          if (!hotelChains[survivingChain].tiles.includes(tile)) {
+            hotelChains[survivingChain].tiles.push(tile);
+          }
         }
       });
       
@@ -605,7 +616,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       let winnerPlayers: Player[] = [];
       let currentMergerChain: HotelChainName | null = null;
       
+      // Process each acquired chain
       for (const chainName of acquiredChains) {
+        // Distribute shareholder bonuses for the acquired chain
         const bonusState = distributeStockholderBonus(updatedState, chainName);
         updatedState = { ...bonusState };
         
@@ -626,17 +639,21 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           currentMergerChain = chainName;
         }
         
+        // Transfer all tiles from the acquired chain to the surviving chain
         for (const tile of hotelChains[chainName].tiles) {
+          // Update the placed tile to belong to the surviving chain
           placedTiles[tile] = {
             ...placedTiles[tile],
             belongsToChain: survivingChain
           };
           
+          // Add the tile to the surviving chain's tile list if it's not already there
           if (!hotelChains[survivingChain].tiles.includes(tile)) {
             hotelChains[survivingChain].tiles.push(tile);
           }
         }
         
+        // Reset the acquired chain
         hotelChains[chainName] = {
           ...hotelChains[chainName],
           tiles: [],
@@ -644,18 +661,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           isSafe: false
         };
         
+        // Make the acquired chain's headquarters available again
         updatedState.availableHeadquarters.push(chainName);
       }
       
+      // Update the surviving chain's safe status
       hotelChains[survivingChain].isSafe = hotelChains[survivingChain].tiles.length >= 11;
       
+      // Sort the available headquarters
       updatedState.availableHeadquarters.sort();
       
+      // Update the current player
       const updatedPlayers = [...updatedState.players];
       updatedPlayers[playerIndex] = player;
       
       toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
       
+      // Check if the current player has stocks in the current merger chain
       const mergerPlayer = updatedPlayers[playerIndex];
       const currentPlayerStocks = currentMergerChain ? mergerPlayer.stocks[currentMergerChain] : 0;
       

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -84,7 +83,6 @@ const GameBoard = () => {
         const adjacents = getAdjacentTiles(coordinate, placedTiles);
         const adjacentChains = findPotentialMergers(coordinate, state);
         
-        // If adjacent to multiple chains, prompt user to select which chain to add the tile to
         if (adjacentChains.length > 1) {
           setTileDestinationInfo({
             adjacentChains,
@@ -94,7 +92,6 @@ const GameBoard = () => {
           return;
         }
         
-        // If no adjacent chains but there are adjacent tiles (potential to found a hotel)
         if (adjacentChains.length === 0 && adjacents.length > 0) {
           const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
           
@@ -107,7 +104,6 @@ const GameBoard = () => {
           }
         }
         
-        // Standard tile placement (adjacent to one chain or no chains)
         dispatch({ 
           type: 'PLACE_TILE', 
           payload: { 
@@ -160,7 +156,6 @@ const GameBoard = () => {
     
     const { tileCoordinate, potentialMergers } = mergeDialogInfo;
     
-    // Get chains to be acquired (all chains except the surviving one)
     const acquiredChains = potentialMergers.filter(chain => chain !== survivingChain);
     
     dispatch({
@@ -185,8 +180,6 @@ const GameBoard = () => {
     
     const { coordinate, adjacentChains } = tileDestinationInfo;
     
-    // First place the tile and add it to the selected chain
-    // We need a special action for this
     dispatch({
       type: 'PLACE_TILE_AND_ADD_TO_CHAIN',
       payload: {
@@ -196,32 +189,25 @@ const GameBoard = () => {
       }
     });
     
-    // Now check if we need to handle mergers
     const remainingChains = adjacentChains.filter(chain => chain !== selectedChain);
     
-    // If there are chains that might need to be merged, check their sizes
     if (remainingChains.length > 0) {
-      // Get the updated chain sizes after adding the tile
-      const selectedChainSize = hotelChains[selectedChain].tiles.length + 1; // +1 for the tile just added
+      const selectedChainSize = hotelChains[selectedChain].tiles.length + 1;
       
-      // Filter chains that need to be merged (those with the same or smaller size)
       const chainsToMerge = remainingChains.filter(chain => 
         hotelChains[chain].tiles.length <= selectedChainSize
       );
       
       if (chainsToMerge.length > 0) {
-        // Open merger dialog for user to decide surviving chain
         setMergeDialogInfo({
           potentialMergers: [selectedChain, ...chainsToMerge],
           tileCoordinate: coordinate,
           open: true
         });
       } else {
-        // No mergers needed, close the dialog
         setTileDestinationInfo(null);
       }
     } else {
-      // No other chains to consider, close the dialog
       setTileDestinationInfo(null);
     }
   };
@@ -250,6 +236,14 @@ const GameBoard = () => {
     return player?.name;
   };
   
+  const getBoardKey = () => {
+    const chainStates = Object.keys(hotelChains).map(chain => {
+      return `${chain}:${hotelChains[chain as HotelChainName].tiles.length}`;
+    }).join('|');
+    
+    return `board-${currentPlayerIndex}-${chainStates}`;
+  };
+  
   if (selectedFoundingTile) {
     return (
       <HotelChainSelector 
@@ -275,7 +269,7 @@ const GameBoard = () => {
         
         return (
           <motion.div
-            key={`board-${coord}-${currentPlayerIndex}`}
+            key={`tile-${coord}-${belongsToChain || 'none'}`}
             className="relative aspect-square flex items-center justify-center scale-95"
             whileHover={isSelectable ? { scale: 1.0 } : {}}
             whileTap={isSelectable ? { scale: 0.9 } : {}}
@@ -350,7 +344,9 @@ const GameBoard = () => {
         </div>
       )}
       
-      {renderGameBoard()}
+      <div key={getBoardKey()}>
+        {renderGameBoard()}
+      </div>
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -377,7 +373,6 @@ const GameBoard = () => {
         </div>
       </div>
       
-      {/* Merger Dialog */}
       {mergeDialogInfo && (
         <MergerDialog
           potentialMergers={mergeDialogInfo.potentialMergers}
@@ -388,7 +383,6 @@ const GameBoard = () => {
         />
       )}
       
-      {/* Tile Destination Dialog */}
       {tileDestinationInfo && (
         <TileDestinationDialog
           adjacentChains={tileDestinationInfo.adjacentChains}

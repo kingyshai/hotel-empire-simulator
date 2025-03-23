@@ -33,8 +33,8 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   
   // Get the chain's color from the hotelChains state
   const getChainColor = () => {
-    if (belongsToChain) {
-      return hotelChains[belongsToChain]?.color || '#6b7280';
+    if (belongsToChain && hotelChains[belongsToChain]) {
+      return hotelChains[belongsToChain].color || '#6b7280';
     }
     return '';
   };
@@ -53,7 +53,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
         !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
       )}
-      style={belongsToChain ? {
+      style={belongsToChain && chainColor ? {
         backgroundColor: chainColor,
         color: getContrastYIQ(chainColor),
         borderColor: chainColor
@@ -88,7 +88,6 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         <div className="absolute inset-0 opacity-30 rounded-md bg-gray-200" />
       )}
       
-      {/* Removed the special yellow styling for initial tiles */}
       {isInitialTile && isPlaced && !belongsToChain && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
       )}
