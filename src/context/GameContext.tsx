@@ -111,6 +111,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
   let newState: GameState;
   
   switch (action.type) {
+    case 'SAVE_GAME': {
+      saveGameState(state);
+      return state;
+    }
+    
     case 'LOAD_SAVED_GAME': {
       const savedGame = loadSavedGame();
       if (savedGame) {

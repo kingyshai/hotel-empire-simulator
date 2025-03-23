@@ -1,4 +1,3 @@
-
 export type Coordinate = `${number}${string}`;
 
 export type HotelChainName = 'luxor' | 'tower' | 'american' | 'festival' | 'worldwide' | 'continental' | 'imperial';
@@ -140,4 +139,5 @@ export type Action =
       } 
     }
   | { type: 'LOAD_SAVED_GAME' }
+  | { type: 'SAVE_GAME' }
   | { type: 'CLEAR_SAVED_GAME' };

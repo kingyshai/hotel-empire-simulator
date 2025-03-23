@@ -11,6 +11,7 @@ import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
+import { Save, ArrowRight } from 'lucide-react';
 
 const GameContent = () => {
   const { state, dispatch, hasSavedGame } = useGame();
@@ -39,6 +40,11 @@ const GameContent = () => {
     dispatch({ type: 'LOAD_SAVED_GAME' });
   };
   
+  const handleSaveGame = () => {
+    dispatch({ type: 'SAVE_GAME' });
+    toast.success("Game saved successfully!");
+  };
+  
   const chainNames: HotelChainName[] = [
     'luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'
   ];
@@ -52,10 +58,11 @@ const GameContent = () => {
           <div className="flex justify-center mb-8">
             <Button 
               size="lg" 
-              variant="outline" 
-              className="w-full max-w-sm"
+              variant="default" 
+              className="w-full max-w-md flex items-center justify-center gap-2"
               onClick={handleLoadGame}
             >
+              <ArrowRight size={18} />
               Continue Saved Game
             </Button>
           </div>
@@ -129,6 +136,16 @@ const GameContent = () => {
             </div>
             
             <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={handleSaveGame}
+                disabled={gamePhase === 'setup' || gameEnded}
+                className="flex items-center gap-1"
+              >
+                <Save size={16} />
+                Save Game
+              </Button>
+              
               <Button 
                 variant="outline"
                 onClick={handleEndGame}
