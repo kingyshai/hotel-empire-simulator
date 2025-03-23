@@ -77,6 +77,7 @@ const initialGameState: GameState = {
   showWinnerBanner: false,
   lastStockPurchase: null,
   showStockPurchaseBanner: false,
+  lastFoundedHotel: undefined,
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -422,14 +423,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'RECORD_STOCK_PURCHASE': {
-      const { playerName, stocks, totalCost } = action.payload;
+      const { playerName, stocks, totalCost, foundedHotel } = action.payload;
       
       return {
         ...state,
         lastStockPurchase: {
           playerName,
           stocks,
-          totalCost
+          totalCost,
+          foundedHotel
         },
         showStockPurchaseBanner: true
       };
@@ -438,11 +440,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'ACKNOWLEDGE_STOCK_PURCHASE': {
       return {
         ...state,
-        showStockPurchaseBanner: false
+        showStockPurchaseBanner: false,
+        lastFoundedHotel: undefined
       };
     }
     
     case 'END_TURN': {
+      // Clear the last founded hotel when the turn ends
       if (shouldEndGame(state)) {
         newState = endGame(state);
         clearSavedGame();
@@ -472,6 +476,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers,
         tilePool,
         gamePhase: 'placeTile',
+        lastFoundedHotel: undefined, // Reset the founded hotel tracking
       };
       
       saveGameState(newState);
@@ -539,6 +544,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers,
         stockMarket,
         placedTiles,
+        lastFoundedHotel: chainName, // Track the last founded hotel
         gamePhase: 'buyStock',
       };
     }
@@ -986,4 +992,4 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useGame = () => useContext(GameContext);
+export const useGame = ()

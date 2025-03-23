@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Save, ArrowRight } from 'lucide-react';
 import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
-import { GamePhase } from '@/types/game';
+import { GamePhase, HotelChainName } from '@/types/game';
 
 const Header: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -27,6 +27,24 @@ const Header: React.FC = () => {
     if (gamePhase !== 'buyStock') {
       toast.error("You must complete your current actions before ending your turn");
       return;
+    }
+    
+    // Record any stock purchases that happened this turn
+    if (currentPlayer) {
+      const purchases: Record<HotelChainName, number> = state.lastStockPurchase?.stocks || {
+        luxor: 0, tower: 0, american: 0, festival: 0, worldwide: 0, continental: 0, imperial: 0
+      };
+      
+      // Even if no stocks were purchased, we'll show the banner
+      dispatch({ 
+        type: 'RECORD_STOCK_PURCHASE', 
+        payload: { 
+          playerName: currentPlayer.name, 
+          stocks: purchases,
+          totalCost: state.lastStockPurchase?.totalCost || 0,
+          foundedHotel: state.lastFoundedHotel
+        } 
+      });
     }
     
     dispatch({ type: 'END_TURN' });

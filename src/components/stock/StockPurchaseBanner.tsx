@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useGame } from '@/context/GameContext';
-import { ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HotelChainName } from '@/types/game';
 
@@ -11,6 +11,7 @@ interface StockPurchaseBannerProps {
     playerName: string;
     stocks: Record<HotelChainName, number>;
     totalCost: number;
+    foundedHotel?: HotelChainName;
   } | null;
   onAcknowledge: () => void;
 }
@@ -33,6 +34,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
     }));
   
   const totalStocks = purchasedStocksList.reduce((sum, { count }) => sum + count, 0);
+  const hasFoundedHotel = !!purchaseInfo.foundedHotel;
   
   return (
     <AnimatePresence>
@@ -44,10 +46,17 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
       >
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <ShoppingCart size={24} className="text-white" />
+            {hasFoundedHotel ? (
+              <Building2 size={24} className="text-white" />
+            ) : (
+              <ShoppingCart size={24} className="text-white" />
+            )}
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold">
-                <span className="text-blue-900">{purchaseInfo.playerName}</span> purchased stocks!
+                <span className="text-blue-900">{purchaseInfo.playerName}</span> 
+                {hasFoundedHotel 
+                  ? ` founded ${purchaseInfo.foundedHotel} hotel!` 
+                  : (totalStocks > 0 ? " purchased stocks!" : " ended turn without purchasing stocks.")}
               </h3>
               <div className="text-sm">
                 {purchasedStocksList.length > 0 ? (
@@ -63,14 +72,19 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                         />
                         <span className="capitalize">{chain}</span>
                         <span className="font-bold">×{count}</span>
+                        {hasFoundedHotel && chain === purchaseInfo.foundedHotel && (
+                          <span className="text-xs ml-1">(Free)</span>
+                        )}
                       </div>
                     ))}
-                    <div className="bg-white/20 px-2 py-1 rounded-full">
-                      Total: ${purchaseInfo.totalCost}
-                    </div>
+                    {purchaseInfo.totalCost > 0 && (
+                      <div className="bg-white/20 px-2 py-1 rounded-full">
+                        Total: ${purchaseInfo.totalCost}
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <span>No stocks purchased</span>
+                  !hasFoundedHotel && <span>No stocks purchased</span>
                 )}
               </div>
             </div>

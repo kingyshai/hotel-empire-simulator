@@ -73,7 +73,7 @@ export type CurrentMerger = {
   playersWithStocks?: number[];
 };
 
-export type GameState = {
+export interface GameState {
   players: Player[];
   currentPlayerIndex: number;
   hotelChains: Record<HotelChainName, HotelChain>;
@@ -96,9 +96,11 @@ export type GameState = {
     playerName: string;
     stocks: Record<HotelChainName, number>;
     totalCost: number;
+    foundedHotel?: HotelChainName;
   } | null;
   showStockPurchaseBanner: boolean;
-};
+  lastFoundedHotel?: HotelChainName;
+}
 
 export type Action =
   | { type: 'SET_PLAYERS'; payload: { players: Player[] } }
@@ -121,5 +123,11 @@ export type Action =
   | { type: 'HIDE_WINNER_BANNER' }
   | { type: 'ADD_TILE_TO_PLAYER_HAND'; payload: { playerId: number; coordinate: Coordinate } }
   | { type: 'PLACE_TILE_AND_ADD_TO_CHAIN'; payload: { coordinate: Coordinate; playerId: number; chainName: HotelChainName } }
-  | { type: 'RECORD_STOCK_PURCHASE'; payload: { playerName: string; stocks: Record<HotelChainName, number>; totalCost: number } }
+  | { type: 'RECORD_STOCK_PURCHASE', payload: { 
+      playerName: string; 
+      stocks: Record<HotelChainName, number>; 
+      totalCost: number;
+      foundedHotel?: HotelChainName;
+    } 
+  }
   | { type: 'ACKNOWLEDGE_STOCK_PURCHASE' };
