@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -336,7 +335,7 @@ const GameBoard = () => {
                 })}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                The player closest to A1 will go first. Note: Moving horizontally away from A1 (like to B1, C1) adds more distance than moving vertically (like to A2, A3).
+                The player closest to A1 will go first.
               </p>
             </div>
           )}
