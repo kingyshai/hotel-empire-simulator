@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
@@ -11,7 +12,7 @@ import MergerDialog from './MergerDialog';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
-  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters } = state;
+  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters, hotelChains } = state;
   const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
   const [connectedTiles, setConnectedTiles] = useState<Coordinate[]>([]);
   const [mergerInfo, setMergerInfo] = useState<{
@@ -202,7 +203,8 @@ const GameBoard: React.FC = () => {
       for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
         const coordinate = `${row}${col}` as Coordinate;
         const placedTile = placedTiles[coordinate];
-        const isIllegalMerger = currentPlayer?.tiles.includes(coordinate) && wouldCauseIllegalMerger(coordinate);
+        const isInPlayerHand = currentPlayer?.tiles.includes(coordinate);
+        const isIllegalMerger = isInPlayerHand && wouldCauseIllegalMerger(coordinate);
         
         cols.push(
           <div key={coordinate} className="aspect-square w-full p-0.5">
@@ -212,12 +214,13 @@ const GameBoard: React.FC = () => {
                 isPlaced
                 belongsToChain={placedTile.belongsToChain}
               />
-            ) : currentPlayer?.tiles.includes(coordinate) ? (
+            ) : isInPlayerHand ? (
               <BuildingTile
                 coordinate={coordinate}
                 isPlaced={false}
                 onClick={() => handleTileClick(coordinate)}
                 isUnplayable={isIllegalMerger}
+                isAvailable={!isIllegalMerger} // Show as available if not illegal
               />
             ) : (
               <motion.div 
