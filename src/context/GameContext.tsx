@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { 
   GameState, 
@@ -80,7 +79,6 @@ const initialGameState: GameState = {
   showStockPurchaseBanner: false,
   lastFoundedHotel: undefined,
   initialPlayerTurnState: null,
-  
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -116,15 +114,12 @@ const clearSavedGame = () => {
   }
 };
 
-// Function to distribute stockholder bonus
 const distributeStockholderBonus = (
   chainName: HotelChainName,
   players: Player[],
   chain: HotelChain,
   stocksHeld: number
 ): number => {
-  // Implement bonus distribution logic
-  // For now, just return a simple value based on stocks held
   const stockPrice = calculateStockPrice(chainName, chain.tiles.length).sell;
   return stocksHeld * stockPrice;
 };
@@ -152,7 +147,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const shuffledTiles = shuffleArray(state.tilePool);
       const initialTiles = [];
       
-      // Deal one initial tile to each player
       for (let i = 0; i < playerCount; i++) {
         const tile = shuffledTiles.pop();
         if (tile) {
@@ -242,16 +236,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'END_TURN':
       let nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       
-      // Check if the next player has any tiles. If not, skip their turn.
       if (state.players[nextPlayerIndex].tiles.length === 0) {
         toast.info(`${state.players[nextPlayerIndex].name} has no tiles and their turn was skipped.`);
         nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
       }
       
-      // Draw a new tile for the current player
       const tile = state.availableTiles.pop();
       if (!tile) {
-        // Handle the case where there are no more tiles to draw
         newState = { ...state, gamePhase: 'buyStock' };
         return newState;
       }
@@ -276,7 +267,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const tileCoordinate = action.payload.tileCoordinate;
       const connectedTiles = action.payload.connectedTiles;
       
-      // Update hotel chain
       const updatedHotelChains = {
         ...state.hotelChains,
         [foundHotelChainName]: {
@@ -286,7 +276,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         },
       };
       
-      // Update placed tiles
       const updatedPlacedTilesAfterFounding = {
         ...state.placedTiles,
       };
@@ -297,10 +286,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Remove headquarters from availableHeadquarters
       const updatedAvailableHeadquarters = state.availableHeadquarters.filter(headquarter => headquarter !== foundHotelChainName);
       
-      // Record the last founded hotel
       const lastFoundedHotel = foundHotelChainName;
       
       newState = {
@@ -352,10 +339,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'HANDLE_MERGER':
       const { coordinate: mergerCoordinate, playerId: mergerPlayerId, survivingChain, acquiredChains } = action.payload;
       
-      // Find all tiles that will be part of the new surviving chain
       const survivingChainTiles = findConnectedTiles(mergerCoordinate, state.placedTiles);
       
-      // Deactivate and gather the acquired chains
       const acquiredHotelChains = acquiredChains.map(chainName => state.hotelChains[chainName]);
       
       const updatedHotelChainsMerger = {
@@ -369,7 +354,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Add acquired tiles to the surviving chain
       const allAcquiredTiles = acquiredChains.reduce((acc, chainName) => {
         acc.push(...state.hotelChains[chainName].tiles);
         return acc;
@@ -380,7 +364,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [...updatedHotelChainsMerger[survivingChain].tiles, ...allAcquiredTiles, ...survivingChainTiles],
       };
       
-      // Update placed tiles to reflect the surviving chain
       const updatedPlacedTilesMerger = {
         ...state.placedTiles,
       };
@@ -415,11 +398,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'HANDLE_MERGER_STOCKS':
       const { acquiredChain, stocksToKeep, stocksToSell, stocksToTrade } = action.payload;
       
-      // Calculate payout from selling stocks
       const sellStockPrice = calculateStockPrice(acquiredChain, 0).sell;
       const payout = stocksToSell * sellStockPrice;
       
-      // Update player's stocks and money
       const updatedPlayersStocks = state.players.map(player => {
         return {
           ...player,
@@ -432,13 +413,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Update stock market with sold stocks
       const updatedStockMarket = {
         ...state.stockMarket,
         [acquiredChain]: state.stockMarket[acquiredChain] + stocksToSell,
       };
-      
-      // Reset merger info
       
       newState = {
         ...state,
@@ -456,7 +434,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const { players, hotelChains } = state;
       
-      // Deactivate all hotel chains
       const updatedHotelChainsEndGame = {
         ...hotelChains,
       };
@@ -468,7 +445,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Payout stockholders
       const updatedPlayersEndGame = players.map(player => {
         let newMoney = player.money;
         
@@ -499,7 +475,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Determine the winner
       let winnerEndGame: Player | null = null;
       let winnersEndGame: Player[] | undefined = undefined;
       
@@ -508,7 +483,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       if (sortedPlayers[0].money > sortedPlayers[1].money) {
         winnerEndGame = sortedPlayers[0];
       } else {
-        // It's a tie
         winnersEndGame = sortedPlayers.filter(player => player.money === sortedPlayers[0].money);
       }
       
@@ -526,7 +500,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'END_GAME_MANUALLY':
       const { players: currentPlayers, hotelChains: currentHotelChains } = state;
       
-      // Payout stockholders
       const updatedPlayersManualEndGame = currentPlayers.map(player => {
         let newMoney = player.money;
         
@@ -557,7 +530,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      // Determine the winner
       let winnerManualEndGame: Player | null = null;
       let winnersManualEndGame: Player[] | undefined = undefined;
       
@@ -566,7 +538,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       if (sortedPlayersManual[0].money > sortedPlayersManual[1].money) {
         winnerManualEndGame = sortedPlayersManual[0];
       } else {
-        // It's a tie
         winnersManualEndGame = sortedPlayersManual.filter(player => player.money === sortedPlayersManual[0].money);
       }
       
@@ -610,11 +581,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedInitialTilesDrawTile = [...state.initialTiles];
       updatedInitialTilesDrawTile.push({ playerId: playerIdDrawTile, coordinate: tileDrawTile });
       
+      const nextPlayerIndex = playerIdDrawTile < state.players.length ? playerIdDrawTile : 0;
+      
+      const allPlayersDrawn = updatedInitialTilesDrawTile.length >= state.players.length;
+      
       newState = {
         ...state,
         players: updatedPlayersDrawTile,
         availableTiles: state.availableTiles,
         initialTiles: updatedInitialTilesDrawTile,
+        currentPlayerIndex: nextPlayerIndex,
+        setupPhase: allPlayersDrawn ? 'dealTiles' : 'drawInitialTile'
       };
       return newState;
     case 'DEAL_STARTING_TILES':
