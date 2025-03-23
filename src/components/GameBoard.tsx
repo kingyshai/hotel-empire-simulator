@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { getAdjacentTiles, findPotentialMergers, findConnectedTiles } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -56,9 +54,7 @@ const GameBoard: React.FC = () => {
     if (adjacentTiles.length > 0) {
       const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
       
-      // Check for merger scenario (multiple chains)
       if (adjacentChains.length > 1) {
-        // Set merger info and show merger dialog
         setMergerInfo({
           coordinate,
           potentialMergers: adjacentChains
@@ -129,7 +125,6 @@ const GameBoard: React.FC = () => {
     
     const { coordinate, potentialMergers } = mergerInfo;
     
-    // Filter out the surviving chain from the list of chains being acquired
     const acquiredChains = potentialMergers.filter(chain => chain !== survivingChain);
     
     dispatch({
@@ -187,7 +182,6 @@ const GameBoard: React.FC = () => {
     
     const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
     
-    // Check if multiple chains are safe (11+ tiles)
     const safeChains = adjacentChains.filter(chain => 
       hotelChains[chain].tiles.length >= 11
     );
@@ -338,55 +332,42 @@ const GameBoard: React.FC = () => {
         </div>
       </div>
       
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="min-h-[500px]"
-      >
-        <ResizablePanel defaultSize={75} minSize={60}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={85} minSize={70}>
-              <div className="p-3 overflow-auto max-h-[70vh]">
-                {generateBoard()}
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={15}>
-              <div className="p-3 bg-secondary/10">
-                {renderSetupControls()}
-                {renderTestControls()}
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={25} minSize={20}>
-          <div className="p-3 bg-secondary/10 h-full overflow-auto">
-            <h3 className="text-sm font-medium mb-3">Game Status</h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Phase:</span>
-                <span className="font-medium capitalize">{gamePhase}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Current Player:</span>
-                <span className="font-medium">{currentPlayer?.name}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Tiles Placed:</span>
-                <span className="font-medium">{Object.keys(placedTiles).length}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Active Chains:</span>
-                <span className="font-medium">
-                  {Object.keys(hotelChains).filter(chain => 
-                    hotelChains[chain as HotelChainName].isEstablished
-                  ).length}
-                </span>
-              </div>
-            </div>
+      <div className="min-h-[500px] flex flex-col">
+        <div className="p-3 overflow-auto max-h-[70vh] flex-grow">
+          {generateBoard()}
+        </div>
+        
+        <div className="p-3 bg-secondary/10">
+          {renderSetupControls()}
+          {renderTestControls()}
+        </div>
+      </div>
+      
+      <div className="p-3 bg-secondary/10 border-t border-border/50">
+        <h3 className="text-sm font-medium mb-3">Game Status</h3>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="flex justify-between p-2 bg-background/50 rounded">
+            <span>Phase:</span>
+            <span className="font-medium capitalize">{gamePhase}</span>
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <div className="flex justify-between p-2 bg-background/50 rounded">
+            <span>Current Player:</span>
+            <span className="font-medium">{currentPlayer?.name}</span>
+          </div>
+          <div className="flex justify-between p-2 bg-background/50 rounded">
+            <span>Tiles Placed:</span>
+            <span className="font-medium">{Object.keys(placedTiles).length}</span>
+          </div>
+          <div className="flex justify-between p-2 bg-background/50 rounded">
+            <span>Active Chains:</span>
+            <span className="font-medium">
+              {Object.keys(hotelChains).filter(chain => 
+                hotelChains[chain as HotelChainName].tiles && hotelChains[chain as HotelChainName].tiles.length > 0
+              ).length}
+            </span>
+          </div>
+        </div>
+      </div>
       
       {tileToFoundHotel && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
