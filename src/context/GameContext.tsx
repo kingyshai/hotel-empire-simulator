@@ -281,7 +281,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER'
+    case 'SET_CURRENT_PLAYER':
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
