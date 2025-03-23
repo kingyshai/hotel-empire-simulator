@@ -190,9 +190,9 @@ const GameBoard = () => {
               return (
                 <motion.div
                   key={`initial-tile-${coord}-${currentPlayerIndex}`}
-                  className="relative aspect-square flex items-center justify-center scale-75"
-                  whileHover={{ scale: 0.85 }}
-                  whileTap={{ scale: 0.7 }}
+                  className="relative aspect-square flex items-center justify-center scale-95"
+                  whileHover={{ scale: 1.0 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <BuildingTile
                     coordinate={coord}
@@ -224,7 +224,7 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 w-full h-auto overflow-hidden">
+      <div className="grid grid-cols-12 gap-0.25 p-1 bg-accent/30 w-full h-auto overflow-hidden">
         {generateAllBoardCoordinates().map((coord) => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;
@@ -236,7 +236,7 @@ const GameBoard = () => {
           return (
             <div
               key={`board-${coord}-${currentPlayerIndex}`}
-              className="aspect-square min-w-0 min-h-0 scale-[0.6] transform-origin-center" 
+              className="aspect-square min-w-0 min-h-0 scale-[0.65] transform-origin-center" 
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 

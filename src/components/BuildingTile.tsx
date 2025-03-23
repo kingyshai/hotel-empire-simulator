@@ -67,7 +67,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       whileTap={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      <span className="text-xs font-medium z-10">{coordinate}</span>
+      <span className="text-sm md:text-base font-medium z-10">{coordinate}</span>
       
       {!belongsToChain && isPlaced && !isInitialTile && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
