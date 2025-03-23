@@ -28,19 +28,6 @@ const GameContent = () => {
     showWinnerBanner 
   } = state;
   
-  const handleEndTurn = () => {
-    if (gamePhase !== 'buyStock') {
-      toast.error("You must complete your current actions before ending your turn");
-      return;
-    }
-    
-    dispatch({ type: 'END_TURN' });
-    
-    if (!shouldEndGame(state)) {
-      toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
-    }
-  };
-  
   const handleLoadGame = () => {
     dispatch({ type: 'LOAD_SAVED_GAME' });
   };
@@ -177,25 +164,15 @@ const GameContent = () => {
               )}
             </div>
             
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={handleSaveGame}
-                disabled={gamePhase === 'setup' || gameEnded}
-                className="flex items-center gap-1"
-              >
-                <Save size={16} />
-                Save Game
-              </Button>
-              
-              <Button 
-                size="lg"
-                onClick={handleEndTurn}
-                disabled={gamePhase !== 'buyStock'}
-              >
-                End Turn
-              </Button>
-            </div>
+            <Button 
+              variant="outline"
+              onClick={handleSaveGame}
+              disabled={gamePhase === 'setup' || gameEnded}
+              className="flex items-center gap-1"
+            >
+              <Save size={16} />
+              Save Game
+            </Button>
           </div>
           
           <StockMarket />

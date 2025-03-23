@@ -1,177 +1,116 @@
 import React, { useState } from 'react';
-import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
-import { toast } from '@/utils/toast';
+import { useGame } from '@/context/GameContext';
 import { motion } from 'framer-motion';
 import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, shouldEndGame } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
+import { toast } from '@/utils/toast';
+import { ArrowRight } from 'lucide-react';
 
-const GameBoard: React.FC = () => {
+const GameBoard = () => {
   const { state, dispatch } = useGame();
-  const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters, hotelChains } = state;
-  const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
-  const [connectedTiles, setConnectedTiles] = useState<Coordinate[]>([]);
-  const [mergerInfo, setMergerInfo] = useState<{
+  const { 
+    players, 
+    currentPlayerIndex, 
+    placedTiles, 
+    hotelChains,
+    availableHeadquarters,
+    gamePhase, 
+    setupPhase 
+  } = state;
+  
+  const [selectedFoundingTile, setSelectedFoundingTile] = useState<{
     coordinate: Coordinate;
-    potentialMergers: HotelChainName[];
+    connectedTiles: Coordinate[];
   } | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
   const canEndGame = shouldEndGame(state);
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
-    const coords: Coordinate[] = [];
-    
+    const tiles: Coordinate[] = [];
     for (let row = 1; row <= 9; row++) {
       for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-        coords.push(`${row}${col}` as Coordinate);
+        tiles.push(`${row}${col}` as Coordinate);
       }
     }
+    return tiles;
+  };
+  
+  const getTileBackground = (coordinate: Coordinate): string => {
+    if (placedTiles[coordinate]?.belongsToChain) {
+      return hotelChains[placedTiles[coordinate].belongsToChain]?.color || 'bg-gray-500';
+    }
+    return 'bg-secondary/50';
+  };
+  
+  const isTilePlaceable = (coordinate: Coordinate): boolean => {
+    if (gamePhase !== 'placeTile') return false;
+    if (placedTiles[coordinate]) return false;
+    if (currentPlayer.tiles.indexOf(coordinate) === -1) return false;
     
-    return coords;
+    const adjacents = getAdjacentTiles(coordinate, placedTiles);
+    
+    if (adjacents.length === 0) return true;
+    
+    const adjacentChains = findPotentialMergers(coordinate, state);
+    
+    const safeChains = adjacentChains.filter(chain => 
+      state.hotelChains[chain].tiles.length >= 11
+    );
+    
+    return safeChains.length < 2;
   };
   
   const handleTileClick = (coordinate: Coordinate) => {
-    if (gamePhase !== 'placeTile') {
-      toast("It's not time to place a tile yet");
-      return;
-    }
+    if (gamePhase === 'setup') return;
     
-    if (!currentPlayer.tiles.includes(coordinate)) {
-      toast.error("You don't have this tile!");
-      return;
-    }
-    
-    const tempPlacedTiles = { 
-      ...placedTiles, 
-      [coordinate]: { coordinate, isPlaced: true } 
-    };
-    
-    const adjacentTiles = getAdjacentTiles(coordinate, tempPlacedTiles);
-    
-    if (adjacentTiles.length > 0) {
-      const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
+    if (isTilePlaceable(coordinate)) {
+      const adjacents = getAdjacentTiles(coordinate, placedTiles);
+      const adjacentChains = findPotentialMergers(coordinate, state);
       
-      if (adjacentChains.length > 1) {
-        setMergerInfo({
+      if (adjacentChains.length === 0) {
+        // Found new hotel chain
+        setSelectedFoundingTile({
           coordinate,
-          potentialMergers: adjacentChains
+          connectedTiles: [coordinate]
         });
-        return;
-      } else if (adjacentChains.length === 1) {
-        dispatch({
-          type: 'PLACE_TILE',
-          payload: {
-            coordinate,
-            playerId: currentPlayer.id,
-          },
-        });
-      } else if (adjacentTiles.length > 0 && adjacentChains.length === 0 && availableHeadquarters.length > 0) {
-        const connected = findConnectedTiles(coordinate, tempPlacedTiles);
-        
-        if (connected.length >= 2) {
-          setTileToFoundHotel(coordinate);
-          setConnectedTiles([coordinate, ...connected.filter(t => t !== coordinate)]);
-          toast.info("Choose a hotel chain to establish");
-        } else {
-          dispatch({
-            type: 'PLACE_TILE',
-            payload: {
-              coordinate,
-              playerId: currentPlayer.id,
-            },
-          });
-        }
       } else {
-        dispatch({
-          type: 'PLACE_TILE',
-          payload: {
-            coordinate,
-            playerId: currentPlayer.id,
-          },
+        dispatch({ 
+          type: 'PLACE_TILE', 
+          payload: { 
+            coordinate, 
+            playerId: currentPlayer.id 
+          } 
         });
       }
     } else {
-      dispatch({
-        type: 'PLACE_TILE',
-        payload: {
-          coordinate,
-          playerId: currentPlayer.id,
-        },
-      });
+      toast.error("You can't place a tile here!");
     }
   };
-
-  const handleFoundHotel = (chainName: HotelChainName) => {
-    if (!tileToFoundHotel) return;
+  
+  const handleHotelSelection = (chainName: HotelChainName) => {
+    if (!selectedFoundingTile) return;
+    
+    const { coordinate } = selectedFoundingTile;
+    const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
     
     dispatch({
       type: 'FOUND_HOTEL',
       payload: {
         chainName,
-        tileCoordinate: tileToFoundHotel,
-        connectedTiles: connectedTiles,
-      },
-    });
-    
-    setTileToFoundHotel(null);
-    setConnectedTiles([]);
-  };
-
-  const handleMerger = (survivingChain: HotelChainName) => {
-    if (!mergerInfo) return;
-    
-    const { coordinate, potentialMergers } = mergerInfo;
-    
-    const acquiredChains = potentialMergers.filter(chain => chain !== survivingChain);
-    
-    dispatch({
-      type: 'HANDLE_MERGER',
-      payload: {
-        coordinate,
-        playerId: currentPlayer.id,
-        survivingChain,
-        acquiredChains
+        tileCoordinate: coordinate,
+        connectedTiles
       }
     });
     
-    setMergerInfo(null);
+    setSelectedFoundingTile(null);
   };
-
-  const handleCancelMerger = () => {
-    setMergerInfo(null);
-  };
-
-  const handleInitialTileDraw = () => {
-    if (gamePhase !== 'setup' || setupPhase !== 'drawInitialTile') {
-      return;
-    }
-
-    if (initialTiles.some(tile => tile.playerId === currentPlayer.id)) {
-      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-      dispatch({ 
-        type: 'SET_CURRENT_PLAYER', 
-        payload: { playerIndex: nextPlayerIndex } 
-      });
-      return;
-    }
-
-    dispatch({
-      type: 'DRAW_INITIAL_TILE',
-      payload: {
-        playerId: currentPlayer.id,
-      },
-    });
-  };
-
+  
   const handleDealStartingTiles = () => {
-    if (gamePhase !== 'setup' || setupPhase !== 'dealTiles') {
-      return;
-    }
-
     dispatch({ type: 'DEAL_STARTING_TILES' });
   };
   
@@ -179,154 +118,37 @@ const GameBoard: React.FC = () => {
     dispatch({ type: 'END_GAME_MANUALLY' });
   };
   
-  const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
-    const tempPlacedTiles = { 
-      ...placedTiles, 
-      [coordinate]: { coordinate, isPlaced: true } 
-    };
-    
-    const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
-    
-    const safeChains = adjacentChains.filter(chain => 
-      hotelChains[chain].tiles.length >= 11
-    );
-    
-    return safeChains.length >= 2;
-  };
-
-  const generateBoard = () => {
-    const rows = [];
-    
-    for (let row = 1; row <= 9; row++) {
-      const cols = [];
-      
-      for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-        const coordinate = `${row}${col}` as Coordinate;
-        const placedTile = placedTiles[coordinate];
-        const isInPlayerHand = currentPlayer?.tiles.includes(coordinate);
-        const isIllegalMerger = isInPlayerHand && wouldCauseIllegalMerger(coordinate);
-        
-        cols.push(
-          <div key={coordinate} className="aspect-square w-full p-0.5">
-            {placedTile ? (
-              <BuildingTile 
-                coordinate={coordinate}
-                isPlaced
-                belongsToChain={placedTile.belongsToChain}
-              />
-            ) : isInPlayerHand ? (
-              <BuildingTile
-                coordinate={coordinate}
-                isPlaced={false}
-                onClick={() => handleTileClick(coordinate)}
-                isUnplayable={isIllegalMerger}
-                isAvailable={!isIllegalMerger} // Show as available if not illegal
-              />
-            ) : (
-              <motion.div 
-                className="w-full h-full rounded-md border border-border/30 bg-secondary/30"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 * (row + col.charCodeAt(0) % 12) / 20 }}
-              >
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                  {coordinate}
-                </div>
-              </motion.div>
-            )}
-          </div>
-        );
-      }
-      
-      rows.push(
-        <div key={row} className="grid grid-cols-12 w-full">
-          {cols}
-        </div>
-      );
+  const handleEndTurn = () => {
+    if (gamePhase !== 'buyStock') {
+      toast.error("You must complete your current actions before ending your turn");
+      return;
     }
     
-    return rows;
-  };
-
-  const handlePlayAsAnyPlayer = (playerIndex: number) => {
-    if (playerIndex === currentPlayerIndex) return;
+    dispatch({ type: 'END_TURN' });
     
-    dispatch({ 
-      type: 'SET_CURRENT_PLAYER', 
-      payload: { playerIndex } 
-    });
-    
-    toast.info(`Now playing as ${players[playerIndex].name}`);
-  };
-
-  const renderSetupControls = () => {
-    if (gamePhase !== 'setup') return null;
-
-    switch (setupPhase) {
-      case 'drawInitialTile':
-        const hasDrawn = initialTiles.some(tile => tile.playerId === currentPlayer?.id);
-        const nextPlayer = hasDrawn ? 
-          players[(currentPlayerIndex + 1) % players.length] : 
-          currentPlayer;
-        
-        return (
-          <div className="mt-4 p-4 bg-secondary/20 rounded-lg text-center">
-            <h3 className="text-lg font-medium mb-2">Initial Tile Draw</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Each player draws one tile to determine turn order.
-              {hasDrawn ? 
-                ` ${nextPlayer.name}'s turn to draw.` : 
-                ` ${currentPlayer?.name}'s turn to draw.`}
-            </p>
-            <Button 
-              onClick={handleInitialTileDraw}
-              disabled={hasDrawn && initialTiles.length < players.length}
-            >
-              Draw Initial Tile
-            </Button>
-          </div>
-        );
-      
-      case 'dealTiles':
-        return (
-          <div className="mt-4 p-4 bg-secondary/20 rounded-lg text-center">
-            <h3 className="text-lg font-medium mb-2">Turn Order Determined</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {players[0].name} will go first based on initial tile placement.
-            </p>
-            <Button onClick={handleDealStartingTiles}>
-              Deal Starting Tiles (6 per player)
-            </Button>
-          </div>
-        );
-      
-      default:
-        return null;
+    if (!shouldEndGame(state)) {
+      toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
     }
   };
   
-  const renderTestControls = () => {
-    if (players.length === 0) return null;
-    
-    return (
-      <div className="mt-4 p-3 border border-yellow-500/30 bg-yellow-500/5 rounded-lg">
-        <h3 className="text-sm font-medium text-yellow-500/80 mb-2">Testing Controls</h3>
-        <div className="flex flex-wrap gap-2">
-          {players.map((player, index) => (
-            <Button 
-              key={player.id}
-              variant="outline"
-              size="sm"
-              className={currentPlayerIndex === index ? "border-yellow-500/50 bg-yellow-500/10" : ""}
-              onClick={() => handlePlayAsAnyPlayer(index)}
-            >
-              Play as {player.name}
-            </Button>
-          ))}
-        </div>
-      </div>
+  const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
+    const adjacentChains = findPotentialMergers(coordinate, state);
+    const safeChains = adjacentChains.filter(chain => 
+      state.hotelChains[chain].tiles.length >= 11
     );
+    return safeChains.length >= 2;
   };
+  
+  // Show hotel chain selector if needed
+  if (selectedFoundingTile) {
+    return (
+      <HotelChainSelector 
+        coordinate={selectedFoundingTile.coordinate}
+        availableHeadquarters={availableHeadquarters}
+        onHotelSelected={handleHotelSelection}
+      />
+    );
+  }
   
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
@@ -334,15 +156,27 @@ const GameBoard: React.FC = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="min-h-[500px] flex flex-col">
-        <div className="p-3 overflow-auto max-h-[70vh] flex-grow">
-          {generateBoard()}
-        </div>
-        
-        <div className="p-3 bg-secondary/10">
-          {renderSetupControls()}
-          {renderTestControls()}
-        </div>
+      <div className="grid grid-cols-12">
+        {generateAllBoardCoordinates().map(coord => (
+          <motion.div
+            key={coord}
+            className={`
+              relative
+              w-8 h-8
+              flex items-center justify-center
+              text-xs font-medium uppercase
+              border border-border/50
+              ${getTileBackground(coord)}
+              ${isTilePlaceable(coord) ? 'cursor-pointer hover:opacity-75' : 'cursor-default'}
+              ${wouldCauseIllegalMerger(coord) ? 'cursor-not-allowed' : ''}
+            `}
+            onClick={() => handleTileClick(coord)}
+            whileHover={{ scale: isTilePlaceable(coord) ? 1.1 : 1 }}
+            whileTap={{ scale: isTilePlaceable(coord) ? 0.9 : 1 }}
+          >
+            <BuildingTile coordinate={coord} />
+          </motion.div>
+        ))}
       </div>
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
@@ -361,41 +195,39 @@ const GameBoard: React.FC = () => {
             </div>
           </div>
           
-          <Button 
-            variant="outline"
-            onClick={handleEndGame}
-            disabled={gamePhase === 'setup' || !canEndGame}
-            title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
-          >
-            End Game
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleEndGame}
+              disabled={gamePhase === 'setup' || !canEndGame}
+              title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
+            >
+              End Game
+            </Button>
+            
+            <Button 
+              size="lg"
+              onClick={handleEndTurn}
+              disabled={gamePhase !== 'buyStock'}
+              className="flex items-center gap-1"
+            >
+              End Turn
+              <ArrowRight size={16} />
+            </Button>
+          </div>
         </div>
       </div>
       
-      {tileToFoundHotel && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-medium mb-4">Found a Hotel Chain</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Choose a hotel chain to establish at {tileToFoundHotel}
-            </p>
-            <HotelChainSelector 
-              availableChains={availableHeadquarters}
-              onSelect={handleFoundHotel}
-              onCancel={() => setTileToFoundHotel(null)}
-            />
-          </div>
+      {setupPhase === 'dealTiles' && (
+        <div className="p-4 bg-secondary/20 border-t border-border/50">
+          <Button 
+            size="lg" 
+            onClick={handleDealStartingTiles}
+            className="w-full"
+          >
+            Deal Starting Tiles
+          </Button>
         </div>
-      )}
-      
-      {mergerInfo && (
-        <MergerDialog
-          open={!!mergerInfo}
-          potentialMergers={mergerInfo.potentialMergers}
-          tileCoordinate={mergerInfo.coordinate}
-          onComplete={handleMerger}
-          onCancel={handleCancelMerger}
-        />
       )}
     </div>
   );
