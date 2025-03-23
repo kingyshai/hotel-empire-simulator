@@ -173,7 +173,7 @@ const GameBoard = () => {
         
         <div className="p-6 text-center">
           <p className="mb-4 text-lg">
-            {currentPlayer?.name}, click anywhere on the board to draw your initial tile randomly
+            {currentPlayer?.name}, click anywhere on the board to draw your initial tile
           </p>
           
           <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
@@ -195,7 +195,7 @@ const GameBoard = () => {
           </div>
           
           <p className="mt-4 text-sm text-muted-foreground">
-            (The app will randomly select a tile for you, regardless of which tile you click)
+            Each player draws an initial tile to determine the play order
           </p>
         </div>
       </div>
