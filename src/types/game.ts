@@ -1,5 +1,5 @@
 
-export type Coordinate = `${string}${number}`;
+export type Coordinate = `${number}${string}`;
 
 export interface Player {
   id: number;
@@ -75,8 +75,7 @@ export type Action =
   | { type: 'HIDE_WINNER_BANNER' }
   | { type: 'END_GAME_MANUALLY' }
   | { type: 'RECORD_STOCK_PURCHASE'; payload: { playerName: string; stocks: Record<HotelChainName, number>; totalCost: number; foundedHotel?: HotelChainName } }
-  | { type: 'ACKNOWLEDGE_STOCK_PURCHASE' }
-  | { type: 'UNDO_TURN' };
+  | { type: 'ACKNOWLEDGE_STOCK_PURCHASE' };
 
 export interface GameState {
   players: Player[];
@@ -108,5 +107,4 @@ export interface GameState {
   initialPlayerTurnState?: {
     player: Player;
   } | null;
-  turnHistory: GameState[];
 }
