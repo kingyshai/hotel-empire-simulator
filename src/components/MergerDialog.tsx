@@ -130,6 +130,8 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
             <p className="flex items-center gap-2"><Info className="h-4 w-4" /> <strong>Important:</strong> The selected chain will survive, and the others will be merged into it.</p>
             <p className="mt-1">This decision impacts stock values and bonuses:</p>
             <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>The survivor takes over all tiles from merged chains</li>
+              <li>Merged chains are removed from the board and their tiles change color</li>
               <li>Majority stockholder receives 10× stock price</li>
               <li>Second largest stockholder receives 5× stock price</li>
               <li>If one player holds most stocks, they get both bonuses (15× price)</li>
