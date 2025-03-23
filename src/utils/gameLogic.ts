@@ -8,11 +8,11 @@ import {
 } from '@/types/game';
 
 export const isAdjacent = (coord1: Coordinate, coord2: Coordinate): boolean => {
-  const row1 = parseInt(coord1.charAt(0));
-  const col1 = coord1.charAt(1);
+  const row1 = parseInt(coord1.match(/^\d+/)?.[0] || '0');
+  const col1 = coord1.match(/[A-Z]$/)?.[0] || '';
   
-  const row2 = parseInt(coord2.charAt(0));
-  const col2 = coord2.charAt(1);
+  const row2 = parseInt(coord2.match(/^\d+/)?.[0] || '0');
+  const col2 = coord2.match(/[A-Z]$/)?.[0] || '';
   
   return (
     (row1 === row2 && Math.abs(col1.charCodeAt(0) - col2.charCodeAt(0)) === 1) ||
@@ -21,21 +21,23 @@ export const isAdjacent = (coord1: Coordinate, coord2: Coordinate): boolean => {
 };
 
 export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordinate, BuildingTile>): Coordinate[] => {
-  const row = parseInt(coord.charAt(0));
-  const col = coord.charAt(1).charCodeAt(0);
+  const row = parseInt(coord.match(/^\d+/)?.[0] || '0');
+  const col = coord.match(/[A-Z]$/)?.[0] || '';
+  
+  if (!row || !col) return [];
   
   const potentialAdjacents: Coordinate[] = [
-    `${row - 1}${String.fromCharCode(col)}` as Coordinate, // Above
-    `${row + 1}${String.fromCharCode(col)}` as Coordinate, // Below
-    `${row}${String.fromCharCode(col - 1)}` as Coordinate, // Left
-    `${row}${String.fromCharCode(col + 1)}` as Coordinate, // Right
+    `${row - 1}${col}` as Coordinate, // Above
+    `${row + 1}${col}` as Coordinate, // Below
+    `${row}${String.fromCharCode(col.charCodeAt(0) - 1)}` as Coordinate, // Left
+    `${row}${String.fromCharCode(col.charCodeAt(0) + 1)}` as Coordinate, // Right
   ];
   
   return potentialAdjacents.filter(c => {
-    const r = parseInt(c.charAt(0));
-    const c1 = c.charAt(1);
+    const r = parseInt(c.match(/^\d+/)?.[0] || '0');
+    const c1 = c.match(/[A-Z]$/)?.[0] || '';
     
-    if (r < 1 || r > 9 || c1 < 'A' || c1 > 'L') return false;
+    if (r < 1 || r > 12 || c1 < 'A' || c1 > 'I') return false;
     
     return placedTiles[c] !== undefined;
   });
@@ -107,12 +109,10 @@ export const findPotentialMergers = (coord: Coordinate, state: GameState): Hotel
 export const isTileBurned = (coord: Coordinate, state: GameState): boolean => {
   const adjacentChains = findPotentialMergers(coord, state);
   
-  // Count safe chains (11+ tiles)
   const safeChains = adjacentChains.filter(chainName => 
     state.hotelChains[chainName].tiles.length >= 11
   );
   
-  // A tile is burned if it would merge 2 or more safe chains
   return safeChains.length >= 2;
 };
 
@@ -171,13 +171,9 @@ export const calculateStockholderBonus = (
 ): StockholderBonus => {
   const { buy } = calculateStockPrice(chainName, chainSize);
   
-  // Primary majority stockholder bonus (10x stock price)
   const primary = buy * 10;
-  
-  // Secondary minority stockholder bonus (5x stock price)
   const secondary = buy * 5;
   
-  // In the classic game mode, there's no tertiary bonus
   return {
     primary,
     secondary,
@@ -189,12 +185,10 @@ export const determineStockholders = (
   players: Player[],
   chainName: HotelChainName
 ): { primary: Player[], secondary: Player[], tertiary: Player[] } => {
-  // Create pairs of [player, stockCount] and sort by stock count in descending order
   const playerStocks: [Player, number][] = players.map(player => [player, player.stocks[chainName]]);
   
   playerStocks.sort((a, b) => b[1] - a[1]);
   
-  // Filter out players with no stocks
   const playersWithStocks = playerStocks.filter(([_, count]) => count > 0);
   
   const result = {
@@ -203,10 +197,8 @@ export const determineStockholders = (
     tertiary: [] as Player[],
   };
   
-  // If no players have stocks, return empty arrays
   if (playersWithStocks.length === 0) return result;
   
-  // Find players with the highest stock count (primary stockholders)
   const primaryStockCount = playersWithStocks[0][1];
   const primaryStockholders = playersWithStocks
     .filter(([_, count]) => count === primaryStockCount)
@@ -214,10 +206,8 @@ export const determineStockholders = (
   
   result.primary = primaryStockholders;
   
-  // If all players with stocks are primary stockholders, return
   if (primaryStockholders.length === playersWithStocks.length) return result;
   
-  // Find players with the second highest stock count (secondary stockholders)
   const remainingPlayers = playersWithStocks.filter(([_, count]) => count !== primaryStockCount);
   const secondaryStockCount = remainingPlayers[0][1];
   const secondaryStockholders = remainingPlayers
@@ -226,10 +216,8 @@ export const determineStockholders = (
   
   result.secondary = secondaryStockholders;
   
-  // If all remaining players are secondary stockholders, return
   if (secondaryStockholders.length === remainingPlayers.length) return result;
   
-  // Find players with the third highest stock count (tertiary stockholders)
   const tertiaryPlayers = remainingPlayers.filter(([_, count]) => count !== secondaryStockCount);
   const tertiaryStockCount = tertiaryPlayers[0][1];
   const tertiaryStockholders = tertiaryPlayers
@@ -248,22 +236,18 @@ export const distributeStockholderBonus = (
   const { players, hotelChains, gameMode } = state;
   const chain = hotelChains[chainName];
   
-  // Calculate the bonus amounts based on chain size
   const bonus = calculateStockholderBonus(chainName, chain.tiles.length, gameMode);
   
-  // Determine primary, secondary, and tertiary stockholders
   const { primary, secondary, tertiary } = determineStockholders(players, chainName);
   
   const updatedPlayers = [...players];
   
-  // Special case: If there's only one stockholder, they get both primary and secondary bonuses
   if (primary.length === 1 && secondary.length === 0) {
     const singleStockholder = primary[0];
     const playerIndex = players.findIndex(p => p.id === singleStockholder.id);
     
     const totalBonus = bonus.primary + bonus.secondary;
     
-    // Round to the nearest $100
     updatedPlayers[playerIndex] = {
       ...singleStockholder,
       money: singleStockholder.money + Math.ceil(totalBonus / 100) * 100,
@@ -275,10 +259,8 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // Special case: If there's a tie for primary stockholder, they split the primary and secondary bonuses
   if (primary.length > 1) {
     const splitBonus = (bonus.primary + bonus.secondary) / primary.length;
-    // Round to the nearest $100
     const roundedBonus = Math.ceil(splitBonus / 100) * 100;
     
     primary.forEach(player => {
@@ -295,7 +277,6 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // Normal case: Distribute primary bonus
   if (primary.length === 1) {
     const player = primary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -305,7 +286,6 @@ export const distributeStockholderBonus = (
     };
   }
   
-  // Distribute secondary bonus
   if (secondary.length === 1) {
     const player = secondary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -314,9 +294,7 @@ export const distributeStockholderBonus = (
       money: player.money + bonus.secondary,
     };
   } else if (secondary.length > 1) {
-    // If there's a tie for secondary, they split the secondary bonus
     const splitSecondary = bonus.secondary / secondary.length;
-    // Round to the nearest $100
     const roundedSecondary = Math.ceil(splitSecondary / 100) * 100;
     
     secondary.forEach(player => {
@@ -434,8 +412,5 @@ export const getTileDistance = (coordinate: Coordinate): number => {
   const colChar = coordinate.match(/[A-Z]$/)?.[0] || 'A';
   const col = colChar.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
   
-  // Manhattan distance from 1A (row 1, col A)
-  // We prioritize row distance over column distance
-  // A tile at row 9 col A (9A) is closer to 1A than a tile at row 1 col B (1B)
   return (row - 1) + (col - 1) * 100;
 };
