@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { 
   GameState, 
@@ -1001,4 +1002,18 @@ const GameContext = createContext<GameContextType>({
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasSavedGame, setHasSavedGame] = React.useState(false);
-  const [
+  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  
+  useEffect(() => {
+    const savedGame = loadSavedGame();
+    setHasSavedGame(!!savedGame);
+  }, []);
+  
+  return (
+    <GameContext.Provider value={{ state, dispatch, hasSavedGame }}>
+      {children}
+    </GameContext.Provider>
+  );
+};
+
+export const useGame = () => useContext(GameContext);
