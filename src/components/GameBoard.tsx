@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -336,7 +335,7 @@ const GameBoard = () => {
                 })}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                The player closest to A1 will go first. Note: Column position is more important than row (A9 is closer to A1 than B1).
+                The player closest to A1 will go first. Note: Column position is more important than row (B1 is closer to A1 than A2).
               </p>
             </div>
           )}
