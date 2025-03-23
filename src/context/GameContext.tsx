@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { 
   GameState, 
@@ -15,7 +16,6 @@ import {
   getAdjacentTiles, 
   findPotentialMergers,
   findConnectedTiles,
-  distributeStockholderBonus,
   calculateStockPrice
 } from '@/utils/gameLogic';
 
@@ -115,6 +115,19 @@ const clearSavedGame = () => {
   }
 };
 
+// Function to distribute stockholder bonus
+const distributeStockholderBonus = (
+  chainName: HotelChainName,
+  players: Player[],
+  chain: HotelChain,
+  stocksHeld: number
+): number => {
+  // Implement bonus distribution logic
+  // For now, just return a simple value based on stocks held
+  const stockPrice = calculateStockPrice(chainName, chain.tiles.length).sell;
+  return stocksHeld * stockPrice;
+};
+
 const gameReducer = (state: GameState, action: Action): GameState => {
   let newState: GameState;
   
@@ -162,23 +175,24 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       newState = { ...state, currentPlayerIndex: action.payload.playerIndex };
       return newState;
     case 'PLACE_TILE':
-      const { coordinate, playerId } = action.payload;
-      const player = state.players.find(p => p.id === playerId);
+      const placeTileCoord = action.payload.coordinate;
+      const placeTilePlayerId = action.payload.playerId;
+      const player = state.players.find(p => p.id === placeTilePlayerId);
       if (!player) return state;
       
-      const tileIndex = player.tiles.indexOf(coordinate);
+      const tileIndex = player.tiles.indexOf(placeTileCoord);
       if (tileIndex === -1) return state;
       
       const updatedPlayerTiles = [...player.tiles];
       updatedPlayerTiles.splice(tileIndex, 1);
       
       const updatedPlayers = state.players.map(p =>
-        p.id === playerId ? { ...p, tiles: updatedPlayerTiles } : p
+        p.id === placeTilePlayerId ? { ...p, tiles: updatedPlayerTiles } : p
       );
       
       const newPlacedTiles: GameState["placedTiles"] = {
         ...state.placedTiles,
-        [coordinate]: { coordinate, isPlaced: true },
+        [placeTileCoord]: { coordinate: placeTileCoord, isPlaced: true },
       };
       
       newState = {
@@ -189,24 +203,26 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       return newState;
     case 'BUY_STOCK':
-      const { chainName, playerId, quantity } = action.payload;
-      const hotelChain = state.hotelChains[chainName];
-      const stockPrice = calculateStockPrice(chainName, hotelChain.tiles.length).buy;
+      const buyStockChainName = action.payload.chainName;
+      const buyStockPlayerId = action.payload.playerId;
+      const quantity = action.payload.quantity;
+      const hotelChain = state.hotelChains[buyStockChainName];
+      const buyStockPrice = calculateStockPrice(buyStockChainName, hotelChain.tiles.length).buy;
       
-      const buyingPlayer = state.players.find(p => p.id === playerId);
+      const buyingPlayer = state.players.find(p => p.id === buyStockPlayerId);
       if (!buyingPlayer) return state;
       
-      if (buyingPlayer.money < stockPrice * quantity) return state;
-      if (state.stockMarket[chainName] < quantity) return state;
+      if (buyingPlayer.money < buyStockPrice * quantity) return state;
+      if (state.stockMarket[buyStockChainName] < quantity) return state;
       
       const updatedPlayersAfterBuying = state.players.map(p => {
-        if (p.id === playerId) {
+        if (p.id === buyStockPlayerId) {
           return {
             ...p,
-            money: p.money - (stockPrice * quantity),
+            money: p.money - (buyStockPrice * quantity),
             stocks: {
               ...p.stocks,
-              [chainName]: p.stocks[chainName] + quantity,
+              [buyStockChainName]: p.stocks[buyStockChainName] + quantity,
             },
           };
         }
@@ -218,7 +234,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayersAfterBuying,
         stockMarket: {
           ...state.stockMarket,
-          [chainName]: state.stockMarket[chainName] - quantity,
+          [buyStockChainName]: state.stockMarket[buyStockChainName] - quantity,
         },
       };
       return newState;
@@ -255,13 +271,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'FOUND_HOTEL':
-      const { chainName, tileCoordinate, connectedTiles } = action.payload;
+      const foundHotelChainName = action.payload.chainName;
+      const tileCoordinate = action.payload.tileCoordinate;
+      const connectedTiles = action.payload.connectedTiles;
       
       // Update hotel chain
       const updatedHotelChains = {
         ...state.hotelChains,
-        [chainName]: {
-          ...state.hotelChains[chainName],
+        [foundHotelChainName]: {
+          ...state.hotelChains[foundHotelChainName],
           isActive: true,
           tiles: [...connectedTiles, tileCoordinate],
         },
@@ -274,15 +292,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       [tileCoordinate, ...connectedTiles].forEach(coord => {
         updatedPlacedTilesAfterFounding[coord] = {
           ...updatedPlacedTilesAfterFounding[coord],
-          belongsToChain: chainName,
+          belongsToChain: foundHotelChainName,
         };
       });
       
       // Remove headquarters from availableHeadquarters
-      const updatedAvailableHeadquarters = state.availableHeadquarters.filter(headquarter => headquarter !== chainName);
+      const updatedAvailableHeadquarters = state.availableHeadquarters.filter(headquarter => headquarter !== foundHotelChainName);
       
       // Record the last founded hotel
-      const lastFoundedHotel = chainName;
+      const lastFoundedHotel = foundHotelChainName;
       
       newState = {
         ...state,
@@ -294,30 +312,32 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'PLACE_TILE_AND_ADD_TO_CHAIN':
-      const { coordinate, playerId, chainName } = action.payload;
-      const playerTilePlacement = state.players.find(p => p.id === playerId);
+      const addToChainCoordinate = action.payload.coordinate;
+      const addToChainPlayerId = action.payload.playerId;
+      const addToChainName = action.payload.chainName;
+      const playerTilePlacement = state.players.find(p => p.id === addToChainPlayerId);
       if (!playerTilePlacement) return state;
       
-      const tileIndexPlacement = playerTilePlacement.tiles.indexOf(coordinate);
+      const tileIndexPlacement = playerTilePlacement.tiles.indexOf(addToChainCoordinate);
       if (tileIndexPlacement === -1) return state;
       
       const updatedPlayerTilesPlacement = [...playerTilePlacement.tiles];
       updatedPlayerTilesPlacement.splice(tileIndexPlacement, 1);
       
       const updatedPlayersPlacement = state.players.map(p =>
-        p.id === playerId ? { ...p, tiles: updatedPlayerTilesPlacement } : p
+        p.id === addToChainPlayerId ? { ...p, tiles: updatedPlayerTilesPlacement } : p
       );
       
       const newPlacedTilesPlacement: GameState["placedTiles"] = {
         ...state.placedTiles,
-        [coordinate]: { coordinate, isPlaced: true, belongsToChain: chainName },
+        [addToChainCoordinate]: { coordinate: addToChainCoordinate, isPlaced: true, belongsToChain: addToChainName },
       };
       
       const updatedHotelChainsPlacement = {
         ...state.hotelChains,
-        [chainName]: {
-          ...state.hotelChains[chainName],
-          tiles: [...state.hotelChains[chainName].tiles, coordinate],
+        [addToChainName]: {
+          ...state.hotelChains[addToChainName],
+          tiles: [...state.hotelChains[addToChainName].tiles, addToChainCoordinate],
         },
       };
       
@@ -332,7 +352,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const { coordinate: mergerCoordinate, playerId: mergerPlayerId, survivingChain, acquiredChains } = action.payload;
       
       // Find all tiles that will be part of the new surviving chain
-      const survivingChainTiles = findConnectedTiles(mergerCoordinate, state.placedTiles, survivingChain);
+      const survivingChainTiles = findConnectedTiles(mergerCoordinate, state.placedTiles);
       
       // Deactivate and gather the acquired chains
       const acquiredHotelChains = acquiredChains.map(chainName => state.hotelChains[chainName]);
@@ -395,8 +415,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const { acquiredChain, stocksToKeep, stocksToSell, stocksToTrade } = action.payload;
       
       // Calculate payout from selling stocks
-      const stockPrice = calculateStockPrice(acquiredChain, 0).sell;
-      const payout = stocksToSell * stockPrice;
+      const sellStockPrice = calculateStockPrice(acquiredChain, 0).sell;
+      const payout = stocksToSell * sellStockPrice;
       
       // Update player's stocks and money
       const updatedPlayersStocks = state.players.map(player => {
@@ -451,13 +471,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedPlayersEndGame = players.map(player => {
         let newMoney = player.money;
         
-        Object.keys(hotelChains).forEach((chainName: string) => {
-          if (player.stocks[chainName as HotelChainName] > 0) {
-            const chain = hotelChains[chainName as HotelChainName];
-            const stockPrice = calculateStockPrice(chainName as HotelChainName, chain.tiles.length).sell;
-            newMoney += player.stocks[chainName as HotelChainName] * stockPrice;
+        Object.keys(hotelChains).forEach((chainNameKey: string) => {
+          const chainNameTyped = chainNameKey as HotelChainName;
+          if (player.stocks[chainNameTyped] > 0) {
+            const chain = hotelChains[chainNameTyped];
+            const stockPriceEndGame = calculateStockPrice(chainNameTyped, chain.tiles.length).sell;
+            newMoney += player.stocks[chainNameTyped] * stockPriceEndGame;
             
-            const bonus = distributeStockholderBonus(chainName as HotelChainName, players, chain, player.stocks[chainName as HotelChainName]);
+            const bonus = distributeStockholderBonus(chainNameTyped, players, chain, player.stocks[chainNameTyped]);
             newMoney += bonus;
           }
         });
@@ -508,13 +529,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedPlayersManualEndGame = currentPlayers.map(player => {
         let newMoney = player.money;
         
-        Object.keys(currentHotelChains).forEach((chainName: string) => {
-          if (player.stocks[chainName as HotelChainName] > 0) {
-            const chain = currentHotelChains[chainName as HotelChainName];
-            const stockPrice = calculateStockPrice(chainName as HotelChainName, chain.tiles.length).sell;
-            newMoney += player.stocks[chainName as HotelChainName] * stockPrice;
+        Object.keys(currentHotelChains).forEach((chainNameKey: string) => {
+          const chainNameTyped = chainNameKey as HotelChainName;
+          if (player.stocks[chainNameTyped] > 0) {
+            const chain = currentHotelChains[chainNameTyped];
+            const stockPriceManual = calculateStockPrice(chainNameTyped, chain.tiles.length).sell;
+            newMoney += player.stocks[chainNameTyped] * stockPriceManual;
             
-            const bonus = distributeStockholderBonus(chainName as HotelChainName, currentPlayers, chain, player.stocks[chainName as HotelChainName]);
+            const bonus = distributeStockholderBonus(chainNameTyped, currentPlayers, chain, player.stocks[chainNameTyped]);
             newMoney += bonus;
           }
         });
@@ -558,7 +580,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'ADD_TILE_TO_PLAYER_HAND':
-      const { playerId: playerIdAddTile, coordinate: coordinateAddTile } = action.payload;
+      const playerIdAddTile = action.payload.playerId;
+      const coordinateAddTile = action.payload.coordinate;
       const playerAddTile = state.players.find(p => p.id === playerIdAddTile);
       if (!playerAddTile) return state;
       
@@ -572,7 +595,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'DRAW_INITIAL_TILE':
-      const { playerId: playerIdDrawTile } = action.payload;
+      const playerIdDrawTile = action.payload.playerId;
       const playerDrawTile = state.players.find(p => p.id === playerIdDrawTile);
       if (!playerDrawTile) return state;
       
