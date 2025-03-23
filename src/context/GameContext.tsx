@@ -75,6 +75,8 @@ const initialGameState: GameState = {
   winners: undefined,
   initialTiles: [],
   showWinnerBanner: false,
+  lastStockPurchase: null,
+  showStockPurchaseBanner: false,
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -390,7 +392,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         return state;
       }
       
-      const pricePerStock = 100 * chain.tiles.length;
+      const pricePerStock = calculateStockPrice(chainName, chain.tiles.length).buy;
       const totalPrice = pricePerStock * quantity;
       
       if (player.money < totalPrice) {
@@ -416,6 +418,27 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         players: updatedPlayers,
         stockMarket,
+      };
+    }
+    
+    case 'RECORD_STOCK_PURCHASE': {
+      const { playerName, stocks, totalCost } = action.payload;
+      
+      return {
+        ...state,
+        lastStockPurchase: {
+          playerName,
+          stocks,
+          totalCost
+        },
+        showStockPurchaseBanner: true
+      };
+    }
+    
+    case 'ACKNOWLEDGE_STOCK_PURCHASE': {
+      return {
+        ...state,
+        showStockPurchaseBanner: false
       };
     }
     

@@ -8,6 +8,7 @@ import StockMarket from '@/components/stock/StockMarket';
 import SetupScreen from '@/components/SetupScreen';
 import WinnerBanner from '@/components/WinnerBanner';
 import MergerStockOptions from '@/components/MergerStockOptions';
+import StockPurchaseBanner from '@/components/stock/StockPurchaseBanner';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -22,7 +23,9 @@ const GameContent = () => {
     gameEnded, 
     winner, 
     winners,
-    showWinnerBanner 
+    showWinnerBanner,
+    lastStockPurchase,
+    showStockPurchaseBanner
   } = state;
   
   const handleLoadGame = () => {
@@ -31,6 +34,10 @@ const GameContent = () => {
   
   const handleHideWinnerBanner = () => {
     dispatch({ type: 'HIDE_WINNER_BANNER' });
+  };
+  
+  const handleAcknowledgeStockPurchase = () => {
+    dispatch({ type: 'ACKNOWLEDGE_STOCK_PURCHASE' });
   };
   
   const chainNames: HotelChainName[] = [
@@ -114,6 +121,13 @@ const GameContent = () => {
           winner={winner} 
           winners={winners} 
           onClose={handleHideWinnerBanner} 
+        />
+      )}
+      
+      {showStockPurchaseBanner && (
+        <StockPurchaseBanner 
+          purchaseInfo={lastStockPurchase}
+          onAcknowledge={handleAcknowledgeStockPurchase}
         />
       )}
       

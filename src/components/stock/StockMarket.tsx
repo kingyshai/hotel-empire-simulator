@@ -114,6 +114,16 @@ const StockMarket: React.FC = () => {
       }
     }
     
+    // Record the purchase for the banner
+    dispatch({
+      type: 'RECORD_STOCK_PURCHASE',
+      payload: {
+        playerName: currentPlayer.name,
+        stocks: { ...stocksToBuy },
+        totalCost
+      }
+    });
+    
     // Reset stocks to buy
     setStocksToBuy({
       luxor: 0,
