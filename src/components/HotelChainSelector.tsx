@@ -29,13 +29,13 @@ const HotelChainSelector: React.FC<HotelChainSelectorProps> = ({
               key={chainName}
               className="p-3 rounded-lg border transition-all hover:shadow-md flex flex-col items-center"
               style={{ 
-                borderColor: `${chain.color}50`,
-                backgroundColor: `${chain.color}10` 
+                borderColor: `${chain.color}80`,
+                backgroundColor: `${chain.color}20` 
               }}
               onClick={() => onSelect(chainName)}
             >
               <div 
-                className="w-8 h-8 rounded-md mb-2"
+                className="w-10 h-10 rounded-md mb-2 shadow-sm"
                 style={{ backgroundColor: chain.color }}
               />
               <span className="font-medium capitalize">{chainName}</span>

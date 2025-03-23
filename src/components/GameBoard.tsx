@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
@@ -12,8 +13,39 @@ const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
   const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters } = state;
   const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
+  const [selectingBoardTile, setSelectingBoardTile] = useState<boolean>(false);
   
   const currentPlayer = players[currentPlayerIndex];
+  
+  // Get all board tiles that are not already placed or in players' hands
+  const getAvailableBoardTiles = (): Coordinate[] => {
+    const allTiles = generateAllBoardCoordinates();
+    // Filter out placed tiles and tiles in any player's hand
+    return allTiles.filter(coord => {
+      // Not already placed
+      if (placedTiles[coord]) return false;
+      
+      // Not in any player's hand
+      for (const player of players) {
+        if (player.tiles.includes(coord)) return false;
+      }
+      
+      return true;
+    });
+  };
+  
+  // Generate all possible coordinates on the board
+  const generateAllBoardCoordinates = (): Coordinate[] => {
+    const coords: Coordinate[] = [];
+    
+    for (let row = 1; row <= 9; row++) {
+      for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+        coords.push(`${row}${col}` as Coordinate);
+      }
+    }
+    
+    return coords;
+  };
   
   const handleTileClick = (coordinate: Coordinate) => {
     if (gamePhase !== 'placeTile') {
@@ -115,9 +147,33 @@ const GameBoard: React.FC = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
   };
   
+  // Handle board tile selection
+  const handleSelectBoardTile = () => {
+    setSelectingBoardTile(true);
+    toast.info("Select a tile from the board to add to your hand");
+  };
+  
+  // Handle when a board tile is selected
+  const handleBoardTileSelected = (coordinate: Coordinate) => {
+    if (!selectingBoardTile) return;
+    
+    // Add the tile to current player's hand
+    dispatch({
+      type: 'ADD_TILE_TO_PLAYER_HAND',
+      payload: {
+        playerId: currentPlayer.id,
+        coordinate,
+      },
+    });
+    
+    setSelectingBoardTile(false);
+    toast.success(`Added tile ${coordinate} to your hand`);
+  };
+  
   // Generate board coordinates
   const generateBoard = () => {
     const rows = [];
+    const availableBoardTiles = getAvailableBoardTiles();
     
     for (let row = 1; row <= 9; row++) {
       const cols = [];
@@ -125,6 +181,7 @@ const GameBoard: React.FC = () => {
       for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
         const coordinate = `${row}${col}` as Coordinate;
         const placedTile = placedTiles[coordinate];
+        const isSelectableBoardTile = selectingBoardTile && availableBoardTiles.includes(coordinate);
         
         cols.push(
           <div key={coordinate} className="aspect-square w-full p-0.5">
@@ -139,6 +196,13 @@ const GameBoard: React.FC = () => {
                 coordinate={coordinate}
                 isPlaced={false}
                 onClick={() => handleTileClick(coordinate)}
+              />
+            ) : isSelectableBoardTile ? (
+              <BuildingTile
+                coordinate={coordinate}
+                isPlaced={false}
+                isSelectable={true}
+                onClick={() => handleBoardTileSelected(coordinate)}
               />
             ) : (
               <motion.div 
@@ -233,7 +297,7 @@ const GameBoard: React.FC = () => {
     return (
       <div className="mt-4 p-3 border border-yellow-500/30 bg-yellow-500/5 rounded-lg">
         <h3 className="text-sm font-medium text-yellow-500/80 mb-2">Testing Controls</h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           {players.map((player, index) => (
             <Button 
               key={player.id}
@@ -245,6 +309,27 @@ const GameBoard: React.FC = () => {
               Play as {player.name}
             </Button>
           ))}
+        </div>
+        
+        <div className="flex justify-between mt-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleSelectBoardTile}
+            disabled={selectingBoardTile || gamePhase !== 'placeTile'}
+          >
+            Pick a tile from board
+          </Button>
+          
+          {selectingBoardTile && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSelectingBoardTile(false)}
+            >
+              Cancel selection
+            </Button>
+          )}
         </div>
       </div>
     );

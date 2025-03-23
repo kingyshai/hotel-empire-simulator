@@ -383,6 +383,39 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
+    case 'ADD_TILE_TO_PLAYER_HAND': {
+      const { playerId, coordinate } = action.payload;
+      const players = [...state.players];
+      const playerIndex = players.findIndex(p => p.id === playerId);
+      
+      if (playerIndex === -1) {
+        toast.error("Player not found!");
+        return state;
+      }
+      
+      if (state.placedTiles[coordinate]) {
+        toast.error("This tile is already placed on the board!");
+        return state;
+      }
+      
+      for (const player of players) {
+        if (player.tiles.includes(coordinate)) {
+          toast.error("This tile is already in a player's hand!");
+          return state;
+        }
+      }
+      
+      players[playerIndex] = {
+        ...players[playerIndex],
+        tiles: [...players[playerIndex].tiles, coordinate]
+      };
+      
+      return {
+        ...state,
+        players
+      };
+    }
+    
     default:
       return state;
   }
