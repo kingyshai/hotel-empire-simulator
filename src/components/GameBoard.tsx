@@ -262,64 +262,41 @@ const GameBoard = () => {
   const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
   
   const renderGameBoard = () => (
-    <div className="grid grid-cols-9 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg">
-      {/* Board header - column labels */}
-      <div className="col-span-9 grid grid-cols-9 mb-1">
-        {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((letter) => (
-          <div key={`header-${letter}`} className="flex justify-center items-center text-xs font-bold text-muted-foreground">
-            {letter}
-          </div>
-        ))}
-      </div>
-      
-      {/* Board with row labels */}
-      {Array.from({length: 12}, (_, rowIndex) => (
-        <React.Fragment key={`row-${rowIndex + 1}`}>
-          {/* Row label */}
-          <div className="flex items-center justify-center text-xs font-bold text-muted-foreground mr-1 -ml-5">
-            {rowIndex + 1}
-          </div>
-          
-          {/* Tile cells for this row */}
-          {Array.from({length: 9}, (_, colIndex) => {
-            const colLetter = String.fromCharCode('A'.charCodeAt(0) + colIndex);
-            const coord = `${rowIndex + 1}${colLetter}` as Coordinate;
-            
-            const isPlaced = !!placedTiles[coord];
-            const belongsToChain = placedTiles[coord]?.belongsToChain;
-            const isSelectable = isTilePlaceable(coord);
-            const isUnplayable = wouldCauseIllegalMerger(coord);
-            const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
-            const tileInitial = isInitialTile(coord);
-            const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
-            
-            return (
-              <motion.div
-                key={`tile-${coord}-${belongsToChain || 'none'}`}
-                className="relative aspect-square flex items-center justify-center scale-95"
-                whileHover={isSelectable ? { scale: 1.0 } : {}}
-                whileTap={isSelectable ? { scale: 0.9 } : {}}
-                onClick={() => handleTileClick(coord)}
-              >
-                <BuildingTile 
-                  coordinate={coord} 
-                  belongsToChain={belongsToChain}
-                  isPlaced={isPlaced}
-                  isSelectable={isSelectable}
-                  isAvailable={isAvailable}
-                  isUnplayable={isUnplayable}
-                  isInitialTile={tileInitial}
-                />
-                {playerName && (
-                  <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
-                    {playerName}
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </React.Fragment>
-      ))}
+    <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
+      {generateAllBoardCoordinates().map((coord) => {
+        const isPlaced = !!placedTiles[coord];
+        const belongsToChain = placedTiles[coord]?.belongsToChain;
+        const isSelectable = isTilePlaceable(coord);
+        const isUnplayable = wouldCauseIllegalMerger(coord);
+        const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
+        const tileInitial = isInitialTile(coord);
+        const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
+        
+        return (
+          <motion.div
+            key={`tile-${coord}-${belongsToChain || 'none'}`}
+            className="relative aspect-square flex items-center justify-center scale-95"
+            whileHover={isSelectable ? { scale: 1.0 } : {}}
+            whileTap={isSelectable ? { scale: 0.9 } : {}}
+            onClick={() => handleTileClick(coord)}
+          >
+            <BuildingTile 
+              coordinate={coord} 
+              belongsToChain={belongsToChain}
+              isPlaced={isPlaced}
+              isSelectable={isSelectable}
+              isAvailable={isAvailable}
+              isUnplayable={isUnplayable}
+              isInitialTile={tileInitial}
+            />
+            {playerName && (
+              <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
+                {playerName}
+              </div>
+            )}
+          </motion.div>
+        );
+      })}
     </div>
   );
   
