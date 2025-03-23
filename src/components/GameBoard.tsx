@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { getAdjacentTiles, findPotentialMergers, findConnectedTiles } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -337,37 +338,81 @@ const GameBoard: React.FC = () => {
         </div>
       </div>
       
-      <div className="p-3">
-        {generateBoard()}
-        {renderSetupControls()}
-        {renderTestControls()}
-        
-        {tileToFoundHotel && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h3 className="text-lg font-medium mb-4">Found a Hotel Chain</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Choose a hotel chain to establish at {tileToFoundHotel}
-              </p>
-              <HotelChainSelector 
-                availableChains={availableHeadquarters}
-                onSelect={handleFoundHotel}
-                onCancel={() => setTileToFoundHotel(null)}
-              />
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="min-h-[500px]"
+      >
+        <ResizablePanel defaultSize={75} minSize={60}>
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={85} minSize={70}>
+              <div className="p-3 overflow-auto max-h-[70vh]">
+                {generateBoard()}
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={15}>
+              <div className="p-3 bg-secondary/10">
+                {renderSetupControls()}
+                {renderTestControls()}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={25} minSize={20}>
+          <div className="p-3 bg-secondary/10 h-full overflow-auto">
+            <h3 className="text-sm font-medium mb-3">Game Status</h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Phase:</span>
+                <span className="font-medium capitalize">{gamePhase}</span>
+              </div>
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Current Player:</span>
+                <span className="font-medium">{currentPlayer?.name}</span>
+              </div>
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Tiles Placed:</span>
+                <span className="font-medium">{Object.keys(placedTiles).length}</span>
+              </div>
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Active Chains:</span>
+                <span className="font-medium">
+                  {Object.keys(hotelChains).filter(chain => 
+                    hotelChains[chain as HotelChainName].isEstablished
+                  ).length}
+                </span>
+              </div>
             </div>
           </div>
-        )}
-        
-        {mergerInfo && (
-          <MergerDialog
-            open={!!mergerInfo}
-            potentialMergers={mergerInfo.potentialMergers}
-            tileCoordinate={mergerInfo.coordinate}
-            onComplete={handleMerger}
-            onCancel={handleCancelMerger}
-          />
-        )}
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+      
+      {tileToFoundHotel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-medium mb-4">Found a Hotel Chain</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose a hotel chain to establish at {tileToFoundHotel}
+            </p>
+            <HotelChainSelector 
+              availableChains={availableHeadquarters}
+              onSelect={handleFoundHotel}
+              onCancel={() => setTileToFoundHotel(null)}
+            />
+          </div>
+        </div>
+      )}
+      
+      {mergerInfo && (
+        <MergerDialog
+          open={!!mergerInfo}
+          potentialMergers={mergerInfo.potentialMergers}
+          tileCoordinate={mergerInfo.coordinate}
+          onComplete={handleMerger}
+          onCancel={handleCancelMerger}
+        />
+      )}
     </div>
   );
 };

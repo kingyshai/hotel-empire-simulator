@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GameProvider, useGame } from '@/context/GameContext';
 import Header from '@/components/Header';
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
 import { Save, ArrowRight } from 'lucide-react';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const GameContent = () => {
   const { state, dispatch, hasSavedGame } = useGame();
@@ -150,78 +150,92 @@ const GameContent = () => {
         <MergerStockOptions />
       )}
       
-      <div className="grid grid-cols-12 gap-6 mt-6">
-        <div className="col-span-8">
-          <GameBoard />
-          
-          <div className="mt-6 flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
-              {gamePhase === 'setup' && (
-                <span className="ml-2 text-xs">({state.setupPhase})</span>
-              )}
+      <ResizablePanelGroup direction="vertical" className="min-h-[80vh]">
+        <ResizablePanel defaultSize={85} minSize={70}>
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            <ResizablePanel defaultSize={70} minSize={50}>
+              <GameBoard />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={30}>
+              <div className="h-full overflow-auto">
+                {/* Players */}
+                <div className="space-y-4 p-4">
+                  {players.map((player, index) => (
+                    <PlayerInfo 
+                      key={player.id} 
+                      player={player}
+                      isCurrentPlayer={index === currentPlayerIndex}
+                    />
+                  ))}
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={15}>
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-sm text-muted-foreground">
+                Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
+                {gamePhase === 'setup' && (
+                  <span className="ml-2 text-xs">({state.setupPhase})</span>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={handleSaveGame}
+                  disabled={gamePhase === 'setup' || gameEnded}
+                  className="flex items-center gap-1"
+                >
+                  <Save size={16} />
+                  Save Game
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={handleEndGame}
+                  disabled={gamePhase === 'setup' || !canEndGame}
+                  title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
+                >
+                  End Game
+                </Button>
+                
+                <Button 
+                  size="lg"
+                  onClick={handleEndTurn}
+                  disabled={gamePhase !== 'buyStock'}
+                >
+                  End Turn
+                </Button>
+              </div>
             </div>
             
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={handleSaveGame}
-                disabled={gamePhase === 'setup' || gameEnded}
-                className="flex items-center gap-1"
-              >
-                <Save size={16} />
-                Save Game
-              </Button>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Stock Market */}
+              <div className="col-span-1">
+                <StockMarket />
+              </div>
               
-              <Button 
-                variant="outline"
-                onClick={handleEndGame}
-                disabled={gamePhase === 'setup' || !canEndGame}
-                title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
-              >
-                End Game
-              </Button>
-              
-              <Button 
-                size="lg"
-                onClick={handleEndTurn}
-                disabled={gamePhase !== 'buyStock'}
-              >
-                End Turn
-              </Button>
+              {/* Hotel Chains */}
+              <div className="col-span-1 glass-panel rounded-xl overflow-hidden">
+                <div className="p-3 bg-secondary/50 border-b border-border/50">
+                  <h2 className="text-sm font-medium">Hotel Chains</h2>
+                </div>
+                
+                <div className="p-4 grid grid-cols-2 gap-4">
+                  {chainNames.map(chainName => (
+                    <HotelChain key={chainName} chainName={chainName} />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="col-span-4 space-y-6">
-          {/* Players */}
-          <div className="space-y-4">
-            {players.map((player, index) => (
-              <PlayerInfo 
-                key={player.id} 
-                player={player}
-                isCurrentPlayer={index === currentPlayerIndex}
-              />
-            ))}
-          </div>
-          
-          {/* Stock Market */}
-          <StockMarket />
-          
-          {/* Hotel Chains */}
-          <div className="glass-panel rounded-xl overflow-hidden">
-            <div className="p-3 bg-secondary/50 border-b border-border/50">
-              <h2 className="text-sm font-medium">Hotel Chains</h2>
-            </div>
-            
-            <div className="p-4 grid grid-cols-2 gap-4">
-              {chainNames.map(chainName => (
-                <HotelChain key={chainName} chainName={chainName} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
