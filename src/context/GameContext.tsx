@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { 
   GameState, 
   Player, 
@@ -38,17 +37,19 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
+const GAME_STORAGE_KEY = 'acquireio_saved_game';
+
 const initialGameState: GameState = {
   players: [],
   currentPlayerIndex: 0,
   hotelChains: {
-    luxor: { name: 'luxor', color: '#f97316', tiles: [], isActive: false, isSafe: false },
-    tower: { name: 'tower', color: '#0ea5e9', tiles: [], isActive: false, isSafe: false },
-    american: { name: 'american', color: '#8b5cf6', tiles: [], isActive: false, isSafe: false },
-    festival: { name: 'festival', color: '#ef4444', tiles: [], isActive: false, isSafe: false },
-    worldwide: { name: 'worldwide', color: '#10b981', tiles: [], isActive: false, isSafe: false },
-    continental: { name: 'continental', color: '#0284c7', tiles: [], isActive: false, isSafe: false },
-    imperial: { name: 'imperial', color: '#fbbf24', tiles: [], isActive: false, isSafe: false },
+    luxor: { name: 'luxor', color: '#ef4444', tiles: [], isActive: false, isSafe: false },
+    tower: { name: 'tower', color: '#fbbf24', tiles: [], isActive: false, isSafe: false },
+    american: { name: 'american', color: '#0ea5e9', tiles: [], isActive: false, isSafe: false },
+    festival: { name: 'festival', color: '#10b981', tiles: [], isActive: false, isSafe: false },
+    worldwide: { name: 'worldwide', color: '#a1855c', tiles: [], isActive: false, isSafe: false },
+    continental: { name: 'continental', color: '#0f766e', tiles: [], isActive: false, isSafe: false },
+    imperial: { name: 'imperial', color: '#ec4899', tiles: [], isActive: false, isSafe: false },
   },
   availableTiles: [],
   placedTiles: {},
@@ -73,8 +74,57 @@ const initialGameState: GameState = {
   initialTiles: [],
 };
 
+const loadSavedGame = (): GameState | null => {
+  try {
+    const savedGameJson = localStorage.getItem(GAME_STORAGE_KEY);
+    if (savedGameJson) {
+      const savedGame = JSON.parse(savedGameJson) as GameState;
+      return savedGame;
+    }
+  } catch (error) {
+    console.error('Error loading saved game:', error);
+  }
+  return null;
+};
+
+const saveGameState = (state: GameState) => {
+  try {
+    if (state.gamePhase === 'setup' || state.gameEnded) {
+      return;
+    }
+    
+    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error('Error saving game:', error);
+  }
+};
+
+const clearSavedGame = () => {
+  try {
+    localStorage.removeItem(GAME_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing saved game:', error);
+  }
+};
+
 const gameReducer = (state: GameState, action: Action): GameState => {
+  let newState: GameState;
+  
   switch (action.type) {
+    case 'LOAD_SAVED_GAME': {
+      const savedGame = loadSavedGame();
+      if (savedGame) {
+        toast.success('Game loaded successfully!');
+        return savedGame;
+      }
+      return state;
+    }
+    
+    case 'CLEAR_SAVED_GAME': {
+      clearSavedGame();
+      return initialGameState;
+    }
+    
     case 'SET_PLAYERS':
       return {
         ...state,
@@ -175,6 +225,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'START_GAME': {
+      clearSavedGame();
+      
       const { playerCount, playerNames, gameMode } = action.payload;
       
       const validatedNames = playerNames.slice(0, playerCount).map((name, i) => 
@@ -249,21 +301,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles });
       
       if (adjacentChains.length === 1) {
-        // One adjacent chain - add this tile and any connected free tiles to it
         const chainName = adjacentChains[0];
         const hotelChains = { ...state.hotelChains };
         
-        // Find all connected free tiles
         const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
         
-        // Add all connected free tiles to the chain
         hotelChains[chainName] = {
           ...hotelChains[chainName],
           tiles: [...hotelChains[chainName].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)],
           isSafe: hotelChains[chainName].tiles.length + connectedFreeTiles.length >= 11,
         };
         
-        // Update all tiles to belong to the chain
         placedTiles[coordinate].belongsToChain = chainName;
         connectedFreeTiles.forEach(tile => {
           if (tile !== coordinate && placedTiles[tile]) {
@@ -336,7 +384,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     
     case 'END_TURN': {
       if (shouldEndGame(state)) {
-        return endGame(state);
+        newState = endGame(state);
+        clearSavedGame();
+        return newState;
       }
       
       const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
@@ -352,13 +402,16 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedPlayers = [...state.players];
       updatedPlayers[state.currentPlayerIndex] = player;
       
-      return {
+      newState = {
         ...state,
         currentPlayerIndex: nextPlayerIndex,
         players: updatedPlayers,
         tilePool,
         gamePhase: 'placeTile',
       };
+      
+      saveGameState(newState);
+      return newState;
     }
     
     case 'FOUND_HOTEL': {
@@ -401,7 +454,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             belongsToChain: chainName,
           };
         } else {
-          // Handle the case where the tile might be newly placed
           placedTiles[tile] = {
             coordinate: tile,
             isPlaced: true,
@@ -428,11 +480,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'END_GAME_MANUALLY': {
+      clearSavedGame();
+      newState = endGame(state);
       toast.success("Game has ended!");
-      return endGame(state);
+      return newState;
     }
     
     case 'END_GAME': {
+      clearSavedGame();
+      
       const updatedPlayers = state.players.map(player => {
         let totalMoney = player.money;
         
@@ -520,7 +576,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         belongsToChain: survivingChain
       };
       
-      // Find all unconnected free tiles that would be connected by this merger
       const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
       
       hotelChains[survivingChain] = {
@@ -528,7 +583,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [...hotelChains[survivingChain].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)]
       };
       
-      // Mark all connected free tiles as belonging to the surviving chain
       connectedFreeTiles.forEach(tile => {
         if (tile !== coordinate && placedTiles[tile] && !placedTiles[tile].belongsToChain) {
           placedTiles[tile].belongsToChain = survivingChain;
@@ -587,18 +641,26 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 type GameContextType = {
   state: GameState;
   dispatch: React.Dispatch<Action>;
+  hasSavedGame: boolean;
 };
 
 const GameContext = createContext<GameContextType>({
   state: initialGameState,
   dispatch: () => null,
+  hasSavedGame: false,
 });
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [hasSavedGame, setHasSavedGame] = React.useState(false);
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   
+  useEffect(() => {
+    const savedGame = loadSavedGame();
+    setHasSavedGame(!!savedGame);
+  }, []);
+  
   return (
-    <GameContext.Provider value={{ state, dispatch }}>
+    <GameContext.Provider value={{ state, dispatch, hasSavedGame }}>
       {children}
     </GameContext.Provider>
   );

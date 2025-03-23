@@ -138,4 +138,6 @@ export type Action =
         playerId: number; 
         coordinate: Coordinate;
       } 
-    };
+    }
+  | { type: 'LOAD_SAVED_GAME' }
+  | { type: 'CLEAR_SAVED_GAME' };

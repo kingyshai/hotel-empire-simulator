@@ -13,7 +13,7 @@ import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
 
 const GameContent = () => {
-  const { state, dispatch } = useGame();
+  const { state, dispatch, hasSavedGame } = useGame();
   const { players, currentPlayerIndex, gamePhase, hotelChains, gameEnded, winner, winners } = state;
   
   const canEndGame = shouldEndGame(state);
@@ -35,13 +35,34 @@ const GameContent = () => {
     dispatch({ type: 'END_GAME_MANUALLY' });
   };
   
+  const handleLoadGame = () => {
+    dispatch({ type: 'LOAD_SAVED_GAME' });
+  };
+  
   const chainNames: HotelChainName[] = [
     'luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'
   ];
   
   // Show setup screen only during the initial setup phase
   if (gamePhase === 'setup' && state.setupPhase === 'initial') {
-    return <SetupScreen />;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Header />
+        {hasSavedGame && (
+          <div className="flex justify-center mb-8">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="w-full max-w-sm"
+              onClick={handleLoadGame}
+            >
+              Continue Saved Game
+            </Button>
+          </div>
+        )}
+        <SetupScreen />
+      </div>
+    );
   }
   
   // Show game results if the game has ended
