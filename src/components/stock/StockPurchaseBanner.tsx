@@ -75,34 +75,24 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   </div>
                 )}
                 
-                {purchasedStocksList.length > 0 && !onlyReceivedFounderStock ? (
+                {hasPurchasedStocks ? (
                   <div className="flex flex-wrap gap-2 mt-1">
                     {purchasedStocksList
-                      .filter(({ chain, count, isFreeFounderStock }) => 
-                        // Don't show the free founder stock here since we already show it above
-                        !(isFreeFounderStock && count === 1)
-                      )
-                      .map(({ chain, count, isFreeFounderStock }) => {
-                        // If this is the founded hotel and has more than 1 stock, reduce count by 1 for display
-                        // because the free founder stock is already shown separately
-                        const displayCount = (chain === purchaseInfo.foundedHotel) ? count - 1 : count;
-                        if (displayCount <= 0) return null;
-                        
-                        return (
+                      .filter(({ isFreeFounderStock }) => !isFreeFounderStock)
+                      .map(({ chain, count }) => (
+                        <div
+                          key={chain}
+                          className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full"
+                        >
                           <div
-                            key={chain}
-                            className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full"
-                          >
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
-                            />
-                            <span className="capitalize">{chain}</span>
-                            <span className="font-bold">×{displayCount}</span>
-                          </div>
-                        );
-                      })}
-                    {purchaseInfo.totalCost > 0 && hasPurchasedStocks && (
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
+                          />
+                          <span className="capitalize">{chain}</span>
+                          <span className="font-bold">×{count}</span>
+                        </div>
+                      ))}
+                    {purchaseInfo.totalCost > 0 && (
                       <div className="bg-white/20 px-2 py-1 rounded-full">
                         Total: ${purchaseInfo.totalCost}
                       </div>
