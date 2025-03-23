@@ -237,8 +237,8 @@ const GameBoard = () => {
             <motion.div
               key={`board-${coord}-${currentPlayerIndex}`}
               className="relative aspect-square flex items-center justify-center scale-95"
-              whileHover={{ isSelectable ? { scale: 1.0 } : {} }}
-              whileTap={{ isSelectable ? { scale: 0.9 } : {} }}
+              whileHover={isSelectable ? { scale: 1.0 } : {}}
+              whileTap={isSelectable ? { scale: 0.9 } : {}}
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 
