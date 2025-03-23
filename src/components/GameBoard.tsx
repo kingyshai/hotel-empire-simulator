@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -95,10 +96,22 @@ const GameBoard = () => {
         if (adjacentChains.length === 0 && adjacents.length > 0) {
           const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
           
-          if (connectedTiles.length > 1) {
+          if (connectedTiles.length > 1 && availableHeadquarters.length > 0) {
             setSelectedFoundingTile({
               coordinate,
               connectedTiles
+            });
+            return;
+          } else if (connectedTiles.length > 1 && availableHeadquarters.length === 0) {
+            // Special case: If connected tiles would form a new chain but no headquarters are available,
+            // just place the tile and continue without creating a hotel chain
+            toast.info("No hotel chains available to found. Placing tile as-is.");
+            dispatch({ 
+              type: 'PLACE_TILE', 
+              payload: { 
+                coordinate, 
+                playerId: currentPlayer.id 
+              } 
             });
             return;
           }

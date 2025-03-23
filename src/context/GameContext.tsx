@@ -137,17 +137,35 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return initialGameState;
     }
     
-    case 'SET_PLAYERS':
+    case 'SET_PLAYERS': {
+      const playerSetups = action.payload.players;
+      const players: Player[] = playerSetups.map((setup, index) => ({
+        id: index,
+        name: setup.name,
+        money: 6000,
+        stocks: {
+          luxor: 0,
+          tower: 0,
+          american: 0,
+          festival: 0,
+          worldwide: 0,
+          continental: 0,
+          imperial: 0,
+        },
+        tiles: [],
+      }));
+      
       return {
         ...state,
-        players: action.payload.players,
+        players,
         setupPhase: 'drawInitialTile',
       };
-      
+    }
+    
     case 'SET_GAME_MODE':
       return {
         ...state,
-        gameMode: 'classic',
+        gameMode: action.payload.gameMode,
       };
       
     case 'DRAW_INITIAL_TILE': {

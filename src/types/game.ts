@@ -49,8 +49,12 @@ export interface MergerState {
   playersWithStocks: number[];
 }
 
+export type PlayerSetup = {
+  name: string;
+};
+
 export type Action =
-  | { type: 'SET_PLAYERS'; payload: { players: Omit<Player, 'id' | 'money' | 'stocks' | 'tiles'>[] } }
+  | { type: 'SET_PLAYERS'; payload: { players: PlayerSetup[] } }
   | { type: 'SET_GAME_MODE'; payload: { gameMode: GameMode } }
   | { type: 'START_GAME'; payload: { playerCount: number; playerNames: string[]; gameMode: GameMode } }
   | { type: 'SET_CURRENT_PLAYER'; payload: { playerIndex: number } }
