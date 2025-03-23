@@ -79,17 +79,23 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
             } 
           : isInitialTile 
             ? {
-                backgroundColor: "#FBBF24",  // Brighter yellow
-                color: "#92400E",  // Amber-800
-                borderColor: "#F59E0B"  // Amber-500
+                backgroundColor: "#F59E0B",  // Even brighter amber-500
+                color: "#7C2D12",  // Darker amber-900 for better contrast
+                borderColor: "#D97706"  // amber-600
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
-                  backgroundColor: "#10B981",  // Brighter green
-                  color: "#064E3B",  // Emerald-900
-                  borderColor: "#34D399"  // Emerald-400
+                  backgroundColor: "#059669",  // emerald-600 - stronger color
+                  color: "#FFFFFF",  // White text for better contrast
+                  borderColor: "#10B981"  // emerald-500
                 }
-              : {}
+              : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
+                ? {
+                    backgroundColor: "#8B5CF6",  // Full opacity purple instead of transparent
+                    color: "#FFFFFF",  // White text
+                    borderColor: "#7C3AED"  // violet-600
+                  }
+                : {}
       }
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
@@ -101,26 +107,23 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
     >
       <span className={cn(
         "text-sm md:text-base font-medium z-10",
-        isInitialTile ? "text-amber-900 font-bold" : "",
-        isRecentlyPlaced && !isInitialTile ? "text-emerald-900 font-bold" : ""
+        isInitialTile ? "text-white font-bold" : "",
+        isRecentlyPlaced && !isInitialTile ? "text-white font-bold" : "",
+        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "text-white font-bold" : ""
       )}>
         {coordinate}
       </span>
       
-      {!belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced && (
-        <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
-      )}
-      
       {isUnplayable && (
-        <div className="absolute inset-0 opacity-40 rounded-md bg-red-500" />
+        <div className="absolute inset-0 opacity-70 rounded-md bg-red-500" />
       )}
       
       {state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' && (
-        <div className="absolute inset-0 opacity-10 rounded-md bg-primary hover:opacity-20 transition-opacity" />
+        <div className="absolute inset-0 opacity-20 rounded-md bg-primary hover:opacity-30 transition-opacity" />
       )}
       
       {isSelectable && (
-        <div className="absolute inset-0 opacity-20 rounded-md bg-green-500" />
+        <div className="absolute inset-0 opacity-40 rounded-md bg-green-500" />
       )}
       
       {isAvailable && !isUnplayable && !isPlaced && (
@@ -128,14 +131,14 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
       
       {isInitialTile && (
-        <div className="absolute w-4 h-4 top-0 right-0 rounded-full bg-amber-500 -mt-1 -mr-1 shadow-sm border border-amber-600 flex items-center justify-center">
-          <span className="text-[8px] text-white font-bold">★</span>
+        <div className="absolute w-5 h-5 top-0 right-0 rounded-full bg-yellow-500 -mt-1 -mr-1 shadow-md border-2 border-yellow-600 flex items-center justify-center">
+          <span className="text-[10px] text-white font-bold">★</span>
         </div>
       )}
       
       {isRecentlyPlaced && !isInitialTile && (
-        <div className="absolute w-4 h-4 bottom-0 left-0 rounded-full bg-emerald-500 -mb-1 -ml-1 shadow-sm border border-emerald-600 flex items-center justify-center">
-          <span className="text-[8px] text-white font-bold">✓</span>
+        <div className="absolute w-5 h-5 bottom-0 left-0 rounded-full bg-emerald-500 -mb-1 -ml-1 shadow-md border-2 border-emerald-600 flex items-center justify-center">
+          <span className="text-[10px] text-white font-bold">✓</span>
         </div>
       )}
     </motion.button>
