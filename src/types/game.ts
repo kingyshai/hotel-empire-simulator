@@ -22,6 +22,7 @@ export interface BuildingTile {
   coordinate: Coordinate;
   isPlaced: boolean;
   belongsToChain?: HotelChainName;
+  isInitialTile?: boolean;
 }
 
 export type GameMode = 'classic';

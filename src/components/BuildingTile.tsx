@@ -65,6 +65,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
         !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
+        isInitialTile && !belongsToChain ? "bg-yellow-200 border-yellow-400" : ""
       )}
       style={
         belongsToChain && chainColor 
@@ -73,7 +74,12 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
               color: textColor,
               borderColor: chainColor
             } 
-          : {}
+          : isInitialTile && !belongsToChain 
+            ? {
+                backgroundColor: "#FEFCE8",
+                borderColor: "#FEF08A"
+              }
+            : {}
       }
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
@@ -83,7 +89,12 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       whileTap={isClickable ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      <span className="text-sm md:text-base font-medium z-10">{coordinate}</span>
+      <span className={cn(
+        "text-sm md:text-base font-medium z-10",
+        isInitialTile && !belongsToChain ? "text-amber-800" : ""
+      )}>
+        {coordinate}
+      </span>
       
       {!belongsToChain && isPlaced && !isInitialTile && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
@@ -106,7 +117,11 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
       
       {isInitialTile && isPlaced && !belongsToChain && (
-        <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
+        <div className="absolute inset-0 opacity-60 rounded-md bg-yellow-300" />
+      )}
+      
+      {isInitialTile && (
+        <div className="absolute w-3 h-3 top-0 right-0 rounded-full bg-amber-500 -mt-1 -mr-1 shadow-sm border border-amber-600" />
       )}
     </motion.button>
   );
