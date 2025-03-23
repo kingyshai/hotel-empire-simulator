@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import BuildingTile from './BuildingTile';
@@ -45,10 +44,15 @@ const GameBoard: React.FC = () => {
       return;
     }
     
-    const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
+    const tempPlacedTiles = { 
+      ...placedTiles, 
+      [coordinate]: { coordinate, isPlaced: true } 
+    };
+    
+    const adjacentTiles = getAdjacentTiles(coordinate, tempPlacedTiles);
     
     if (adjacentTiles.length > 0) {
-      const adjacentChains = findPotentialMergers(coordinate, state);
+      const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
       
       // Check for merger scenario (multiple chains)
       if (adjacentChains.length > 1) {
@@ -67,16 +71,11 @@ const GameBoard: React.FC = () => {
           },
         });
       } else if (adjacentTiles.length > 0 && adjacentChains.length === 0 && availableHeadquarters.length > 0) {
-        const tempPlacedTiles = { 
-          ...placedTiles, 
-          [coordinate]: { coordinate, isPlaced: true } 
-        };
-        
         const connected = findConnectedTiles(coordinate, tempPlacedTiles);
         
         if (connected.length >= 2) {
           setTileToFoundHotel(coordinate);
-          setConnectedTiles(connected);
+          setConnectedTiles([coordinate, ...connected.filter(t => t !== coordinate)]);
           toast.info("Choose a hotel chain to establish");
         } else {
           dispatch({

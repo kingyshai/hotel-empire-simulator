@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -248,16 +249,27 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles });
       
       if (adjacentChains.length === 1) {
+        // One adjacent chain - add this tile and any connected free tiles to it
         const chainName = adjacentChains[0];
         const hotelChains = { ...state.hotelChains };
         
+        // Find all connected free tiles
+        const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
+        
+        // Add all connected free tiles to the chain
         hotelChains[chainName] = {
           ...hotelChains[chainName],
-          tiles: [...hotelChains[chainName].tiles, coordinate],
-          isSafe: hotelChains[chainName].tiles.length + 1 >= 11,
+          tiles: [...hotelChains[chainName].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)],
+          isSafe: hotelChains[chainName].tiles.length + connectedFreeTiles.length >= 11,
         };
         
+        // Update all tiles to belong to the chain
         placedTiles[coordinate].belongsToChain = chainName;
+        connectedFreeTiles.forEach(tile => {
+          if (tile !== coordinate && placedTiles[tile]) {
+            placedTiles[tile].belongsToChain = chainName;
+          }
+        });
         
         const updatedPlayers = [...state.players];
         updatedPlayers[playerIndex] = player;
@@ -383,10 +395,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const placedTiles = { ...state.placedTiles };
       
       for (const tile of connectedTiles) {
-        placedTiles[tile] = {
-          ...placedTiles[tile],
-          belongsToChain: chainName,
-        };
+        if (placedTiles[tile]) {
+          placedTiles[tile] = {
+            ...placedTiles[tile],
+            belongsToChain: chainName,
+          };
+        } else {
+          // Handle the case where the tile might be newly placed
+          placedTiles[tile] = {
+            coordinate: tile,
+            isPlaced: true,
+            belongsToChain: chainName,
+          };
+        }
       }
       
       const isSafe = connectedTiles.length >= 11;
@@ -499,10 +520,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         belongsToChain: survivingChain
       };
       
+      // Find all unconnected free tiles that would be connected by this merger
+      const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
+      
       hotelChains[survivingChain] = {
         ...hotelChains[survivingChain],
-        tiles: [...hotelChains[survivingChain].tiles, coordinate]
+        tiles: [...hotelChains[survivingChain].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)]
       };
+      
+      // Mark all connected free tiles as belonging to the surviving chain
+      connectedFreeTiles.forEach(tile => {
+        if (tile !== coordinate && placedTiles[tile] && !placedTiles[tile].belongsToChain) {
+          placedTiles[tile].belongsToChain = survivingChain;
+        }
+      });
       
       let updatedState = { ...state, placedTiles, hotelChains };
       
