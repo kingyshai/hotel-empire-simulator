@@ -1,3 +1,4 @@
+
 import { 
   GameState, 
   Player, 
@@ -27,8 +28,8 @@ export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordina
   const potentialAdjacents: Coordinate[] = [
     `${col}${row - 1}` as Coordinate, // Above (same column, row - 1)
     `${col}${row + 1}` as Coordinate, // Below (same column, row + 1)
-    `${String.fromCharCode(col.charCodeAt(0) - 1)}${row}` as Coordinate, // Left (col - 1, same row)
-    `${String.fromCharCode(col.charCodeAt(0) + 1)}${row}` as Coordinate, // Right (col + 1, same row)
+    `${String.fromCharCode(col.charCodeAt(0) - 1)}${row}` as Coordinate, // Left (column - 1, same row)
+    `${String.fromCharCode(col.charCodeAt(0) + 1)}${row}` as Coordinate, // Right (column + 1, same row)
   ];
   
   return potentialAdjacents.filter(c => {
