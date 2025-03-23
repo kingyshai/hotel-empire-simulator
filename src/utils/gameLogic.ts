@@ -43,50 +43,41 @@ export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordina
 
 export const findConnectedTiles = (startCoord: Coordinate, placedTiles: Record<Coordinate, BuildingTile>): Coordinate[] => {
   const visited: Record<Coordinate, boolean> = {};
-  const connected: Coordinate[] = [startCoord]; // Include the start coordinate
+  const connected: Coordinate[] = [];
   
-  // First, check if the startCoord is already in placedTiles
-  const includeStartInSearch = !placedTiles[startCoord];
-  
-  const dfs = (coord: Coordinate) => {
-    if (visited[coord]) return;
-    
-    visited[coord] = true;
-    
-    // Only add to connected if it's not the start coordinate (already added) or if we should include it
-    if (coord !== startCoord || includeStartInSearch) {
-      connected.push(coord);
-    }
-    
-    const adjacents = getAdjacentTiles(coord, placedTiles);
-    for (const adj of adjacents) {
-      // Only traverse to tiles that don't belong to a chain already
-      if (!placedTiles[adj].belongsToChain) {
-        dfs(adj);
-      }
-    }
-  };
-  
-  // Create a temporary copy of placedTiles with the startCoord included
+  // Create a modified copy of placedTiles with the startCoord included for adjacency checking
   const tempPlacedTiles = { ...placedTiles };
   if (!tempPlacedTiles[startCoord]) {
     tempPlacedTiles[startCoord] = { coordinate: startCoord, isPlaced: true };
   }
   
-  // Start DFS from all adjacents, not from the startCoord itself
+  const dfs = (coord: Coordinate) => {
+    if (visited[coord]) return;
+    visited[coord] = true;
+    
+    // Add to connected if not already in the list
+    if (!connected.includes(coord)) {
+      connected.push(coord);
+    }
+    
+    const adjacents = getAdjacentTiles(coord, tempPlacedTiles);
+    
+    for (const adj of adjacents) {
+      // Only traverse to tiles that don't belong to a chain already
+      if (tempPlacedTiles[adj] && !tempPlacedTiles[adj].belongsToChain) {
+        dfs(adj);
+      }
+    }
+  };
+  
+  // Always include the starting coordinate
+  connected.push(startCoord);
+  
+  // Find all adjacent tiles that don't belong to a chain
   const adjacents = getAdjacentTiles(startCoord, tempPlacedTiles);
   for (const adj of adjacents) {
-    // Only include adjacents that don't belong to chains
     if (placedTiles[adj] && !placedTiles[adj].belongsToChain) {
       dfs(adj);
-    }
-  }
-  
-  // If startCoord was included in the result but shouldn't be, remove it
-  if (!includeStartInSearch) {
-    const index = connected.indexOf(startCoord);
-    if (index > 0) { // Only remove if it wasn't the first element we added
-      connected.splice(index, 1);
     }
   }
   

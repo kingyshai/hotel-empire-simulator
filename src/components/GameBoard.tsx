@@ -74,22 +74,26 @@ const GameBoard = () => {
         const adjacents = getAdjacentTiles(coordinate, placedTiles);
         const adjacentChains = findPotentialMergers(coordinate, state);
         
-        if (adjacentChains.length === 0) {
-          // Found new hotel chain
+        if (adjacentChains.length === 0 && adjacents.length > 0) {
+          // Found potential new hotel chain - connected to unattached tiles
           const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
-          setSelectedFoundingTile({
-            coordinate,
-            connectedTiles
-          });
-        } else {
-          dispatch({ 
-            type: 'PLACE_TILE', 
-            payload: { 
-              coordinate, 
-              playerId: currentPlayer.id 
-            } 
-          });
+          
+          if (connectedTiles.length > 1) {
+            setSelectedFoundingTile({
+              coordinate,
+              connectedTiles
+            });
+            return;
+          }
         }
+        
+        dispatch({ 
+          type: 'PLACE_TILE', 
+          payload: { 
+            coordinate, 
+            playerId: currentPlayer.id 
+          } 
+        });
       } else {
         toast.error("You can't place a tile here!");
       }
