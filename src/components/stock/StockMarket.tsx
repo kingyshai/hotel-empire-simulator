@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
@@ -113,16 +112,6 @@ const StockMarket: React.FC = () => {
         });
       }
     }
-    
-    // Record the purchase for the banner
-    dispatch({
-      type: 'RECORD_STOCK_PURCHASE',
-      payload: {
-        playerName: currentPlayer.name,
-        stocks: { ...stocksToBuy },
-        totalCost
-      }
-    });
     
     // Reset stocks to buy
     setStocksToBuy({

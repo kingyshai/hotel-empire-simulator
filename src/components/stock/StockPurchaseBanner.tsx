@@ -29,13 +29,15 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   
   // Safely extract stock purchase info
   const purchasedStocksList = Object.entries(purchaseInfo.stocks || {})
-    .filter(([chain, count]) => count > 0 && chain !== purchaseInfo.foundedHotel) // Filter out the founded hotel
+    .filter(([chain, count]) => count > 0)
     .map(([chain, count]) => ({
       chain: chain as HotelChainName,
-      count
+      count,
+      isFreeFounderStock: chain === purchaseInfo.foundedHotel && count === 1
     }));
   
-  const totalStocks = purchasedStocksList.reduce((sum, { count }) => sum + count, 0);
+  const totalStocks = purchasedStocksList.reduce((sum, { count, isFreeFounderStock }) => 
+    sum + (isFreeFounderStock ? 0 : count), 0);
   const hasFoundedHotel = !!purchaseInfo.foundedHotel;
   const hasPurchasedStocks = totalStocks > 0;
   
@@ -73,19 +75,27 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                 
                 {purchasedStocksList.length > 0 ? (
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {purchasedStocksList.map(({ chain, count }) => (
-                      <div
-                        key={chain}
-                        className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full"
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
-                        />
-                        <span className="capitalize">{chain}</span>
-                        <span className="font-bold">×{count}</span>
-                      </div>
-                    ))}
+                    {purchasedStocksList
+                      .filter(({ chain }) => chain !== purchaseInfo.foundedHotel || purchaseInfo.stocks[chain] > 1)
+                      .map(({ chain, count, isFreeFounderStock }) => {
+                        // If this is the founded hotel and has more than 1 stock, reduce count by 1 for display
+                        const displayCount = (chain === purchaseInfo.foundedHotel) ? count - 1 : count;
+                        if (displayCount <= 0) return null;
+                        
+                        return (
+                          <div
+                            key={chain}
+                            className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full"
+                          >
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
+                            />
+                            <span className="capitalize">{chain}</span>
+                            <span className="font-bold">×{displayCount}</span>
+                          </div>
+                        );
+                      })}
                     {purchaseInfo.totalCost > 0 && (
                       <div className="bg-white/20 px-2 py-1 rounded-full">
                         Total: ${purchaseInfo.totalCost}

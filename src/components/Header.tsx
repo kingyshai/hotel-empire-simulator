@@ -32,9 +32,27 @@ const Header: React.FC = () => {
     // Record any stock purchases that happened this turn or if a hotel was founded
     if (currentPlayer) {
       const foundedHotel = state.lastFoundedHotel;
-      const purchases: Record<HotelChainName, number> = state.lastStockPurchase?.stocks || {
+      const purchases: Record<HotelChainName, number> = {
         luxor: 0, tower: 0, american: 0, festival: 0, worldwide: 0, continental: 0, imperial: 0
       };
+      
+      // Calculate total stocks purchased this turn
+      let totalCost = 0;
+      
+      // Track purchases for each hotel chain
+      for (const chainName of Object.keys(state.hotelChains) as HotelChainName[]) {
+        const initialStocks = state.players[currentPlayerIndex].stocks[chainName] - 
+          (foundedHotel === chainName ? 1 : 0); // Account for founder stock
+          
+        const currentStocks = currentPlayer.stocks[chainName];
+        const purchasedStocks = currentStocks - initialStocks;
+        
+        if (purchasedStocks > 0) {
+          purchases[chainName] = purchasedStocks;
+          // Add to total cost (we don't have actual cost here, will be updated in the action)
+          totalCost += purchasedStocks * 100; // Placeholder value
+        }
+      }
       
       // If a hotel was founded, ensure the free stock is reflected
       if (foundedHotel) {
@@ -42,15 +60,19 @@ const Header: React.FC = () => {
       }
       
       // Show the banner for founded hotels or stock purchases
-      dispatch({ 
-        type: 'RECORD_STOCK_PURCHASE', 
-        payload: { 
-          playerName: currentPlayer.name, 
-          stocks: purchases,
-          totalCost: state.lastStockPurchase?.totalCost || 0,
-          foundedHotel: state.lastFoundedHotel
-        } 
-      });
+      const hasStockActivity = Object.values(purchases).some(count => count > 0) || foundedHotel;
+      
+      if (hasStockActivity) {
+        dispatch({ 
+          type: 'RECORD_STOCK_PURCHASE', 
+          payload: { 
+            playerName: currentPlayer.name, 
+            stocks: purchases,
+            totalCost,
+            foundedHotel: state.lastFoundedHotel
+          } 
+        });
+      }
     }
     
     dispatch({ type: 'END_TURN' });
