@@ -44,8 +44,9 @@ const GameBoard = () => {
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const tiles: Coordinate[] = [];
-    for (let row = 1; row <= 9; row++) {
-      for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+    // Changed order to have letters first (vertical) and numbers second (horizontal)
+    for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+      for (let row = 1; row <= 9; row++) {
         tiles.push(`${row}${col}` as Coordinate);
       }
     }
@@ -269,41 +270,60 @@ const GameBoard = () => {
   const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
   
   const renderGameBoard = () => (
-    <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
-      {generateAllBoardCoordinates().map((coord) => {
-        const isPlaced = !!placedTiles[coord];
-        const belongsToChain = placedTiles[coord]?.belongsToChain;
-        const isSelectable = isTilePlaceable(coord);
-        const isUnplayable = wouldCauseIllegalMerger(coord);
-        const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
-        const tileInitial = isInitialTile(coord);
-        const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
-        
-        return (
-          <motion.div
-            key={`tile-${coord}-${belongsToChain || 'none'}`}
-            className="relative aspect-square flex items-center justify-center scale-95"
-            whileHover={isSelectable ? { scale: 1.0 } : {}}
-            whileTap={isSelectable ? { scale: 0.9 } : {}}
-            onClick={() => handleTileClick(coord)}
-          >
-            <BuildingTile 
-              coordinate={coord} 
-              belongsToChain={belongsToChain}
-              isPlaced={isPlaced}
-              isSelectable={isSelectable}
-              isAvailable={isAvailable}
-              isUnplayable={isUnplayable}
-              isInitialTile={tileInitial}
-            />
-            {playerName && (
-              <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
-                {playerName}
-              </div>
-            )}
-          </motion.div>
-        );
-      })}
+    <div className="grid grid-cols-9 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
+      {/* Column Headers (Numbers 1-9) */}
+      {Array.from({length: 9}, (_, i) => i + 1).map((num) => (
+        <div key={`col-header-${num}`} className="flex items-center justify-center font-medium text-muted-foreground text-sm">
+          {num}
+        </div>
+      ))}
+      
+      {/* Row Headers (Letters A-L) and Tiles */}
+      {Array.from({length: 12}, (_, i) => String.fromCharCode(65 + i)).map((letter) => (
+        <React.Fragment key={`row-${letter}`}>
+          {/* Row Header */}
+          <div className="flex items-center justify-center font-medium text-muted-foreground text-sm">
+            {letter}
+          </div>
+          
+          {/* Actual Tiles for this row */}
+          {Array.from({length: 8}, (_, i) => i + 1).map((num) => {
+            const coord = `${num}${letter}` as Coordinate;
+            const isPlaced = !!placedTiles[coord];
+            const belongsToChain = placedTiles[coord]?.belongsToChain;
+            const isSelectable = isTilePlaceable(coord);
+            const isUnplayable = wouldCauseIllegalMerger(coord);
+            const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
+            const tileInitial = isInitialTile(coord);
+            const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
+            
+            return (
+              <motion.div
+                key={`tile-${coord}-${belongsToChain || 'none'}`}
+                className="relative aspect-square flex items-center justify-center scale-95"
+                whileHover={isSelectable ? { scale: 1.0 } : {}}
+                whileTap={isSelectable ? { scale: 0.9 } : {}}
+                onClick={() => handleTileClick(coord)}
+              >
+                <BuildingTile 
+                  coordinate={coord} 
+                  belongsToChain={belongsToChain}
+                  isPlaced={isPlaced}
+                  isSelectable={isSelectable}
+                  isAvailable={isAvailable}
+                  isUnplayable={isUnplayable}
+                  isInitialTile={tileInitial}
+                />
+                {playerName && (
+                  <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
+                    {playerName}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </React.Fragment>
+      ))}
     </div>
   );
   
