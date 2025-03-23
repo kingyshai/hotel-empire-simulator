@@ -40,6 +40,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const GAME_STORAGE_KEY = 'acquireio_saved_game';
+const MAX_HISTORY_LENGTH = 3; // Maximum number of turns to store in history
 
 const initialGameState: GameState = {
   players: [],
@@ -80,6 +81,7 @@ const initialGameState: GameState = {
   showStockPurchaseBanner: false,
   lastFoundedHotel: undefined,
   initialPlayerTurnState: null,
+  turnHistory: [],
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -157,6 +159,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         setupPhase: 'drawInitialTile',
         initialTiles: initialTiles,
         gameMode: gameMode,
+        turnHistory: [],
       };
       return newState;
     case 'SET_CURRENT_PLAYER':
@@ -227,18 +230,32 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'END_TURN':
+      const updatedHistory = [
+        ...state.turnHistory.slice(-MAX_HISTORY_LENGTH + 1), // Keep only last (MAX_HISTORY_LENGTH - 1) states
+        { ...state, turnHistory: [] } // Save current state but without turnHistory to avoid recursion
+      ];
+      
       const endTurnNextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       
       if (state.players[endTurnNextPlayerIndex].tiles.length === 0) {
         toast.info(`${state.players[endTurnNextPlayerIndex].name} has no tiles and their turn was skipped.`);
         const skipNextPlayerIndex = (endTurnNextPlayerIndex + 1) % state.players.length;
-        newState = { ...state, currentPlayerIndex: skipNextPlayerIndex, gamePhase: 'placeTile' };
+        newState = { 
+          ...state, 
+          currentPlayerIndex: skipNextPlayerIndex, 
+          gamePhase: 'placeTile',
+          turnHistory: updatedHistory
+        };
         return newState;
       }
       
       const tile = state.availableTiles.pop();
       if (!tile) {
-        newState = { ...state, gamePhase: 'buyStock' };
+        newState = { 
+          ...state, 
+          gamePhase: 'buyStock',
+          turnHistory: updatedHistory
+        };
         return newState;
       }
       
@@ -255,6 +272,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         availableTiles: state.availableTiles,
         gamePhase: 'placeTile',
         players: updatedPlayersAfterTurn,
+        turnHistory: updatedHistory,
+        initialPlayerTurnState: {
+          player: updatedPlayersAfterTurn[endTurnNextPlayerIndex]
+        }
       };
       return newState;
     case 'FOUND_HOTEL':
@@ -583,17 +604,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const isLastPlayerToDraw = updatedInitialTilesDrawTile.length >= state.players.length;
       
-      let nextPlayerIndex;
+      let drawNextPlayerIndex;
       if (isLastPlayerToDraw) {
         const sortedInitialTiles = [...updatedInitialTilesDrawTile]
           .sort((a, b) => getTileDistance(a.coordinate) - getTileDistance(b.coordinate));
         
         const firstPlayerToPlay = sortedInitialTiles[0].playerId;
-        nextPlayerIndex = state.players.findIndex(p => p.id === firstPlayerToPlay);
+        drawNextPlayerIndex = state.players.findIndex(p => p.id === firstPlayerToPlay);
         
-        toast.info(`${state.players[nextPlayerIndex].name} will go first with tile ${sortedInitialTiles[0].coordinate} (closest to 1A)`);
+        toast.info(`${state.players[drawNextPlayerIndex].name} will go first with tile ${sortedInitialTiles[0].coordinate} (closest to 1A)`);
       } else {
-        nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        drawNextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       }
       
       newState = {
@@ -602,11 +623,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         availableTiles: state.availableTiles,
         placedTiles: updatedPlacedTiles,
         initialTiles: updatedInitialTilesDrawTile,
-        currentPlayerIndex: nextPlayerIndex,
+        currentPlayerIndex: drawNextPlayerIndex,
         setupPhase: isLastPlayerToDraw ? 'dealTiles' : 'drawInitialTile'
       };
       return newState;
-      
     case 'DEAL_STARTING_TILES':
       const updatedPlayersDealTiles = state.players.map(player => {
         const newTiles = [];
@@ -630,7 +650,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         },
       };
       return newState;
-      
     case 'SAVE_GAME':
       saveGameState(state);
       return state;
@@ -653,6 +672,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'ACKNOWLEDGE_STOCK_PURCHASE':
       newState = { ...state, showStockPurchaseBanner: false, lastStockPurchase: null };
       return newState;
+    case 'UNDO_TURN':
+      if (state.turnHistory.length === 0) {
+        toast.error("No previous turns to undo");
+        return state;
+      }
+      
+      const previousTurn = state.turnHistory[state.turnHistory.length - 1];
+      
+      const remainingHistory = state.turnHistory.slice(0, -1);
+      
+      toast.success(`Reverted to ${previousTurn.players[previousTurn.currentPlayerIndex].name}'s turn`);
+      
+      return {
+        ...previousTurn,
+        turnHistory: remainingHistory
+      };
+      
     default:
       return state;
   }
@@ -693,3 +729,4 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useGame = () => useContext(GameContext);
+

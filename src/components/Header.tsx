@@ -2,17 +2,18 @@
 import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
-import { Save, ArrowRight } from 'lucide-react';
+import { Save, ArrowRight, Undo } from 'lucide-react';
 import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
 import { GamePhase, HotelChainName } from '@/types/game';
 
 const Header: React.FC = () => {
   const { state, dispatch } = useGame();
-  const { gamePhase, players, currentPlayerIndex } = state;
+  const { gamePhase, players, currentPlayerIndex, turnHistory } = state;
   
   const currentPlayer = players.length > 0 ? players[currentPlayerIndex] : null;
   const canEndGame = shouldEndGame(state);
+  const canUndo = turnHistory.length > 0 && gamePhase !== 'setup' && !state.gameEnded;
   
   const handleSaveGame = () => {
     dispatch({ type: 'SAVE_GAME' });
@@ -21,6 +22,10 @@ const Header: React.FC = () => {
   
   const handleEndGame = () => {
     dispatch({ type: 'END_GAME_MANUALLY' });
+  };
+  
+  const handleUndoTurn = () => {
+    dispatch({ type: 'UNDO_TURN' });
   };
   
   const handleEndTurn = () => {
@@ -139,6 +144,18 @@ const Header: React.FC = () => {
           >
             <Save size={16} />
             Save
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleUndoTurn}
+            disabled={!canUndo}
+            size="sm"
+            className="whitespace-nowrap flex items-center gap-1"
+            title={!canUndo ? "No previous turns to undo" : "Undo the last turn"}
+          >
+            <Undo size={16} />
+            Undo
           </Button>
           
           <Button 

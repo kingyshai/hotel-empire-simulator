@@ -75,7 +75,8 @@ export type Action =
   | { type: 'HIDE_WINNER_BANNER' }
   | { type: 'END_GAME_MANUALLY' }
   | { type: 'RECORD_STOCK_PURCHASE'; payload: { playerName: string; stocks: Record<HotelChainName, number>; totalCost: number; foundedHotel?: HotelChainName } }
-  | { type: 'ACKNOWLEDGE_STOCK_PURCHASE' };
+  | { type: 'ACKNOWLEDGE_STOCK_PURCHASE' }
+  | { type: 'UNDO_TURN' };
 
 export interface GameState {
   players: Player[];
@@ -107,4 +108,5 @@ export interface GameState {
   initialPlayerTurnState?: {
     player: Player;
   } | null;
+  turnHistory: GameState[];
 }
