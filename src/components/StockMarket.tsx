@@ -5,6 +5,7 @@ import { HotelChainName } from '@/types/game';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
+import { calculateStockPrice } from '@/utils/gameLogic';
 
 const StockMarket: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -25,17 +26,6 @@ const StockMarket: React.FC = () => {
     'luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'
   ];
   
-  const calculateStockPrice = (chainName: HotelChainName) => {
-    const chain = hotelChains[chainName];
-    if (!chain.isActive) return 0;
-    
-    // Simplified price calculation based on chain size
-    const basePrice = 100;
-    const size = chain.tiles.length;
-    
-    return basePrice * size;
-  };
-
   const incrementStock = (chainName: HotelChainName) => {
     const chain = hotelChains[chainName];
     if (!chain.isActive) return;
@@ -48,6 +38,12 @@ const StockMarket: React.FC = () => {
     
     if (stockMarket[chainName] <= 0) {
       toast.error("No more stocks available for this chain");
+      return;
+    }
+    
+    const price = calculateStockPrice(chainName, chain.tiles.length).buy;
+    if (currentPlayer.money < price) {
+      toast.error("You don't have enough money for this stock");
       return;
     }
     
@@ -78,7 +74,7 @@ const StockMarket: React.FC = () => {
     // Calculate total cost and check if player can afford it
     for (const chainName of chainNames) {
       if (stocksToBuy[chainName] > 0) {
-        const price = calculateStockPrice(chainName);
+        const price = calculateStockPrice(chainName, hotelChains[chainName].tiles.length).buy;
         totalCost += price * stocksToBuy[chainName];
       }
     }
@@ -119,7 +115,8 @@ const StockMarket: React.FC = () => {
   const totalStocksBought = Object.values(stocksToBuy).reduce((sum, count) => sum + count, 0);
   const totalCost = chainNames.reduce((sum, chainName) => {
     if (stocksToBuy[chainName] > 0) {
-      return sum + (calculateStockPrice(chainName) * stocksToBuy[chainName]);
+      const price = calculateStockPrice(chainName, hotelChains[chainName].tiles.length).buy;
+      return sum + (price * stocksToBuy[chainName]);
     }
     return sum;
   }, 0);
@@ -155,7 +152,7 @@ const StockMarket: React.FC = () => {
             {chainNames.map((chainName) => {
               const chain = hotelChains[chainName];
               const available = stockMarket[chainName];
-              const price = calculateStockPrice(chainName);
+              const price = chain.isActive ? calculateStockPrice(chainName, chain.tiles.length).buy : 0;
               
               return (
                 <div 
@@ -177,10 +174,13 @@ const StockMarket: React.FC = () => {
               <div className="grid grid-cols-7 gap-2">
                 {chainNames.map((chainName) => {
                   const chain = hotelChains[chainName];
-                  const disableIncrement = !chain.isActive || 
+                  const price = chain.isActive ? calculateStockPrice(chainName, chain.tiles.length).buy : 0;
+                  
+                  const disableIncrement = 
+                    !chain.isActive || 
                     stockMarket[chainName] === 0 || 
                     totalStocksBought >= 3 ||
-                    calculateStockPrice(chainName) > currentPlayer?.money;
+                    currentPlayer?.money < price;
                   
                   return (
                     <div key={chainName} className="flex flex-col items-center">

@@ -3,6 +3,7 @@ import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { motion } from 'framer-motion';
+import { calculateStockPrice } from '@/utils/gameLogic';
 
 interface HotelChainProps {
   chainName: HotelChainName;
@@ -14,18 +15,9 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
   
   const chain = hotelChains[chainName];
   
-  // Calculate stock value based on chain size
-  const calculateStockPrice = () => {
-    if (!chain.isActive) return 0;
-    
-    // Simplified price calculation
-    const basePrice = 100;
-    const size = chain.tiles.length;
-    
-    return basePrice * size;
-  };
-  
-  const price = calculateStockPrice();
+  const price = chain.isActive 
+    ? calculateStockPrice(chainName, chain.tiles.length).buy 
+    : 0;
   
   return (
     <motion.div 

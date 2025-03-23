@@ -1,4 +1,3 @@
-
 import { 
   GameState, 
   Player, 
@@ -90,30 +89,56 @@ export const findPotentialMergers = (coord: Coordinate, state: GameState): Hotel
 };
 
 export const calculateStockPrice = (chainName: HotelChainName, chainSize: number): { buy: number, sell: number } => {
-  // Base prices per chain (these would typically vary by chain)
-  const basePrices: Record<HotelChainName, number> = {
-    luxor: 200,
-    tower: 200,
-    american: 300,
-    festival: 300,
-    worldwide: 400,
-    continental: 400,
-    imperial: 500
-  };
+  // Base price calculation based on chain type and size
+  let basePrice = 0;
   
-  const basePrice = basePrices[chainName];
+  // Determine tier based on chain name
+  const tier = getChainTier(chainName);
   
-  // Multiplier based on chain size
-  let multiplier = 1;
+  // Calculate base price based on tiles
+  if (chainSize >= 41) {
+    basePrice = 1000;
+  } else if (chainSize >= 31) {
+    basePrice = 900;
+  } else if (chainSize >= 21) {
+    basePrice = 800;
+  } else if (chainSize >= 11) {
+    basePrice = 700;
+  } else if (chainSize >= 6) {
+    basePrice = 600;
+  } else if (chainSize === 5) {
+    basePrice = 500;
+  } else if (chainSize === 4) {
+    basePrice = 400;
+  } else if (chainSize === 3) {
+    basePrice = 300;
+  } else if (chainSize === 2) {
+    basePrice = 200;
+  } else {
+    basePrice = 0; // Inactive chains
+  }
   
-  if (chainSize >= 11) multiplier = 10;
-  else if (chainSize >= 6) multiplier = 5;
-  else if (chainSize >= 3) multiplier = 2;
+  // Apply tier modifiers
+  if (tier === 'medium') {
+    basePrice += 100;
+  } else if (tier === 'expensive') {
+    basePrice += 200;
+  }
   
   return {
-    buy: basePrice * multiplier,
-    sell: Math.floor(basePrice * multiplier * 0.5),
+    buy: basePrice,
+    sell: Math.floor(basePrice * 0.5),
   };
+};
+
+const getChainTier = (chainName: HotelChainName): 'cheap' | 'medium' | 'expensive' => {
+  if (chainName === 'luxor' || chainName === 'tower') {
+    return 'cheap';
+  } else if (chainName === 'american' || chainName === 'festival' || chainName === 'worldwide') {
+    return 'medium';
+  } else {
+    return 'expensive'; // Continental and Imperial
+  }
 };
 
 export const calculateStockholderBonus = (
