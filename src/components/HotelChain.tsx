@@ -3,7 +3,7 @@ import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { motion } from 'framer-motion';
-import { calculateStockPrice } from '@/utils/gameLogic';
+import { calculateStockPrice, calculateStockholderBonus } from '@/utils/gameLogic';
 
 interface HotelChainProps {
   chainName: HotelChainName;
@@ -11,13 +11,21 @@ interface HotelChainProps {
 
 const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
   const { state } = useGame();
-  const { hotelChains } = state;
+  const { hotelChains, gameMode } = state;
   
   const chain = hotelChains[chainName];
   
   const price = chain.isActive 
     ? calculateStockPrice(chainName, chain.tiles.length).buy 
     : 0;
+  
+  // Calculate stockholder bonuses
+  const bonuses = chain.isActive
+    ? calculateStockholderBonus(chainName, chain.tiles.length, gameMode)
+    : { primary: 0, secondary: 0, tertiary: 0 };
+  
+  // Determine if chain is safe (11 or more tiles)
+  const isSafe = chain.tiles.length >= 11;
   
   return (
     <motion.div 
@@ -37,7 +45,7 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
         />
         <h3 className="font-medium capitalize">{chainName}</h3>
         
-        {chain.isSafe && (
+        {isSafe && (
           <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">
             Safe
           </span>
@@ -57,10 +65,31 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
         </div>
         
         {chain.isActive && (
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Stock Price</span>
-            <span className="font-medium text-sm">${price}</span>
-          </div>
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Stock Price</span>
+              <span className="font-medium text-sm">${price}</span>
+            </div>
+            
+            <div className="space-y-1 mt-2 pt-2 border-t border-border/30">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Primary Bonus</span>
+                <span className="font-medium text-sm">${bonuses.primary}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Secondary Bonus</span>
+                <span className="font-medium text-sm">${bonuses.secondary}</span>
+              </div>
+              
+              {gameMode === 'tycoon' && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Tertiary Bonus</span>
+                  <span className="font-medium text-sm">${bonuses.tertiary}</span>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </motion.div>

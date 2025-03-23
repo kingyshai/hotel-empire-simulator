@@ -175,10 +175,11 @@ const StockMarket: React.FC = () => {
                 {chainNames.map((chainName) => {
                   const chain = hotelChains[chainName];
                   const price = chain.isActive ? calculateStockPrice(chainName, chain.tiles.length).buy : 0;
+                  const available = stockMarket[chainName];
                   
                   const disableIncrement = 
                     !chain.isActive || 
-                    stockMarket[chainName] === 0 || 
+                    available === 0 || 
                     totalStocksBought >= 3 ||
                     currentPlayer?.money < price;
                   

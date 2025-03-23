@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useReducer } from 'react';
 import { 
   GameState, 
@@ -52,7 +53,7 @@ const initialGameState: GameState = {
     continental: 25,
     imperial: 25,
   },
-  gameMode: 'tycoon',
+  gameMode: 'classic', // Changed default from 'tycoon' to 'classic'
   gamePhase: 'setup',
   setupPhase: 'initial',
   availableHeadquarters: ['luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'],
