@@ -4,9 +4,6 @@ import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { toast } from '@/utils/toast';
 import { calculateStockPrice } from '@/utils/gameLogic';
-import StockHeader from './StockHeader';
-import ChainLabels from './ChainLabels';
-import AvailableStocks from './AvailableStocks';
 import StockBuyingInterface from './StockBuyingInterface';
 
 const StockMarket: React.FC = () => {
@@ -139,46 +136,21 @@ const StockMarket: React.FC = () => {
   const canAfford = currentPlayer?.money >= totalCost;
   
   return (
-    <div className="glass-panel rounded-xl overflow-hidden">
-      <StockHeader 
-        hideAvailableStocks={hideAvailableStocks}
-        setHideAvailableStocks={setHideAvailableStocks}
-      />
-      
-      <div className="p-4">
-        <ChainLabels 
-          chainNames={chainNames} 
-          hotelChains={hotelChains} 
-        />
-        
-        <div className="space-y-4">
-          {!hideAvailableStocks && (
-            <AvailableStocks
-              chainNames={chainNames}
-              hotelChains={hotelChains}
-              stockMarket={stockMarket}
-              hideAvailableStocks={hideAvailableStocks}
-            />
-          )}
-          
-          {gamePhase === 'buyStock' && (
-            <StockBuyingInterface
-              chainNames={chainNames}
-              hotelChains={hotelChains}
-              stockMarket={stockMarket}
-              stocksToBuy={stocksToBuy}
-              currentPlayer={currentPlayer}
-              incrementStock={incrementStock}
-              decrementStock={decrementStock}
-              handleBuyStocks={handleBuyStocks}
-              totalStocksBought={totalStocksBought}
-              totalCost={totalCost}
-              canAfford={canAfford}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <StockBuyingInterface
+      chainNames={chainNames}
+      hotelChains={hotelChains}
+      stockMarket={stockMarket}
+      stocksToBuy={stocksToBuy}
+      currentPlayer={currentPlayer}
+      incrementStock={incrementStock}
+      decrementStock={decrementStock}
+      handleBuyStocks={handleBuyStocks}
+      totalStocksBought={totalStocksBought}
+      totalCost={totalCost}
+      canAfford={canAfford}
+      hideAvailableStocks={hideAvailableStocks}
+      setHideAvailableStocks={setHideAvailableStocks}
+    />
   );
 };
 
