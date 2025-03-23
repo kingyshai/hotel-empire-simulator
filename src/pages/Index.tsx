@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { GameProvider, useGame } from '@/context/GameContext';
 import Header from '@/components/Header';
 import GameBoard from '@/components/GameBoard';
 import PlayerInfo from '@/components/PlayerInfo';
 import StockMarket from '@/components/stock/StockMarket';
-import HotelChain from '@/components/HotelChain';
 import SetupScreen from '@/components/SetupScreen';
 import WinnerBanner from '@/components/WinnerBanner';
 import MergerStockOptions from '@/components/MergerStockOptions';
@@ -135,18 +135,6 @@ const GameContent = () => {
           {gamePhase === 'setup' && (
             <span className="ml-2 text-xs">({state.setupPhase})</span>
           )}
-        </div>
-        
-        <div className="glass-panel rounded-xl overflow-hidden">
-          <div className="p-3 bg-secondary/50 border-b border-border/50">
-            <h2 className="text-sm font-medium">Hotel Chains</h2>
-          </div>
-          
-          <div className="p-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            {chainNames.map(chainName => (
-              <HotelChain key={chainName} chainName={chainName} />
-            ))}
-          </div>
         </div>
         
         <div className="glass-panel rounded-xl overflow-hidden">
