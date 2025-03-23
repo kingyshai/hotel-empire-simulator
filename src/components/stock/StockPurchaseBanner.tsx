@@ -40,6 +40,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
     sum + (isFreeFounderStock ? 0 : count), 0);
   const hasFoundedHotel = !!purchaseInfo.foundedHotel;
   const hasPurchasedStocks = totalStocks > 0;
+  const onlyReceivedFounderStock = hasFoundedHotel && !hasPurchasedStocks;
   
   return (
     <AnimatePresence>
@@ -59,12 +60,13 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold">
                 <span className="text-blue-900">{purchaseInfo.playerName}</span> 
-                {hasFoundedHotel
-                  ? ` founded ${purchaseInfo.foundedHotel} hotel chain` 
-                  : (hasPurchasedStocks 
-                    ? " purchased stocks" 
-                    : " ended turn without purchasing stocks")}
-                {hasFoundedHotel && hasPurchasedStocks ? " and purchased additional stocks!" : "!"}
+                {hasFoundedHotel && hasPurchasedStocks
+                  ? " founded " + purchaseInfo.foundedHotel + " hotel chain and purchased additional stocks!" 
+                  : hasFoundedHotel && !hasPurchasedStocks
+                    ? " founded " + purchaseInfo.foundedHotel + " hotel chain and received free founder stock!"
+                    : hasPurchasedStocks 
+                      ? " purchased stocks!" 
+                      : " ended turn without purchasing any stocks!"}
               </h3>
               <div className="text-sm">
                 {hasFoundedHotel && (
@@ -73,7 +75,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   </div>
                 )}
                 
-                {purchasedStocksList.length > 0 ? (
+                {purchasedStocksList.length > 0 && !onlyReceivedFounderStock ? (
                   <div className="flex flex-wrap gap-2 mt-1">
                     {purchasedStocksList
                       .filter(({ chain, count }) => 
@@ -106,7 +108,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                     )}
                   </div>
                 ) : (
-                  !hasFoundedHotel && <span className="mt-1 inline-block">No stocks purchased</span>
+                  !hasFoundedHotel && <span className="mt-1 inline-block">No stocks purchased during this turn</span>
                 )}
               </div>
             </div>
