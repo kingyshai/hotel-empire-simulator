@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
 import { motion } from 'framer-motion';
 import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, isTileBurned } from '@/utils/gameLogic';
+import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, isTileBurned, getTileDistance } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 import { toast } from '@/utils/toast';
@@ -308,7 +309,7 @@ const GameBoard = () => {
         
         <div className="p-6 text-center">
           <p className="mb-4 text-lg">
-            <span className="font-medium">{currentPlayerName}</span>, click the button below to draw your initial tile
+            <span className="font-medium">{currentPlayer.name}</span>, click the button below to draw your initial tile
           </p>
           
           <Button 
@@ -318,6 +319,27 @@ const GameBoard = () => {
           >
             Draw Initial Tile
           </Button>
+          
+          {initialTiles.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-md font-medium mb-2">Initial Tiles Drawn:</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {initialTiles.map((tileInfo, index) => {
+                  const player = players.find(p => p.id === tileInfo.playerId);
+                  const distance = getTileDistance(tileInfo.coordinate);
+                  return (
+                    <div key={index} className="px-3 py-2 bg-secondary/30 rounded-md">
+                      <span className="font-medium">{player?.name}</span>: {tileInfo.coordinate}
+                      <span className="text-xs ml-2 text-muted-foreground">(Distance from 1A: {distance})</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                The player closest to 1A will go first. Note: Row position is more important than column (9A is closer to 1A than 1B).
+              </p>
+            </div>
+          )}
           
           {renderGameBoard()}
           

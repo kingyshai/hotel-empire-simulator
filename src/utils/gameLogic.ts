@@ -423,3 +423,19 @@ export const endGame = (state: GameState): GameState => {
     winners: winners.length > 1 ? winners : undefined
   };
 };
+
+/**
+ * Calculates the distance from a tile coordinate to 1A
+ * Used for determining initial player order
+ * Lower number = closer to 1A
+ */
+export const getTileDistance = (coordinate: Coordinate): number => {
+  const row = parseInt(coordinate.match(/^\d+/)?.[0] || '1');
+  const colChar = coordinate.match(/[A-Z]$/)?.[0] || 'A';
+  const col = colChar.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+  
+  // Manhattan distance from 1A (row 1, col A)
+  // We prioritize row distance over column distance
+  // A tile at row 9 col A (9A) is closer to 1A than a tile at row 1 col B (1B)
+  return (row - 1) + (col - 1) * 100;
+};

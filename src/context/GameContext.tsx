@@ -16,7 +16,8 @@ import {
   getAdjacentTiles, 
   findPotentialMergers,
   findConnectedTiles,
-  calculateStockPrice
+  calculateStockPrice,
+  getTileDistance
 } from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
@@ -146,14 +147,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const shuffledTiles = shuffleArray(state.tilePool);
       const initialTiles = [];
-      
-      for (let i = 0; i < playerCount; i++) {
-        const tile = shuffledTiles.pop();
-        if (tile) {
-          initialPlayers[i].tiles.push(tile);
-          initialTiles.push({ playerId: i + 1, coordinate: tile });
-        }
-      }
       
       newState = {
         ...state,
@@ -576,31 +569,48 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const tileDrawTile = state.availableTiles.pop();
       if (!tileDrawTile) return state;
       
-      const updatedPlayersDrawTile = state.players.map(p =>
-        p.id === playerIdDrawTile ? { ...p, tiles: [...p.tiles, tileDrawTile] } : p
+      const updatedPlayersDrawTile = state.players.map(p => 
+        p.id === playerIdDrawTile ? { ...p, tiles: [] } : p
       );
+      
+      const updatedPlacedTiles = {
+        ...state.placedTiles,
+        [tileDrawTile]: { coordinate: tileDrawTile, isPlaced: true },
+      };
       
       const updatedInitialTilesDrawTile = [...state.initialTiles];
       updatedInitialTilesDrawTile.push({ playerId: playerIdDrawTile, coordinate: tileDrawTile });
       
-      const drawNextPlayerIndex = playerIdDrawTile < state.players.length ? playerIdDrawTile : 0;
-      const nextPlayerIdToPlay = drawNextPlayerIndex === state.players.length - 1 ? 1 : drawNextPlayerIndex + 1;
+      const isLastPlayerToDraw = updatedInitialTilesDrawTile.length >= state.players.length;
       
-      const allPlayersDrawn = updatedInitialTilesDrawTile.length >= state.players.length;
+      let nextPlayerIndex;
+      if (isLastPlayerToDraw) {
+        const sortedInitialTiles = [...updatedInitialTilesDrawTile]
+          .sort((a, b) => getTileDistance(a.coordinate) - getTileDistance(b.coordinate));
+        
+        const firstPlayerToPlay = sortedInitialTiles[0].playerId;
+        nextPlayerIndex = state.players.findIndex(p => p.id === firstPlayerToPlay);
+        
+        toast.info(`${state.players[nextPlayerIndex].name} will go first with tile ${sortedInitialTiles[0].coordinate} (closest to 1A)`);
+      } else {
+        nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+      }
       
       newState = {
         ...state,
         players: updatedPlayersDrawTile,
         availableTiles: state.availableTiles,
+        placedTiles: updatedPlacedTiles,
         initialTiles: updatedInitialTilesDrawTile,
-        currentPlayerIndex: nextPlayerIdToPlay - 1,
-        setupPhase: allPlayersDrawn ? 'dealTiles' : 'drawInitialTile'
+        currentPlayerIndex: nextPlayerIndex,
+        setupPhase: isLastPlayerToDraw ? 'dealTiles' : 'drawInitialTile'
       };
       return newState;
+      
     case 'DEAL_STARTING_TILES':
       const updatedPlayersDealTiles = state.players.map(player => {
         const newTiles = [];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           const tile = state.availableTiles.pop();
           if (tile) {
             newTiles.push(tile);
@@ -620,6 +630,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         },
       };
       return newState;
+      
     case 'SAVE_GAME':
       saveGameState(state);
       return state;
