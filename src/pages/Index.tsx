@@ -85,7 +85,7 @@ const GameContent = () => {
               <h3 className="text-xl mb-2">It's a tie!</h3>
               <div className="space-y-2 mt-4">
                 {winners.map(player => (
-                  <div key={player.id} className="flex justify-between items-center p-2 bg-secondary/20 rounded">
+                  <div key={`winner-${player.id}`} className="flex justify-between items-center p-2 bg-secondary/20 rounded">
                     <span>{player.name}</span>
                     <span className="font-medium">${player.money}</span>
                   </div>
@@ -96,7 +96,7 @@ const GameContent = () => {
           
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
             {players.map(player => (
-              <div key={player.id} className="p-4 border border-border rounded-lg">
+              <div key={`endgame-${player.id}`} className="p-4 border border-border rounded-lg">
                 <h4 className="font-medium mb-2">{player.name}</h4>
                 <p className="text-lg font-bold">${player.money}</p>
               </div>
@@ -166,7 +166,7 @@ const GameContent = () => {
             <div className="space-y-4 p-4">
               {players.map((player, index) => (
                 <PlayerInfo 
-                  key={`player-${player.id}`} 
+                  key={`player-${player.id}-${index}`} 
                   player={player}
                   isCurrentPlayer={index === currentPlayerIndex}
                 />

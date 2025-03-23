@@ -172,7 +172,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       let sortedPlayers = [...players];
       let currentPlayerIndex = state.currentPlayerIndex;
       
-      if (initialTiles.length === players.length) {
+      // Move to the next player or complete initial tile drawing
+      if (initialTiles.length < players.length) {
+        // Move to next player for initial tile drawing
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      } else {
+        // All players have drawn initial tiles, sort by distance from origin
         const sortedInitialTiles = [...initialTiles].sort((a, b) => {
           const rowA = parseInt(a.coordinate.charAt(0));
           const colA = a.coordinate.charCodeAt(1) - 65;

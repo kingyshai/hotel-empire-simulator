@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -206,7 +207,7 @@ const GameBoard = () => {
               
               return (
                 <motion.div
-                  key={`initial-${coord}`}
+                  key={`initial-${coord}-${currentPlayerIndex}`}
                   className="relative aspect-square flex items-center justify-center"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -252,7 +253,7 @@ const GameBoard = () => {
           
           return (
             <div
-              key={`board-${coord}`}
+              key={`board-${coord}-${currentPlayerIndex}`}
               className="aspect-square w-full h-full"
               onClick={() => handleTileClick(coord)}
             >
