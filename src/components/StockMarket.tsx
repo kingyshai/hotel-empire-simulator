@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { motion } from 'framer-motion';
@@ -8,6 +8,7 @@ import { toast } from '@/utils/toast';
 import { calculateStockPrice } from '@/utils/gameLogic';
 import { Switch } from '@/components/ui/switch';
 import { EyeOff } from 'lucide-react';
+import StockBuyingInterface from './stock/StockBuyingInterface';
 
 const StockMarket: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -22,6 +23,19 @@ const StockMarket: React.FC = () => {
     imperial: 0
   });
   const [hideAvailableStocks, setHideAvailableStocks] = useState(false);
+  
+  // Reset stocks to buy when player changes
+  useEffect(() => {
+    setStocksToBuy({
+      luxor: 0,
+      tower: 0,
+      american: 0,
+      festival: 0,
+      worldwide: 0,
+      continental: 0,
+      imperial: 0
+    });
+  }, [currentPlayerIndex]);
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -186,69 +200,19 @@ const StockMarket: React.FC = () => {
           )}
           
           {gamePhase === 'buyStock' && (
-            <>
-              <div className="grid grid-cols-7 gap-2">
-                {chainNames.map((chainName) => {
-                  const chain = hotelChains[chainName];
-                  const price = chain.isActive ? calculateStockPrice(chainName, chain.tiles.length).buy : 0;
-                  const available = stockMarket[chainName];
-                  
-                  const disableIncrement = 
-                    !chain.isActive || 
-                    available === 0 || 
-                    totalStocksBought >= 3 ||
-                    currentPlayer?.money < price;
-                  
-                  return (
-                    <div key={chainName} className="flex flex-col items-center">
-                      <div className="flex items-center justify-between w-full mb-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={stocksToBuy[chainName] === 0}
-                          onClick={() => decrementStock(chainName)}
-                        >
-                          <span>-</span>
-                        </Button>
-                        
-                        <span className="mx-2 text-sm font-medium">{stocksToBuy[chainName]}</span>
-                        
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={disableIncrement}
-                          onClick={() => incrementStock(chainName)}
-                        >
-                          <span>+</span>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className="flex flex-col">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm">Total Stocks:</span>
-                  <span className="font-medium">{totalStocksBought} / 3</span>
-                </div>
-                
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm">Total Cost:</span>
-                  <span className={`font-medium ${!canAfford ? 'text-red-500' : ''}`}>${totalCost}</span>
-                </div>
-                
-                <Button 
-                  className="w-full"
-                  disabled={totalStocksBought === 0 || !canAfford}
-                  onClick={handleBuyStocks}
-                >
-                  Buy Stocks
-                </Button>
-              </div>
-            </>
+            <StockBuyingInterface
+              chainNames={chainNames}
+              hotelChains={hotelChains}
+              stockMarket={stockMarket}
+              stocksToBuy={stocksToBuy}
+              currentPlayer={currentPlayer}
+              incrementStock={incrementStock}
+              decrementStock={decrementStock}
+              handleBuyStocks={handleBuyStocks}
+              totalStocksBought={totalStocksBought}
+              totalCost={totalCost}
+              canAfford={canAfford}
+            />
           )}
         </div>
       </div>

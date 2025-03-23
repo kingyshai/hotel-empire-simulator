@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { HotelChainName } from '@/types/game';
 import { calculateStockPrice } from '@/utils/gameLogic';
-import { toast } from '@/utils/toast';
 import { PlusCircle, MinusCircle } from 'lucide-react';
 
 interface StockBuyingInterfaceProps {
@@ -54,7 +53,7 @@ const StockBuyingInterface: React.FC<StockBuyingInterfaceProps> = ({
           return (
             <div key={chainName} className="flex flex-col items-center p-2 border border-border/30 rounded-md bg-secondary/20">
               <div className="w-4 h-4 rounded-full mb-1" style={{ backgroundColor: chain.color }} />
-              <span className="text-xs capitalize mb-2">{chainName}</span>
+              <span className="text-xs capitalize mb-1">{chainName}</span>
               
               {chain.isActive && (
                 <>
