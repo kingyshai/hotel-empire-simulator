@@ -5,17 +5,17 @@ import { toast } from '@/utils/toast';
 import { motion } from 'framer-motion';
 import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { getAdjacentTiles, findPotentialMergers } from '@/utils/gameLogic';
+import { getAdjacentTiles, findPotentialMergers, findConnectedTiles } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 
 const GameBoard: React.FC = () => {
   const { state, dispatch } = useGame();
   const { placedTiles, gamePhase, setupPhase, currentPlayerIndex, players, initialTiles, availableHeadquarters } = state;
   const [tileToFoundHotel, setTileToFoundHotel] = useState<Coordinate | null>(null);
+  const [connectedTiles, setConnectedTiles] = useState<Coordinate[]>([]);
   
   const currentPlayer = players[currentPlayerIndex];
   
-  // Generate all possible coordinates on the board
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const coords: Coordinate[] = [];
     
@@ -39,16 +39,12 @@ const GameBoard: React.FC = () => {
       return;
     }
     
-    // Check if the placed tile is adjacent to any existing tiles
     const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
     
     if (adjacentTiles.length > 0) {
-      // Check if any of the adjacent tiles belong to hotel chains
       const adjacentChains = findPotentialMergers(coordinate, state);
       
       if (adjacentChains.length > 0) {
-        // Existing hotel chains are adjacent
-        // For now, just place the tile - merger logic will be handled separately
         dispatch({
           type: 'PLACE_TILE',
           payload: {
@@ -57,11 +53,27 @@ const GameBoard: React.FC = () => {
           },
         });
       } else if (adjacentTiles.length > 0 && adjacentChains.length === 0 && availableHeadquarters.length > 0) {
-        // Adjacent to tiles but not to hotel chains - opportunity to found a hotel
-        setTileToFoundHotel(coordinate);
-        toast.info("Choose a hotel chain to establish");
+        const tempPlacedTiles = { 
+          ...placedTiles, 
+          [coordinate]: { coordinate, isPlaced: true } 
+        };
+        
+        const connected = findConnectedTiles(coordinate, tempPlacedTiles);
+        
+        if (connected.length >= 2) {
+          setTileToFoundHotel(coordinate);
+          setConnectedTiles(connected);
+          toast.info("Choose a hotel chain to establish");
+        } else {
+          dispatch({
+            type: 'PLACE_TILE',
+            payload: {
+              coordinate,
+              playerId: currentPlayer.id,
+            },
+          });
+        }
       } else {
-        // Just place the tile
         dispatch({
           type: 'PLACE_TILE',
           payload: {
@@ -71,7 +83,6 @@ const GameBoard: React.FC = () => {
         });
       }
     } else {
-      // No adjacent tiles, just place it
       dispatch({
         type: 'PLACE_TILE',
         payload: {
@@ -90,10 +101,12 @@ const GameBoard: React.FC = () => {
       payload: {
         chainName,
         tileCoordinate: tileToFoundHotel,
+        connectedTiles: connectedTiles,
       },
     });
     
     setTileToFoundHotel(null);
+    setConnectedTiles([]);
   };
 
   const handleInitialTileDraw = () => {
@@ -101,9 +114,7 @@ const GameBoard: React.FC = () => {
       return;
     }
 
-    // Check if current player has already drawn an initial tile
     if (initialTiles.some(tile => tile.playerId === currentPlayer.id)) {
-      // Move to next player for initial drawing
       const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
       dispatch({ 
         type: 'SET_CURRENT_PLAYER', 
@@ -128,7 +139,6 @@ const GameBoard: React.FC = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
   };
   
-  // Generate board coordinates
   const generateBoard = () => {
     const rows = [];
     
@@ -179,7 +189,6 @@ const GameBoard: React.FC = () => {
     return rows;
   };
 
-  // Function to play for any player during testing
   const handlePlayAsAnyPlayer = (playerIndex: number) => {
     if (playerIndex === currentPlayerIndex) return;
     
@@ -191,13 +200,11 @@ const GameBoard: React.FC = () => {
     toast.info(`Now playing as ${players[playerIndex].name}`);
   };
 
-  // Render setup phase UI
   const renderSetupControls = () => {
     if (gamePhase !== 'setup') return null;
 
     switch (setupPhase) {
       case 'drawInitialTile':
-        // Check if current player has already drawn
         const hasDrawn = initialTiles.some(tile => tile.playerId === currentPlayer?.id);
         const nextPlayer = hasDrawn ? 
           players[(currentPlayerIndex + 1) % players.length] : 
@@ -239,7 +246,6 @@ const GameBoard: React.FC = () => {
     }
   };
   
-  // Render test controls for switching between players
   const renderTestControls = () => {
     if (players.length === 0) return null;
     
@@ -277,7 +283,6 @@ const GameBoard: React.FC = () => {
         {renderSetupControls()}
         {renderTestControls()}
         
-        {/* Hotel chain selector dialog */}
         {tileToFoundHotel && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">

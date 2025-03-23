@@ -1,4 +1,3 @@
-
 export type Coordinate = `${number}${string}`;
 
 export type HotelChainName = 'luxor' | 'tower' | 'american' | 'festival' | 'worldwide' | 'continental' | 'imperial';
@@ -83,7 +82,50 @@ export type GameState = {
   initialTiles: InitialTile[];
 };
 
-export type Action = {
-  type: string;
-  payload?: any;
-};
+export type Action =
+  | { type: 'SET_PLAYERS'; payload: { players: Player[] } }
+  | { type: 'SET_GAME_MODE'; payload: { gameMode: GameMode } }
+  | { type: 'DRAW_INITIAL_TILE'; payload: { playerId: number } }
+  | { type: 'DEAL_STARTING_TILES' }
+  | { 
+      type: 'START_GAME'; 
+      payload: { 
+        playerCount: number; 
+        playerNames: string[]; 
+        gameMode: GameMode;
+      } 
+    }
+  | { type: 'SET_CURRENT_PLAYER'; payload: { playerIndex: number } }
+  | { 
+      type: 'PLACE_TILE'; 
+      payload: { 
+        coordinate: Coordinate; 
+        playerId: number; 
+      } 
+    }
+  | { 
+      type: 'BUY_STOCK'; 
+      payload: { 
+        chainName: HotelChainName; 
+        playerId: number; 
+        quantity: number;
+      } 
+    }
+  | { type: 'END_TURN' }
+  | { 
+      type: 'FOUND_HOTEL'; 
+      payload: { 
+        chainName: HotelChainName; 
+        tileCoordinate: Coordinate;
+        connectedTiles: Coordinate[];
+      } 
+    }
+  | { type: 'END_GAME_MANUALLY' }
+  | { type: 'END_GAME' }
+  | { 
+      type: 'ADD_TILE_TO_PLAYER_HAND'; 
+      payload: { 
+        playerId: number; 
+        coordinate: Coordinate;
+      } 
+    };

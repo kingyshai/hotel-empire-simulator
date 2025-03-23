@@ -13,7 +13,8 @@ import {
   shouldEndGame, 
   endGame, 
   getAdjacentTiles, 
-  findPotentialMergers 
+  findPotentialMergers,
+  findConnectedTiles 
 } from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
@@ -257,25 +258,25 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         
         placedTiles[coordinate].belongsToChain = chainName;
         
-        const players = [...state.players];
-        players[playerIndex] = player;
+        const updatedPlayers = [...state.players];
+        updatedPlayers[playerIndex] = player;
         
         return {
           ...state,
           hotelChains,
           placedTiles,
-          players,
+          players: updatedPlayers,
           gamePhase: 'buyStock',
         };
       }
       
-      const players = [...state.players];
-      players[playerIndex] = player;
+      const updatedPlayers = [...state.players];
+      updatedPlayers[playerIndex] = player;
       
       return {
         ...state,
         placedTiles,
-        players,
+        players: updatedPlayers,
         gamePhase: 'buyStock',
       };
     }
@@ -310,12 +311,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const stockMarket = { ...state.stockMarket };
       stockMarket[chainName] -= quantity;
       
-      const players = [...state.players];
-      players[playerIndex] = player;
+      const updatedPlayers = [...state.players];
+      updatedPlayers[playerIndex] = player;
       
       return {
         ...state,
-        players,
+        players: updatedPlayers,
         stockMarket,
       };
     }
@@ -335,23 +336,28 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         player.tiles.push(coordinate);
       }
       
-      const players = [...state.players];
-      players[state.currentPlayerIndex] = player;
+      const updatedPlayers = [...state.players];
+      updatedPlayers[state.currentPlayerIndex] = player;
       
       return {
         ...state,
         currentPlayerIndex: nextPlayerIndex,
-        players,
+        players: updatedPlayers,
         tilePool,
         gamePhase: 'placeTile',
       };
     }
     
     case 'FOUND_HOTEL': {
-      const { chainName, tileCoordinate } = action.payload;
+      const { chainName, tileCoordinate, connectedTiles } = action.payload;
       
       if (!state.availableHeadquarters.includes(chainName)) {
         toast.error(`${chainName} headquarters is not available!`);
+        return state;
+      }
+      
+      if (!connectedTiles || connectedTiles.length < 2) {
+        toast.error("You need at least 2 connected tiles to found a hotel!");
         return state;
       }
       
@@ -359,7 +365,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       hotelChains[chainName] = {
         ...hotelChains[chainName],
         isActive: true,
-        tiles: [...hotelChains[chainName].tiles, tileCoordinate],
+        tiles: connectedTiles,
       };
       
       const availableHeadquarters = state.availableHeadquarters.filter(hq => hq !== chainName);
@@ -370,22 +376,29 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const stockMarket = { ...state.stockMarket };
       stockMarket[chainName] -= 1;
       
-      const players = [...state.players];
-      players[state.currentPlayerIndex] = player;
+      const updatedPlayers = [...state.players];
+      updatedPlayers[state.currentPlayerIndex] = player;
       
       const placedTiles = { ...state.placedTiles };
-      placedTiles[tileCoordinate] = {
-        ...placedTiles[tileCoordinate],
-        belongsToChain: chainName,
-      };
       
-      toast.success(`Founded ${chainName} hotel chain! Received 1 free stock.`);
+      for (const tile of connectedTiles) {
+        placedTiles[tile] = {
+          ...placedTiles[tile],
+          belongsToChain: chainName,
+        };
+      }
+      
+      const isSafe = connectedTiles.length >= 11;
+      
+      hotelChains[chainName].isSafe = isSafe;
+      
+      toast.success(`Founded ${chainName} hotel chain with ${connectedTiles.length} tiles! Received 1 free stock.`);
       
       return {
         ...state,
         hotelChains,
         availableHeadquarters,
-        players,
+        players: updatedPlayers,
         stockMarket,
         placedTiles,
         gamePhase: 'buyStock',
