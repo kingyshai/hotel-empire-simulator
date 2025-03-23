@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -103,8 +102,6 @@ const GameBoard = () => {
             });
             return;
           } else if (connectedTiles.length > 1 && availableHeadquarters.length === 0) {
-            // Special case: If connected tiles would form a new chain but no headquarters are available,
-            // just place the tile and continue without creating a hotel chain
             toast.info("No hotel chains available to found. Placing tile as-is.");
             dispatch({ 
               type: 'PLACE_TILE', 
@@ -242,6 +239,8 @@ const GameBoard = () => {
   };
 
   const getInitialTilePlayerName = (coordinate: Coordinate): string | undefined => {
+    if (gamePhase !== 'setup') return undefined;
+    
     const initialTile = initialTiles.find(tile => tile.coordinate === coordinate);
     if (!initialTile) return undefined;
     
