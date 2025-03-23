@@ -24,9 +24,11 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   const { currentPlayerIndex, players } = state;
   const currentPlayer = players[currentPlayerIndex];
   
+  // Early return if purchaseInfo is null
   if (!purchaseInfo) return null;
   
-  const purchasedStocksList = Object.entries(purchaseInfo.stocks)
+  // Safely extract stock purchase info
+  const purchasedStocksList = Object.entries(purchaseInfo.stocks || {})
     .filter(([_, count]) => count > 0)
     .map(([chain, count]) => ({
       chain: chain as HotelChainName,
@@ -68,7 +70,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                       >
                         <div
                           className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: state.hotelChains[chain].color }}
+                          style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
                         />
                         <span className="capitalize">{chain}</span>
                         <span className="font-bold">×{count}</span>
