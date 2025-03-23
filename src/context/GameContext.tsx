@@ -22,9 +22,9 @@ import {
 
 const generateBoard = (): Coordinate[] => {
   const tiles: Coordinate[] = [];
-  for (let row = 1; row <= 12; row++) {
-    for (let col = 'A'; col <= 'I'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-      tiles.push(`${row}${col}` as Coordinate);
+  for (let col = 'A'; col <= 'I'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+    for (let row = 1; row <= 12; row++) {
+      tiles.push(`${col}${row}` as Coordinate);
     }
   }
   return tiles;
@@ -729,4 +729,3 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useGame = () => useContext(GameContext);
-

@@ -1,5 +1,5 @@
 
-export type Coordinate = `${number}${string}`;
+export type Coordinate = `${string}${number}`;
 
 export interface Player {
   id: number;

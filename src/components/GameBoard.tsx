@@ -45,9 +45,9 @@ const GameBoard = () => {
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const tiles: Coordinate[] = [];
-    for (let row = 1; row <= 12; row++) {
-      for (let col = 'A'; col <= 'I'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
-        tiles.push(`${row}${col}` as Coordinate);
+    for (let col = 'A'; col <= 'I'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+      for (let row = 1; row <= 12; row++) {
+        tiles.push(`${col}${row}` as Coordinate);
       }
     }
     return tiles;
@@ -262,7 +262,7 @@ const GameBoard = () => {
   const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
   
   const renderGameBoard = () => (
-    <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
+    <div className="grid grid-cols-9 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
       {generateAllBoardCoordinates().map((coord) => {
         const isPlaced = !!placedTiles[coord];
         const belongsToChain = placedTiles[coord]?.belongsToChain;
@@ -330,13 +330,13 @@ const GameBoard = () => {
                   return (
                     <div key={index} className="px-3 py-2 bg-secondary/30 rounded-md">
                       <span className="font-medium">{player?.name}</span>: {tileInfo.coordinate}
-                      <span className="text-xs ml-2 text-muted-foreground">(Distance from 1A: {distance})</span>
+                      <span className="text-xs ml-2 text-muted-foreground">(Distance from A1: {distance})</span>
                     </div>
                   );
                 })}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                The player closest to 1A will go first. Note: Row position is more important than column (9A is closer to 1A than 1B).
+                The player closest to A1 will go first. Note: Column position is more important than row (A9 is closer to A1 than B1).
               </p>
             </div>
           )}
