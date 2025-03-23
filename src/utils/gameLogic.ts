@@ -8,34 +8,34 @@ import {
 } from '@/types/game';
 
 export const isAdjacent = (coord1: Coordinate, coord2: Coordinate): boolean => {
-  const row1 = parseInt(coord1.charAt(0));
-  const col1 = coord1.charAt(1);
+  const row1 = coord1.charAt(0);
+  const col1 = parseInt(coord1.substring(1));
   
-  const row2 = parseInt(coord2.charAt(0));
-  const col2 = coord2.charAt(1);
+  const row2 = coord2.charAt(0);
+  const col2 = parseInt(coord2.substring(1));
   
   return (
-    (row1 === row2 && Math.abs(col1.charCodeAt(0) - col2.charCodeAt(0)) === 1) ||
-    (col1 === col2 && Math.abs(row1 - row2) === 1)
+    (row1 === row2 && Math.abs(col1 - col2) === 1) ||
+    (col1 === col2 && Math.abs(row1.charCodeAt(0) - row2.charCodeAt(0)) === 1)
   );
 };
 
 export const getAdjacentTiles = (coord: Coordinate, placedTiles: Record<Coordinate, BuildingTile>): Coordinate[] => {
-  const row = parseInt(coord.charAt(0));
-  const col = coord.charAt(1).charCodeAt(0);
+  const row = coord.charAt(0);
+  const col = parseInt(coord.substring(1));
   
   const potentialAdjacents: Coordinate[] = [
-    `${row - 1}${String.fromCharCode(col)}` as Coordinate, // Above
-    `${row + 1}${String.fromCharCode(col)}` as Coordinate, // Below
-    `${row}${String.fromCharCode(col - 1)}` as Coordinate, // Left
-    `${row}${String.fromCharCode(col + 1)}` as Coordinate, // Right
+    `${String.fromCharCode(row.charCodeAt(0) - 1)}${col}` as Coordinate, // Above
+    `${String.fromCharCode(row.charCodeAt(0) + 1)}${col}` as Coordinate, // Below
+    `${row}${col - 1}` as Coordinate, // Left
+    `${row}${col + 1}` as Coordinate, // Right
   ];
   
   return potentialAdjacents.filter(c => {
-    const r = parseInt(c.charAt(0));
-    const c1 = c.charAt(1);
+    const r = c.charAt(0);
+    const c1 = parseInt(c.substring(1));
     
-    if (r < 1 || r > 9 || c1 < 'A' || c1 > 'L') return false;
+    if (r < 'A' || r > 'I' || c1 < 1 || c1 > 12) return false;
     
     return placedTiles[c] !== undefined;
   });
@@ -425,17 +425,15 @@ export const endGame = (state: GameState): GameState => {
 };
 
 /**
- * Calculates the distance from a tile coordinate to 1A
+ * Calculates the distance from a tile coordinate to A1
  * Used for determining initial player order
- * Lower number = closer to 1A
+ * Lower number = closer to A1
  */
 export const getTileDistance = (coordinate: Coordinate): number => {
-  const row = parseInt(coordinate.match(/^\d+/)?.[0] || '1');
-  const colChar = coordinate.match(/[A-Z]$/)?.[0] || 'A';
-  const col = colChar.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+  const row = coordinate.charAt(0).charCodeAt(0) - 'A'.charCodeAt(0);
+  const col = parseInt(coordinate.substring(1)) - 1;
   
-  // Manhattan distance from 1A (row 1, col A)
-  // We prioritize row distance over column distance
-  // A tile at row 9 col A (9A) is closer to 1A than a tile at row 1 col B (1B)
-  return (row - 1) + (col - 1) * 100;
+  // Manhattan distance from A1 (row A, col 1)
+  // Row distance is more important than column distance
+  return row * 100 + col;
 };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -45,8 +44,8 @@ const GameBoard = () => {
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const tiles: Coordinate[] = [];
-    for (let row = 1; row <= 12; row++) {
-      for (let col = 'A'; col <= 'I'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
+    for (let row = 'A'; row <= 'I'; row = String.fromCharCode(row.charCodeAt(0) + 1)) {
+      for (let col = 1; col <= 12; col++) {
         tiles.push(`${row}${col}` as Coordinate);
       }
     }
