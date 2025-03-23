@@ -79,19 +79,19 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
             } 
           : isInitialTile 
             ? {
-                backgroundColor: "#F59E0B",  // Even brighter amber-500
-                color: "#7C2D12",  // Darker amber-900 for better contrast
-                borderColor: "#D97706"  // amber-600
+                backgroundColor: "#FFC107",  // Bright yellow
+                color: "#333333",  // Dark gray for contrast
+                borderColor: "#FFA000"  // Amber for border
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
-                  backgroundColor: "#059669",  // emerald-600 - stronger color
-                  color: "#FFFFFF",  // White text for better contrast
-                  borderColor: "#10B981"  // emerald-500
+                  backgroundColor: "#333333",  // Dark gray
+                  color: "#FFFFFF",  // White text
+                  borderColor: "#555555"  // Slightly lighter gray border
                 }
               : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
                 ? {
-                    backgroundColor: "#8B5CF6",  // Full opacity purple instead of transparent
+                    backgroundColor: "#8B5CF6",  // Full opacity purple for placed tiles
                     color: "#FFFFFF",  // White text
                     borderColor: "#7C3AED"  // violet-600
                   }
@@ -107,7 +107,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
     >
       <span className={cn(
         "text-sm md:text-base font-medium z-10",
-        isInitialTile ? "text-white font-bold" : "",
+        isInitialTile ? "text-black font-bold" : "",
         isRecentlyPlaced && !isInitialTile ? "text-white font-bold" : "",
         !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "text-white font-bold" : ""
       )}>
@@ -137,7 +137,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
       
       {isRecentlyPlaced && !isInitialTile && (
-        <div className="absolute w-5 h-5 bottom-0 left-0 rounded-full bg-emerald-500 -mb-1 -ml-1 shadow-md border-2 border-emerald-600 flex items-center justify-center">
+        <div className="absolute w-5 h-5 bottom-0 left-0 rounded-full bg-gray-700 -mb-1 -ml-1 shadow-md border-2 border-gray-600 flex items-center justify-center">
           <span className="text-[10px] text-white font-bold">✓</span>
         </div>
       )}
