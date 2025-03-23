@@ -234,11 +234,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       return newState;
     case 'END_TURN':
-      let nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+      const endTurnNextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
       
-      if (state.players[nextPlayerIndex].tiles.length === 0) {
-        toast.info(`${state.players[nextPlayerIndex].name} has no tiles and their turn was skipped.`);
-        nextPlayerIndex = (nextPlayerIndex + 1) % state.players.length;
+      if (state.players[endTurnNextPlayerIndex].tiles.length === 0) {
+        toast.info(`${state.players[endTurnNextPlayerIndex].name} has no tiles and their turn was skipped.`);
+        const skipNextPlayerIndex = (endTurnNextPlayerIndex + 1) % state.players.length;
+        newState = { ...state, currentPlayerIndex: skipNextPlayerIndex, gamePhase: 'placeTile' };
+        return newState;
       }
       
       const tile = state.availableTiles.pop();
@@ -256,7 +258,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       newState = {
         ...state,
-        currentPlayerIndex: nextPlayerIndex,
+        currentPlayerIndex: endTurnNextPlayerIndex,
         availableTiles: state.availableTiles,
         gamePhase: 'placeTile',
         players: updatedPlayersAfterTurn,
@@ -581,7 +583,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedInitialTilesDrawTile = [...state.initialTiles];
       updatedInitialTilesDrawTile.push({ playerId: playerIdDrawTile, coordinate: tileDrawTile });
       
-      const nextPlayerIndex = playerIdDrawTile < state.players.length ? playerIdDrawTile : 0;
+      const drawNextPlayerIndex = playerIdDrawTile < state.players.length ? playerIdDrawTile : 0;
+      const nextPlayerIdToPlay = drawNextPlayerIndex === state.players.length - 1 ? 1 : drawNextPlayerIndex + 1;
       
       const allPlayersDrawn = updatedInitialTilesDrawTile.length >= state.players.length;
       
@@ -590,7 +593,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayersDrawTile,
         availableTiles: state.availableTiles,
         initialTiles: updatedInitialTilesDrawTile,
-        currentPlayerIndex: nextPlayerIndex,
+        currentPlayerIndex: nextPlayerIdToPlay - 1,
         setupPhase: allPlayersDrawn ? 'dealTiles' : 'drawInitialTile'
       };
       return newState;
