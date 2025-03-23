@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -68,14 +67,12 @@ const GameBoard = () => {
   };
   
   const handleTileClick = (coordinate: Coordinate) => {
-    // This function is no longer needed for the drawInitialTile phase
     if (gamePhase !== 'setup' || setupPhase !== 'drawInitialTile') {
       if (isTilePlaceable(coordinate)) {
         const adjacents = getAdjacentTiles(coordinate, placedTiles);
         const adjacentChains = findPotentialMergers(coordinate, state);
         
         if (adjacentChains.length === 0 && adjacents.length > 0) {
-          // Found potential new hotel chain - connected to unattached tiles
           const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
           
           if (connectedTiles.length > 1) {
@@ -159,22 +156,18 @@ const GameBoard = () => {
     return safeChains.length >= 2;
   };
   
-  // Check if a coordinate is an initial tile
   const isInitialTile = (coordinate: Coordinate): boolean => {
     return initialTiles.some(tile => tile.coordinate === coordinate);
   };
 
-  // Function to get the player's name who drew this initial tile
   const getInitialTilePlayerName = (coordinate: Coordinate): string | undefined => {
     const initialTile = initialTiles.find(tile => tile.coordinate === coordinate);
-    if (initialTile) {
-      const player = players.find(p => p.id === initialTile.playerId);
-      return player?.name;
-    }
-    return undefined;
+    if (!initialTile) return undefined;
+    
+    const player = players.find(p => p.id === initialTile.playerId);
+    return player?.name;
   };
   
-  // Show hotel chain selector if needed
   if (selectedFoundingTile) {
     return (
       <HotelChainSelector 
@@ -185,7 +178,6 @@ const GameBoard = () => {
     );
   }
   
-  // Special display for the initial draw phase
   if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
     return (
       <div className="glass-panel rounded-xl overflow-hidden">
@@ -207,13 +199,13 @@ const GameBoard = () => {
           </Button>
           
           <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
-            {generateAllBoardCoordinates().map((coord, index) => {
+            {generateAllBoardCoordinates().map((coord) => {
               const tileInitial = isInitialTile(coord);
               const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
               
               return (
                 <motion.div
-                  key={`draw-${coord}-${index}`}
+                  key={`draw-${coord}`}
                   className="relative aspect-square flex items-center justify-center"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}

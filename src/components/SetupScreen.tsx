@@ -15,9 +15,9 @@ const SetupScreen: React.FC = () => {
   const [gameMode, setGameMode] = useState<'classic' | 'tycoon'>(state.gameMode);
   
   const handleStartGame = () => {
-    // Validate that we have at least basic names for players
+    // Create array of filled names (or default names if not provided)
     const filledNames = playerNames.slice(0, playerCount).map((name, i) => 
-      name.trim() || `Player ${i + 1}`
+      name.trim() ? name.trim() : `Player ${i + 1}`
     );
     
     // Log the action for debugging

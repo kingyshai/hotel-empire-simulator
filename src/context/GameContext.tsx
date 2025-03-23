@@ -185,12 +185,17 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           return distanceA - distanceB;
         });
         
-        sortedPlayers = sortedInitialTiles.map(tile => 
-          players.find(p => p.id === tile.playerId)!
-        );
+        // Use player IDs from the sorted initial tiles to reorder the players
+        sortedPlayers = sortedInitialTiles.map(tile => {
+          const player = players.find(p => p.id === tile.playerId);
+          if (!player) {
+            console.error(`Player with ID ${tile.playerId} not found!`);
+            return players[0]; // Fallback
+          }
+          return player;
+        });
         
         currentPlayerIndex = 0;
-        
         newSetupPhase = 'dealTiles';
         
         toast.success(`${sortedPlayers[0].name} goes first!`);
@@ -237,13 +242,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const { playerCount, playerNames, gameMode } = action.payload;
       
+      // Ensure each player gets the correct name
       const validatedNames = playerNames.slice(0, playerCount).map((name, i) => 
         name.trim() ? name.trim() : `Player ${i + 1}`
       );
       
+      // Create players with correct names
       const players: Player[] = Array.from({ length: playerCount }, (_, i) => ({
         id: i,
-        name: validatedNames[i],
+        name: validatedNames[i], // Ensure correct name assignment
         money: 6000,
         stocks: {
           luxor: 0,
@@ -257,7 +264,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tiles: [],
       }));
       
-      console.log('Starting game with:', { playerCount, playerNames: validatedNames, gameMode });
+      console.log('Starting game with players:', players);
       
       toast.success(`Game started with ${playerCount} players!`);
       
@@ -306,7 +313,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
       
       const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
-      const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles });
+      const adjacentChains = findPotentialMergers(coordinate, state);
       
       const safeChains = adjacentChains.filter(chain => 
         state.hotelChains[chain].tiles.length >= 11
