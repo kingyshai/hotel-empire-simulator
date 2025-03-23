@@ -156,24 +156,6 @@ const StockMarket: React.FC = () => {
       </div>
       
       <div className="p-4">
-        <div className="grid grid-cols-7 gap-2 mb-3">
-          {chainNames.map((chainName) => (
-            <motion.div
-              key={chainName}
-              className="flex flex-col items-center"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 * chainNames.indexOf(chainName) }}
-            >
-              <div 
-                className="w-4 h-4 rounded-full mb-1"
-                style={{ backgroundColor: hotelChains[chainName].color }}
-              />
-              <span className="text-xs capitalize">{chainName}</span>
-            </motion.div>
-          ))}
-        </div>
-        
         <div className="grid grid-cols-7 gap-2">
           {chainNames.map((chainName) => {
             const chain = hotelChains[chainName];
@@ -192,35 +174,38 @@ const StockMarket: React.FC = () => {
                 {chain.isActive && (
                   <>
                     <div className="text-xs mb-1">${price}</div>
-                    <div className="flex items-center justify-between w-full mt-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={stocksToBuy[chainName] === 0 || gamePhase !== 'buyStock'}
-                        onClick={() => decrementStock(chainName)}
-                      >
-                        <MinusCircle size={16} />
-                      </Button>
-                      
-                      <span className="mx-1 text-sm font-bold">{stocksToBuy[chainName]}</span>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={
-                          !chain.isActive || 
-                          available === 0 || 
-                          totalStocksBought >= 3 ||
-                          currentPlayer?.money < price ||
-                          gamePhase !== 'buyStock'
-                        }
-                        onClick={() => incrementStock(chainName)}
-                      >
-                        <PlusCircle size={16} />
-                      </Button>
-                    </div>
+                    
+                    {/* Only show buying controls during the buyStock phase */}
+                    {gamePhase === 'buyStock' && (
+                      <div className="flex items-center justify-between w-full mt-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={stocksToBuy[chainName] === 0}
+                          onClick={() => decrementStock(chainName)}
+                        >
+                          <MinusCircle size={16} />
+                        </Button>
+                        
+                        <span className="mx-1 text-sm font-bold">{stocksToBuy[chainName]}</span>
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={
+                            !chain.isActive || 
+                            available === 0 || 
+                            totalStocksBought >= 3 ||
+                            currentPlayer?.money < price
+                          }
+                          onClick={() => incrementStock(chainName)}
+                        >
+                          <PlusCircle size={16} />
+                        </Button>
+                      </div>
+                    )}
                   </>
                 )}
                 
@@ -232,6 +217,7 @@ const StockMarket: React.FC = () => {
           })}
         </div>
         
+        {/* Only show the buy button and totals during the buyStock phase */}
         {gamePhase === 'buyStock' && totalStocksBought > 0 && (
           <div className="flex flex-col p-3 bg-secondary/30 rounded-md mt-4">
             <div className="flex justify-between items-center mb-2">
