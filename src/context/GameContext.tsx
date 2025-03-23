@@ -272,7 +272,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER':
+    case 'SET_CURRENT_PLAYER'
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
@@ -307,6 +307,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
       const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles });
+      
+      const safeChains = adjacentChains.filter(chain => 
+        state.hotelChains[chain].tiles.length >= 11
+      );
+      
+      if (safeChains.length >= 2) {
+        toast.error("Cannot place tile that would merge safe hotel chains!");
+        player.tiles.splice(tileIndex, 0, coordinate);
+        return {
+          ...state,
+          players: [
+            ...state.players.slice(0, playerIndex),
+            player,
+            ...state.players.slice(playerIndex + 1)
+          ]
+        };
+      }
       
       if (adjacentChains.length === 1) {
         const chainName = adjacentChains[0];
@@ -609,7 +626,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           currentMerger: {
             acquiredChain: currentMergerChain,
             survivingChain,
-            stocksHeld: currentPlayerStocks
+            stocksHeld: currentPlayerStocks,
+            playersWithStocks: updatedPlayers
+              .filter(p => p.id !== currentPlayer.id && p.stocks[currentMergerChain as HotelChainName] > 0)
+              .map(p => p.id)
           }
         };
       }
@@ -628,75 +648,110 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'HANDLE_MERGER_STOCKS': {
-      const { acquiredChain, stockOption, quantity } = action.payload;
+      const { acquiredChain, stocksToKeep, stocksToSell, stocksToTrade } = action.payload;
       
       if (!state.currentMerger) {
         return state;
       }
       
-      const { survivingChain, stocksHeld } = state.currentMerger;
+      const { survivingChain, stocksHeld, playersWithStocks } = state.currentMerger;
       const currentPlayer = { ...state.players[state.currentPlayerIndex] };
       
       // Deep copy of state to avoid mutations
       const updatedPlayers = [...state.players];
       const stockMarket = { ...state.stockMarket };
-      const acquiredChains = [...state.mergerInfo?.acquired.map(c => c.name) || []].filter(c => c !== acquiredChain);
       
-      // Handle based on selected option
-      switch (stockOption) {
-        case 'keep':
-          // Do nothing, keep the stocks
-          break;
-          
-        case 'sell':
-          // Sell all stocks at current price
-          const chain = state.hotelChains[acquiredChain];
-          const { sell } = calculateStockPrice(acquiredChain, chain.tiles.length);
-          const totalSale = sell * stocksHeld;
-          
-          currentPlayer.money += totalSale;
-          currentPlayer.stocks[acquiredChain] = 0;
-          stockMarket[acquiredChain] += stocksHeld;
-          
-          toast.success(`Sold ${stocksHeld} shares of ${acquiredChain} for $${totalSale}`);
-          break;
-          
-        case 'trade':
-          // Trade 2:1 for surviving chain stocks
-          if (quantity && quantity % 2 === 0 && quantity <= stocksHeld) {
-            const tradedStocks = Math.floor(quantity / 2);
-            
-            // Check if enough surviving chain stocks are available
-            if (stockMarket[survivingChain] < tradedStocks) {
-              toast.error(`Not enough ${survivingChain} stocks available for trade`);
-              break;
-            }
-            
-            currentPlayer.stocks[acquiredChain] -= quantity;
-            currentPlayer.stocks[survivingChain] += tradedStocks;
-            stockMarket[acquiredChain] += quantity;
-            stockMarket[survivingChain] -= tradedStocks;
-            
-            toast.success(`Traded ${quantity} shares of ${acquiredChain} for ${tradedStocks} shares of ${survivingChain}`);
-          }
-          break;
+      // Verify total adds up to stocks held
+      if (stocksToKeep + stocksToSell + stocksToTrade !== stocksHeld) {
+        toast.error("Total stocks don't match stocks held");
+        return state;
+      }
+      
+      // Verify trade count is even
+      if (stocksToTrade % 2 !== 0) {
+        toast.error("Trade amount must be even");
+        return state;
+      }
+      
+      // Handle keeping stocks
+      if (stocksToKeep > 0) {
+        // Player keeps some stocks, no market changes
+        currentPlayer.stocks[acquiredChain] = stocksToKeep;
+      } else {
+        // Player doesn't keep any stocks
+        currentPlayer.stocks[acquiredChain] = 0;
+      }
+      
+      // Handle selling stocks
+      if (stocksToSell > 0) {
+        const chain = state.hotelChains[acquiredChain];
+        const { sell } = calculateStockPrice(acquiredChain, chain.tiles.length);
+        const totalSale = sell * stocksToSell;
+        
+        currentPlayer.money += totalSale;
+        stockMarket[acquiredChain] += stocksToSell;
+        
+        toast.success(`Sold ${stocksToSell} shares of ${acquiredChain} for $${totalSale}`);
+      }
+      
+      // Handle trading stocks
+      if (stocksToTrade > 0) {
+        const tradedStocks = Math.floor(stocksToTrade / 2);
+        
+        // Check if enough surviving chain stocks are available
+        if (stockMarket[survivingChain] < tradedStocks) {
+          toast.error(`Not enough ${survivingChain} stocks available for trade`);
+          return state;
+        }
+        
+        currentPlayer.stocks[survivingChain] += tradedStocks;
+        stockMarket[survivingChain] -= tradedStocks;
+        stockMarket[acquiredChain] += stocksToTrade;
+        
+        toast.success(`Traded ${stocksToTrade} shares of ${acquiredChain} for ${tradedStocks} shares of ${survivingChain}`);
       }
       
       updatedPlayers[state.currentPlayerIndex] = currentPlayer;
       
-      // Check if there are more acquired chains to process for this player
-      const nextAcquiredChain = acquiredChains[0];
-      
-      if (nextAcquiredChain && currentPlayer.stocks[nextAcquiredChain] > 0) {
-        // Move to next acquired chain
+      // Check if there are more players with stocks to process
+      if (playersWithStocks && playersWithStocks.length > 0) {
+        const nextPlayerId = playersWithStocks[0];
+        const nextPlayerIndex = updatedPlayers.findIndex(p => p.id === nextPlayerId);
+        const nextPlayer = updatedPlayers[nextPlayerIndex];
+        const remainingPlayers = playersWithStocks.slice(1);
+        
         return {
           ...state,
           players: updatedPlayers,
           stockMarket,
+          currentPlayerIndex: nextPlayerIndex,
           currentMerger: {
-            acquiredChain: nextAcquiredChain,
+            acquiredChain,
             survivingChain,
-            stocksHeld: currentPlayer.stocks[nextAcquiredChain]
+            stocksHeld: nextPlayer.stocks[acquiredChain],
+            playersWithStocks: remainingPlayers
+          }
+        };
+      }
+      
+      // All stocks processed, move to next chain or buy stock phase
+      const allMergedChains = [...state.mergerInfo?.acquired.map(c => c.name) || []].filter(c => c !== acquiredChain);
+      const nextChain = allMergedChains[0];
+      
+      // Check if there's another chain to process
+      if (nextChain && currentPlayer.stocks[nextChain] > 0) {
+        return {
+          ...state,
+          players: updatedPlayers,
+          stockMarket,
+          currentPlayerIndex: state.currentPlayerIndex, // Reset to original merger player
+          currentMerger: {
+            acquiredChain: nextChain,
+            survivingChain,
+            stocksHeld: currentPlayer.stocks[nextChain],
+            playersWithStocks: updatedPlayers
+              .filter(p => p.id !== currentPlayer.id && p.stocks[nextChain] > 0)
+              .map(p => p.id)
           }
         };
       }
@@ -707,6 +762,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers,
         stockMarket,
         currentMerger: undefined,
+        currentPlayerIndex: state.currentPlayerIndex, // Reset to original merger player
         gamePhase: 'buyStock'
       };
     }
