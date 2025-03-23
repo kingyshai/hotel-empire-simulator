@@ -245,7 +245,7 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 aspect-[2/1] overflow-auto">
+      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 aspect-video overflow-hidden">
         {generateAllBoardCoordinates().map((coord) => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;

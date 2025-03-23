@@ -43,18 +43,7 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
       onComplete(selectedChain);
     }
   };
-
-  // Get chain color for display
-  const chainColorMap = {
-    american: 'blue',
-    worldwide: 'brown',
-    festival: 'green',
-    imperial: 'pink',
-    continental: 'turquoise',
-    luxor: 'red',
-    tower: 'yellow'
-  };
-
+  
   // Check if there's more than one largest chain
   const largestSize = sortedChains.length > 0 ? hotelChains[sortedChains[0]].tiles.length : 0;
   const equalLargestChains = sortedChains.filter(chain => 
@@ -88,13 +77,14 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
               const stockPrice = calculateStockPrice(chain, hotelChains[chain].tiles.length);
               const primaryBonus = stockPrice.buy * 10;
               const secondaryBonus = stockPrice.buy * 5;
+              const chainColor = hotelChains[chain]?.color || '#6b7280';
               
               return (
                 <div key={chain} className="flex items-center justify-between border p-3 rounded-md">
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-5 h-5 rounded-md"
-                      style={{ backgroundColor: chainColorMap[chain as keyof typeof chainColorMap] || hotelChains[chain].color }}
+                      style={{ backgroundColor: chainColor }}
                     />
                     <div className="space-y-0.5">
                       <p className="text-sm font-medium capitalize">{chain}</p>

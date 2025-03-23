@@ -130,8 +130,9 @@ const GameContent = () => {
         <MergerStockOptions />
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
-        <div className="lg:col-span-9">
+      <div className="flex flex-col gap-4 mt-4">
+        {/* Game Board - Now larger and at the top */}
+        <div className="w-full">
           <GameBoard key={`board-${currentPlayerIndex}`} />
           
           <div className="mt-4 flex justify-between items-center">
@@ -158,12 +159,14 @@ const GameContent = () => {
           </div>
         </div>
         
-        <div className="lg:col-span-3 space-y-4">
+        {/* Player Info Section - Now at the bottom */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Players */}
           <div className="glass-panel rounded-xl overflow-hidden">
             <div className="p-3 bg-secondary/50 border-b border-border/50">
               <h2 className="text-sm font-medium">Players</h2>
             </div>
-            <div className="space-y-4 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
               {players.map((player, index) => (
                 <PlayerInfo 
                   key={`player-info-${player.id}-${currentPlayerIndex}`} 
@@ -174,12 +177,13 @@ const GameContent = () => {
             </div>
           </div>
           
+          {/* Hotel Chains */}
           <div className="glass-panel rounded-xl overflow-hidden">
             <div className="p-3 bg-secondary/50 border-b border-border/50">
               <h2 className="text-sm font-medium">Hotel Chains</h2>
             </div>
             
-            <div className="p-4 grid grid-cols-1 gap-4">
+            <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {chainNames.map(chainName => (
                 <HotelChain key={chainName} chainName={chainName} />
               ))}
