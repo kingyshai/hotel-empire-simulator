@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -162,6 +161,45 @@ const GameBoard = () => {
   
   const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
   
+  const renderGameBoard = () => (
+    <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
+      {generateAllBoardCoordinates().map((coord) => {
+        const isPlaced = !!placedTiles[coord];
+        const belongsToChain = placedTiles[coord]?.belongsToChain;
+        const isSelectable = isTilePlaceable(coord);
+        const isUnplayable = wouldCauseIllegalMerger(coord);
+        const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
+        const tileInitial = isInitialTile(coord);
+        const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
+        
+        return (
+          <motion.div
+            key={`board-${coord}-${currentPlayerIndex}`}
+            className="relative aspect-square flex items-center justify-center scale-95"
+            whileHover={isSelectable ? { scale: 1.0 } : {}}
+            whileTap={isSelectable ? { scale: 0.9 } : {}}
+            onClick={() => handleTileClick(coord)}
+          >
+            <BuildingTile 
+              coordinate={coord} 
+              belongsToChain={belongsToChain}
+              isPlaced={isPlaced}
+              isSelectable={isSelectable}
+              isAvailable={isAvailable}
+              isUnplayable={isUnplayable}
+              isInitialTile={tileInitial}
+            />
+            {playerName && (
+              <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
+                {playerName}
+              </div>
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+  
   if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
     return (
       <div className="glass-panel rounded-xl overflow-hidden">
@@ -182,33 +220,7 @@ const GameBoard = () => {
             Draw Initial Tile
           </Button>
           
-          <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
-            {generateAllBoardCoordinates().map((coord) => {
-              const tileInitial = isInitialTile(coord);
-              const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
-              
-              return (
-                <motion.div
-                  key={`initial-tile-${coord}-${currentPlayerIndex}`}
-                  className="relative aspect-square flex items-center justify-center scale-95"
-                  whileHover={{ scale: 1.0 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <BuildingTile
-                    coordinate={coord}
-                    isSelectable={false}
-                    isAvailable={false}
-                    isInitialTile={tileInitial}
-                  />
-                  {playerName && (
-                    <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
-                      {playerName}
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+          {renderGameBoard()}
           
           <p className="mt-4 text-sm text-muted-foreground">
             Each player draws an initial tile to determine the play order
@@ -224,36 +236,7 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
-        {generateAllBoardCoordinates().map((coord) => {
-          const isPlaced = !!placedTiles[coord];
-          const belongsToChain = placedTiles[coord]?.belongsToChain;
-          const isSelectable = isTilePlaceable(coord);
-          const isUnplayable = wouldCauseIllegalMerger(coord);
-          const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
-          const tileInitial = isInitialTile(coord);
-          
-          return (
-            <motion.div
-              key={`board-${coord}-${currentPlayerIndex}`}
-              className="relative aspect-square flex items-center justify-center scale-95"
-              whileHover={isSelectable ? { scale: 1.0 } : {}}
-              whileTap={isSelectable ? { scale: 0.9 } : {}}
-              onClick={() => handleTileClick(coord)}
-            >
-              <BuildingTile 
-                coordinate={coord} 
-                belongsToChain={belongsToChain}
-                isPlaced={isPlaced}
-                isSelectable={isSelectable}
-                isAvailable={isAvailable}
-                isUnplayable={isUnplayable}
-                isInitialTile={tileInitial}
-              />
-            </motion.div>
-          );
-        })}
-      </div>
+      {renderGameBoard()}
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
