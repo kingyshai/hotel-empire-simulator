@@ -42,6 +42,15 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   const hasPurchasedStocks = totalStocks > 0;
   const onlyReceivedFounderStock = hasFoundedHotel && !hasPurchasedStocks;
   
+  // Calculate additional purchased stocks for the founded hotel (beyond the free founder stock)
+  let additionalFounderHotelStocks = 0;
+  if (hasFoundedHotel) {
+    const foundedHotelEntry = purchasedStocksList.find(entry => entry.chain === purchaseInfo.foundedHotel);
+    if (foundedHotelEntry && foundedHotelEntry.count > 1) {
+      additionalFounderHotelStocks = foundedHotelEntry.count - 1;
+    }
+  }
+  
   return (
     <AnimatePresence>
       <motion.div
@@ -75,11 +84,28 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   </div>
                 )}
                 
-                {hasPurchasedStocks ? (
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {purchasedStocksList
-                      .filter(({ isFreeFounderStock }) => !isFreeFounderStock)
-                      .map(({ chain, count }) => (
+                {/* Always show purchased stocks if there are any, regardless of founder status */}
+                {(() => {
+                  // Get list of purchased stocks excluding the free founder stock
+                  const regularPurchases = purchasedStocksList
+                    .filter(({ chain, count, isFreeFounderStock }) => {
+                      // Don't show the free founder stock here
+                      if (chain === purchaseInfo.foundedHotel && count === 1 && isFreeFounderStock) {
+                        return false;
+                      }
+                      // For the founded hotel with more than 1 stock, we want to show the additional purchases
+                      if (chain === purchaseInfo.foundedHotel && count > 1) {
+                        return true;
+                      }
+                      // Show all other chain purchases
+                      return count > 0;
+                    })
+                    .map(({ chain, count, isFreeFounderStock }) => {
+                      // If this is the founded hotel, reduce the count by 1 to account for the free stock
+                      const displayCount = chain === purchaseInfo.foundedHotel ? count - 1 : count;
+                      if (displayCount <= 0) return null;
+                      
+                      return (
                         <div
                           key={chain}
                           className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full"
@@ -89,18 +115,29 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                             style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
                           />
                           <span className="capitalize">{chain}</span>
-                          <span className="font-bold">×{count}</span>
+                          <span className="font-bold">×{displayCount}</span>
                         </div>
-                      ))}
-                    {purchaseInfo.totalCost > 0 && (
-                      <div className="bg-white/20 px-2 py-1 rounded-full">
-                        Total: ${purchaseInfo.totalCost}
+                      );
+                    })
+                    .filter(Boolean);
+                  
+                  if (regularPurchases.length > 0) {
+                    return (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {regularPurchases}
+                        {purchaseInfo.totalCost > 0 && (
+                          <div className="bg-white/20 px-2 py-1 rounded-full">
+                            Total: ${purchaseInfo.totalCost}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  !hasFoundedHotel && <span className="mt-1 inline-block">No stocks purchased during this turn</span>
-                )}
+                    );
+                  } else if (!hasFoundedHotel) {
+                    return <span className="mt-1 inline-block">No stocks purchased during this turn</span>;
+                  }
+                  
+                  return null;
+                })()}
               </div>
             </div>
           </div>
