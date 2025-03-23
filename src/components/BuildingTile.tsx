@@ -52,7 +52,6 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
         !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
-        isInitialTile ? "bg-yellow-200 border-2 border-yellow-500" : ""
       )}
       style={belongsToChain ? {
         backgroundColor: chainColor,
@@ -89,8 +88,9 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         <div className="absolute inset-0 opacity-30 rounded-md bg-gray-200" />
       )}
       
-      {isInitialTile && (
-        <div className="absolute inset-0 opacity-30 rounded-md bg-yellow-500" />
+      {/* Removed the special yellow styling for initial tiles */}
+      {isInitialTile && isPlaced && !belongsToChain && (
+        <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
       )}
     </motion.button>
   );
