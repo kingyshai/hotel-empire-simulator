@@ -78,6 +78,7 @@ const initialGameState: GameState = {
   lastStockPurchase: null,
   showStockPurchaseBanner: false,
   lastFoundedHotel: undefined,
+  initialPlayerTurnState: null,
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -298,6 +299,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const player = { ...state.players[playerIndex] };
       
+      // Save initial player state before any changes for this turn
+      const initialPlayerTurnState = {
+        player: JSON.parse(JSON.stringify(player)),
+      };
+      
       const tileIndex = player.tiles.indexOf(coordinate);
       if (tileIndex === -1) {
         toast.error("You don't have this tile!");
@@ -362,6 +368,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           placedTiles,
           players: updatedPlayers,
           gamePhase: 'buyStock',
+          initialPlayerTurnState,
         };
       }
       
@@ -373,6 +380,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         placedTiles,
         players: updatedPlayers,
         gamePhase: 'buyStock',
+        initialPlayerTurnState,
       };
     }
     
@@ -469,6 +477,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         tilePool,
         gamePhase: 'placeTile',
         lastFoundedHotel: undefined,
+        initialPlayerTurnState: null, // Reset initial player state for the next turn
       };
       
       saveGameState(newState);
@@ -476,6 +485,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'FOUND_HOTEL': {
+      // Save initial player state if it doesn't exist yet
+      let initialPlayerTurnState = state.initialPlayerTurnState;
+      if (!initialPlayerTurnState) {
+        const player = { ...state.players[state.currentPlayerIndex] };
+        initialPlayerTurnState = {
+          player: JSON.parse(JSON.stringify(player)),
+        };
+      }
+      
       const { chainName, tileCoordinate, connectedTiles } = action.payload;
       
       if (!state.availableHeadquarters.includes(chainName)) {
@@ -538,6 +556,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         placedTiles,
         lastFoundedHotel: chainName,
         gamePhase: 'buyStock',
+        initialPlayerTurnState,
       };
     }
     

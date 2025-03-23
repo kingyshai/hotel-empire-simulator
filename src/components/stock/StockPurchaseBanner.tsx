@@ -84,25 +84,27 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                   </div>
                 )}
                 
-                {/* Always show purchased stocks if there are any, regardless of founder status */}
+                {/* Display all purchased stocks (excluding the free founder stock) */}
                 {(() => {
-                  // Get list of purchased stocks excluding the free founder stock
-                  const regularPurchases = purchasedStocksList
-                    .filter(({ chain, count, isFreeFounderStock }) => {
-                      // Don't show the free founder stock here
-                      if (chain === purchaseInfo.foundedHotel && count === 1 && isFreeFounderStock) {
-                        return false;
-                      }
-                      // For the founded hotel with more than 1 stock, we want to show the additional purchases
-                      if (chain === purchaseInfo.foundedHotel && count > 1) {
-                        return true;
-                      }
-                      // Show all other chain purchases
-                      return count > 0;
+                  // Create list of purchased stocks excluding the free founder stock
+                  const regularPurchases = Object.entries(purchaseInfo.stocks)
+                    .filter(([chain, count]) => {
+                      // Skip if no stocks
+                      if (count <= 0) return false;
+                      
+                      // Skip if this is just the free founder stock
+                      if (chain === purchaseInfo.foundedHotel && count === 1) return false;
+                      
+                      // Include if either:
+                      // 1. This is not the founded hotel chain
+                      // 2. This is the founded hotel chain but has more than 1 stock (beyond the free one)
+                      return true;
                     })
-                    .map(({ chain, count, isFreeFounderStock }) => {
-                      // If this is the founded hotel, reduce the count by 1 to account for the free stock
-                      const displayCount = chain === purchaseInfo.foundedHotel ? count - 1 : count;
+                    .map(([chain, count]) => {
+                      const chainName = chain as HotelChainName;
+                      // Adjust count for founder hotel (subtract 1 for the free stock)
+                      const displayCount = chainName === purchaseInfo.foundedHotel ? count - 1 : count;
+                      
                       if (displayCount <= 0) return null;
                       
                       return (
@@ -112,7 +114,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                         >
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: state.hotelChains[chain]?.color || '#888' }}
+                            style={{ backgroundColor: state.hotelChains[chainName]?.color || '#888' }}
                           />
                           <span className="capitalize">{chain}</span>
                           <span className="font-bold">×{displayCount}</span>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
@@ -38,18 +39,36 @@ const Header: React.FC = () => {
       // Calculate total stocks purchased this turn
       let totalCost = 0;
       
+      // Check if player has initial stocks count in state to compare with current
+      const initialPlayerState = state.initialPlayerTurnState?.player;
+      
       // Track purchases for each hotel chain
       for (const chainName of Object.keys(state.hotelChains) as HotelChainName[]) {
-        const initialStocks = state.players[currentPlayerIndex].stocks[chainName] - 
-          (foundedHotel === chainName ? 1 : 0); // Account for founder stock
+        const chain = state.hotelChains[chainName];
+        
+        // Get the initial stock count, considering founder stock if applicable
+        let initialStocks = 0;
+        
+        if (initialPlayerState) {
+          // Use initial state from the start of turn if available
+          initialStocks = initialPlayerState.stocks[chainName];
+        } else {
+          // Fallback: assume founder stock is the only difference if no initial state
+          initialStocks = currentPlayer.stocks[chainName] - (foundedHotel === chainName ? 1 : 0);
+        }
           
         const currentStocks = currentPlayer.stocks[chainName];
         const purchasedStocks = currentStocks - initialStocks;
         
         if (purchasedStocks > 0) {
           purchases[chainName] = purchasedStocks;
-          // Add to total cost (we don't have actual cost here, will be updated in the action)
-          totalCost += purchasedStocks * 100; // Placeholder value
+          
+          // Add to total cost
+          if (chain.isActive) {
+            const stockPrice = 100 * Math.min(Math.max(2, chain.tiles.length), 10);
+            const stockCost = purchasedStocks * stockPrice;
+            totalCost += stockCost;
+          }
         }
       }
       
