@@ -25,9 +25,15 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const { state } = useGame();
   const { hotelChains } = state;
   
-  // Get the first letter of the chain name (uppercase)
-  const getChainInitial = (chainName: string): string => {
-    return chainName.charAt(0).toUpperCase();
+  // Define colors for hotel chains
+  const chainColorMap = {
+    american: 'blue',
+    worldwide: 'brown',
+    festival: 'green',
+    imperial: 'pink',
+    continental: 'turquoise',
+    luxor: 'red',
+    tower: 'yellow'
   };
   
   return (
@@ -54,19 +60,11 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       {belongsToChain && (
         <>
           <div 
-            className="absolute inset-0 opacity-30 rounded-md"
-            style={{ backgroundColor: hotelChains[belongsToChain].color }}
+            className="absolute inset-0 opacity-50 rounded-md"
+            style={{ 
+              backgroundColor: chainColorMap[belongsToChain as keyof typeof chainColorMap] || hotelChains[belongsToChain].color 
+            }}
           />
-          <div 
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <span 
-              className="text-xl font-bold"
-              style={{ color: hotelChains[belongsToChain].color }}
-            >
-              {getChainInitial(belongsToChain)}
-            </span>
-          </div>
         </>
       )}
       
