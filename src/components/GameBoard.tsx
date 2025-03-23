@@ -180,6 +180,9 @@ const GameBoard = () => {
     );
   }
   
+  // Get current player name - important for proper display
+  const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
+  
   if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
     return (
       <div className="glass-panel rounded-xl overflow-hidden">
@@ -189,7 +192,7 @@ const GameBoard = () => {
         
         <div className="p-6 text-center">
           <p className="mb-4 text-lg">
-            <span className="font-medium">{currentPlayer?.name}</span>, click the button below to draw your initial tile
+            <span className="font-medium">{currentPlayerName}</span>, click the button below to draw your initial tile
           </p>
           
           <Button 
@@ -207,7 +210,7 @@ const GameBoard = () => {
               
               return (
                 <motion.div
-                  key={`initial-${coord}-${currentPlayerIndex}`}
+                  key={`initial-tile-${coord}-${currentPlayerIndex}`}
                   className="relative aspect-square flex items-center justify-center"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}

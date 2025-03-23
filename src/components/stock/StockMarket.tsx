@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { toast } from '@/utils/toast';
@@ -22,6 +22,19 @@ const StockMarket: React.FC = () => {
     imperial: 0
   });
   const [hideAvailableStocks, setHideAvailableStocks] = useState(false);
+  
+  // Reset stocks to buy when player changes
+  useEffect(() => {
+    setStocksToBuy({
+      luxor: 0,
+      tower: 0,
+      american: 0,
+      festival: 0,
+      worldwide: 0,
+      continental: 0,
+      imperial: 0
+    });
+  }, [currentPlayerIndex]);
   
   const currentPlayer = players[currentPlayerIndex];
   

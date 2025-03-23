@@ -154,7 +154,7 @@ const GameContent = () => {
           </div>
           
           <div className="mt-4">
-            <StockMarket />
+            <StockMarket key={`stock-market-${currentPlayerIndex}`} />
           </div>
         </div>
         
@@ -166,7 +166,7 @@ const GameContent = () => {
             <div className="space-y-4 p-4">
               {players.map((player, index) => (
                 <PlayerInfo 
-                  key={`player-${player.id}-${index}`} 
+                  key={`player-info-${player.id}-${currentPlayerIndex}`} 
                   player={player}
                   isCurrentPlayer={index === currentPlayerIndex}
                 />

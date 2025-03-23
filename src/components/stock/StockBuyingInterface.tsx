@@ -32,6 +32,8 @@ const StockBuyingInterface: React.FC<StockBuyingInterfaceProps> = ({
   totalCost,
   canAfford
 }) => {
+  if (!currentPlayer) return null;
+  
   return (
     <>
       <div className="grid grid-cols-7 gap-2">
