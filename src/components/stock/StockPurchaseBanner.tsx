@@ -61,9 +61,9 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
               <h3 className="text-lg font-semibold">
                 <span className="text-blue-900">{purchaseInfo.playerName}</span> 
                 {hasFoundedHotel && hasPurchasedStocks
-                  ? " founded " + purchaseInfo.foundedHotel + " hotel chain and purchased additional stocks!" 
+                  ? ` founded ${purchaseInfo.foundedHotel} hotel chain and purchased additional stocks!` 
                   : hasFoundedHotel && !hasPurchasedStocks
-                    ? " founded " + purchaseInfo.foundedHotel + " hotel chain and received free founder stock!"
+                    ? ` founded ${purchaseInfo.foundedHotel} hotel chain and received free founder stock!`
                     : hasPurchasedStocks 
                       ? " purchased stocks!" 
                       : " ended turn without purchasing any stocks!"}
@@ -78,12 +78,13 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                 {purchasedStocksList.length > 0 && !onlyReceivedFounderStock ? (
                   <div className="flex flex-wrap gap-2 mt-1">
                     {purchasedStocksList
-                      .filter(({ chain, count }) => 
-                        // Only show purchased stocks, excluding the free founder stock if that's all they got
-                        !(chain === purchaseInfo.foundedHotel && count === 1)
+                      .filter(({ chain, count, isFreeFounderStock }) => 
+                        // Don't show the free founder stock here since we already show it above
+                        !(isFreeFounderStock && count === 1)
                       )
                       .map(({ chain, count, isFreeFounderStock }) => {
                         // If this is the founded hotel and has more than 1 stock, reduce count by 1 for display
+                        // because the free founder stock is already shown separately
                         const displayCount = (chain === purchaseInfo.foundedHotel) ? count - 1 : count;
                         if (displayCount <= 0) return null;
                         
