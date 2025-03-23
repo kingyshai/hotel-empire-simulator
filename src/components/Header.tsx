@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Save, ArrowRight } from 'lucide-react';
 import { toast } from '@/utils/toast';
 import { shouldEndGame } from '@/utils/gameLogic';
+import { GamePhase } from '@/types/game';
 
 const Header: React.FC = () => {
   const { state, dispatch } = useGame();
@@ -50,7 +51,7 @@ const Header: React.FC = () => {
           <Button 
             variant="outline"
             onClick={handleEndGame}
-            disabled={gamePhase === 'setup' || !canEndGame}
+            disabled={!canEndGame}
             title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
             size="sm"
             className="whitespace-nowrap"
@@ -61,9 +62,8 @@ const Header: React.FC = () => {
           <Button 
             variant="outline"
             onClick={handleSaveGame}
-            disabled={gamePhase === 'setup'}
-            className="whitespace-nowrap flex items-center gap-1"
             size="sm"
+            className="whitespace-nowrap flex items-center gap-1"
           >
             <Save size={16} />
             Save
