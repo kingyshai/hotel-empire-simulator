@@ -27,53 +27,54 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   isUnplayable = false // Default to false
 }) => {
   const { state } = useGame();
-  const { hotelChains } = state;
+  const { hotelChains, gamePhase, setupPhase } = state;
   
   // Define colors for hotel chains
-  const chainColorMap = {
-    american: 'blue',
-    worldwide: 'brown',
-    festival: 'green',
-    imperial: 'pink',
-    continental: 'turquoise',
-    luxor: 'red',
-    tower: 'yellow'
+  const chainColorMap: Record<string, string> = {
+    american: '#0ea5e9',  // blue
+    worldwide: '#a1855c', // brown
+    festival: '#10b981',  // green
+    imperial: '#ec4899',  // pink
+    continental: '#0f766e', // turquoise
+    luxor: '#ef4444',     // red
+    tower: '#fbbf24'      // yellow
   };
+  
+  const isDrawPhase = gamePhase === 'setup' && setupPhase === 'drawInitialTile';
   
   return (
     <motion.button
       className={cn(
-        "building-tile relative w-full h-full flex items-center justify-center",
+        "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
         isAvailable ? "bg-gray-300 cursor-pointer" : 
+        isDrawPhase ? "cursor-pointer hover:bg-primary/20" :
         "cursor-default",
-        isUnplayable ? "bg-red-200 cursor-not-allowed" : "", // Add styling for illegal moves
+        isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
         belongsToChain 
-          ? `bg-${belongsToChain}/20 border-${belongsToChain}/50` 
+          ? `border-${belongsToChain}` 
           : isPlaced 
             ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" 
-            : ""
+            : "bg-secondary/70 hover:bg-secondary"
       )}
-      onClick={!isUnplayable && (isSelectable || isAvailable || (!disabled && !isPlaced)) ? onClick : undefined}
+      onClick={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!disabled && !isPlaced)) ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={!isUnplayable && (isSelectable || isAvailable || (!isPlaced && !disabled)) ? { scale: 1.05 } : {}}
-      whileTap={!isUnplayable && (isSelectable || isAvailable || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
+      whileHover={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!isPlaced && !disabled)) ? { scale: 1.05 } : {}}
+      whileTap={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <span className="text-xs md:text-sm font-medium">{coordinate}</span>
       
       {belongsToChain && (
-        <>
-          <div 
-            className="absolute inset-0 opacity-50 rounded-md"
-            style={{ 
-              backgroundColor: chainColorMap[belongsToChain as keyof typeof chainColorMap] || hotelChains[belongsToChain].color 
-            }}
-          />
-        </>
+        <div 
+          className="absolute inset-0 opacity-50 rounded-md"
+          style={{ 
+            backgroundColor: chainColorMap[belongsToChain] || hotelChains[belongsToChain]?.color || '#6b7280'
+          }}
+        />
       )}
       
       {isPlaced && !belongsToChain && (
@@ -82,6 +83,14 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       
       {isUnplayable && (
         <div className="absolute inset-0 opacity-40 rounded-md bg-red-500" />
+      )}
+      
+      {isDrawPhase && (
+        <div className="absolute inset-0 opacity-10 rounded-md bg-primary hover:opacity-20 transition-opacity" />
+      )}
+      
+      {isSelectable && (
+        <div className="absolute inset-0 opacity-20 rounded-md bg-green-500" />
       )}
     </motion.button>
   );

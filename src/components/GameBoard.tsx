@@ -67,7 +67,15 @@ const GameBoard = () => {
   };
   
   const handleTileClick = (coordinate: Coordinate) => {
-    if (gamePhase === 'setup') return;
+    if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
+      dispatch({ 
+        type: 'DRAW_INITIAL_TILE', 
+        payload: { 
+          playerId: currentPlayer.id 
+        } 
+      });
+      return;
+    }
     
     if (isTilePlaceable(coordinate)) {
       const adjacents = getAdjacentTiles(coordinate, placedTiles);
@@ -144,10 +152,46 @@ const GameBoard = () => {
   if (selectedFoundingTile) {
     return (
       <HotelChainSelector 
-        tileCoordinate={selectedFoundingTile.coordinate}
+        coordinate={selectedFoundingTile.coordinate}
         availableChains={availableHeadquarters}
         onSelect={handleHotelSelection}
       />
+    );
+  }
+  
+  // Special display for the initial draw phase
+  if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
+    return (
+      <div className="glass-panel rounded-xl overflow-hidden">
+        <div className="p-3 bg-secondary/50 border-b border-border/50">
+          <h2 className="text-lg font-medium">Draw Initial Tile</h2>
+        </div>
+        
+        <div className="p-6 text-center">
+          <p className="mb-4 text-lg">
+            {currentPlayer?.name}, click anywhere on the board to draw your initial tile
+          </p>
+          
+          <div className="grid grid-cols-12 gap-1 max-w-3xl mx-auto p-2 bg-accent/30 rounded-lg">
+            {generateAllBoardCoordinates().map(coord => (
+              <motion.div
+                key={coord}
+                className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center
+                           text-xs font-medium uppercase bg-secondary/30 border border-border/50
+                           cursor-pointer hover:opacity-75 transition-opacity"
+                onClick={() => handleTileClick(coord)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <BuildingTile
+                  coordinate={coord}
+                  isSelectable={true}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
   
@@ -157,27 +201,30 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30">
-        {generateAllBoardCoordinates().map(coord => (
-          <motion.div
-            key={coord}
-            className={`
-              relative
-              w-10 h-10 md:w-12 md:h-12
-              flex items-center justify-center
-              text-xs font-medium uppercase
-              border border-border/50
-              ${getTileBackground(coord)}
-              ${isTilePlaceable(coord) ? 'cursor-pointer hover:opacity-75' : 'cursor-default'}
-              ${wouldCauseIllegalMerger(coord) ? 'cursor-not-allowed' : ''}
-            `}
-            onClick={() => handleTileClick(coord)}
-            whileHover={{ scale: isTilePlaceable(coord) ? 1.1 : 1 }}
-            whileTap={{ scale: isTilePlaceable(coord) ? 0.9 : 1 }}
-          >
-            <BuildingTile coordinate={coord} />
-          </motion.div>
-        ))}
+      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 sm:max-h-[80vh] overflow-auto">
+        {generateAllBoardCoordinates().map(coord => {
+          const isPlaced = !!placedTiles[coord];
+          const belongsToChain = placedTiles[coord]?.belongsToChain;
+          const isSelectable = isTilePlaceable(coord);
+          const isUnplayable = wouldCauseIllegalMerger(coord);
+          
+          return (
+            <div
+              key={coord}
+              className="aspect-square w-full h-full"
+              onClick={() => handleTileClick(coord)}
+            >
+              <BuildingTile 
+                coordinate={coord} 
+                belongsToChain={belongsToChain}
+                isPlaced={isPlaced}
+                isSelectable={isSelectable}
+                isUnplayable={isUnplayable}
+                onClick={() => handleTileClick(coord)}
+              />
+            </div>
+          );
+        })}
       </div>
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
@@ -220,13 +267,14 @@ const GameBoard = () => {
       </div>
       
       {setupPhase === 'dealTiles' && (
-        <div className="p-4 bg-secondary/20 border-t border-border/50">
+        <div className="p-6 bg-secondary/20 border-t border-border/50 text-center">
+          <p className="mb-4 text-lg">Ready to start the game!</p>
           <Button 
             size="lg" 
             onClick={handleDealStartingTiles}
-            className="w-full text-lg py-6"
+            className="w-full max-w-lg mx-auto text-lg py-6"
           >
-            Deal Starting Tiles
+            Deal Starting Tiles to All Players
           </Button>
         </div>
       )}
