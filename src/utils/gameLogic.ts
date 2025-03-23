@@ -352,6 +352,7 @@ export const distributeStockholderBonus = (
 export const shouldEndGame = (state: GameState): boolean => {
   const { hotelChains, placedTiles, availableHeadquarters } = state;
   
+  // Rule 1: A chain has grown to 41 or more tiles
   for (const chainName in hotelChains) {
     const chain = hotelChains[chainName as HotelChainName];
     if (chain.isActive && chain.tiles.length >= 41) {
@@ -359,12 +360,40 @@ export const shouldEndGame = (state: GameState): boolean => {
     }
   }
   
+  // Rule 2: All active chains are safe (11+ tiles)
   const activeChains = Object.values(hotelChains).filter(chain => chain.isActive);
   if (activeChains.length > 0 && activeChains.every(chain => chain.tiles.length >= 11)) {
     return true;
   }
   
+  // Check if there's potential for a new hotel chain to be formed
+  // This is the key rule correction: game ends when no NEW hotels can be built
+  // (not when there are no headquarters left)
+  
+  // If all headquarters are already used, no new hotel can be built
   if (availableHeadquarters.length === 0) {
+    return true;
+  }
+  
+  // If we have available headquarters, check if there are at least 2 unattached tiles
+  // that could potentially form a new chain
+  let freeStandingTiles = 0;
+  for (const key in placedTiles) {
+    const tile = placedTiles[key as Coordinate];
+    if (tile && !tile.belongsToChain) {
+      freeStandingTiles++;
+      if (freeStandingTiles >= 2) {
+        // Potential to form a new hotel exists
+        return false;
+      }
+    }
+  }
+  
+  // If we have less than 2 free-standing tiles, and we have headquarters,
+  // check if there are enough tiles in players' hands to potentially form a chain
+  const totalPlayerTiles = state.players.reduce((total, player) => total + player.tiles.length, 0);
+  if (freeStandingTiles + totalPlayerTiles < 2) {
+    // Not enough tiles to form a new chain
     return true;
   }
   

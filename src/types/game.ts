@@ -1,3 +1,4 @@
+
 export type Coordinate = `${number}${string}`;
 
 export type HotelChainName = 'luxor' | 'tower' | 'american' | 'festival' | 'worldwide' | 'continental' | 'imperial';
@@ -49,6 +50,7 @@ export type GamePhase =
   | 'foundHotel' 
   | 'buyStock' 
   | 'merger' 
+  | 'mergerStockOptions'
   | 'tradeStock' 
   | 'gameEnd';
 
@@ -63,6 +65,8 @@ export type InitialTile = {
   coordinate: Coordinate;
 };
 
+export type MergerStockOption = 'keep' | 'sell' | 'trade';
+
 export type GameState = {
   players: Player[];
   currentPlayerIndex: number;
@@ -75,11 +79,17 @@ export type GameState = {
   setupPhase: SetupPhase;
   availableHeadquarters: HotelChainName[];
   mergerInfo: MergerInfo | null;
+  currentMerger?: {
+    acquiredChain: HotelChainName;
+    survivingChain: HotelChainName;
+    stocksHeld: number;
+  };
   tilePool: Coordinate[];
   gameEnded: boolean;
   winner: Player | null;
   winners?: Player[];
   initialTiles: InitialTile[];
+  showWinnerBanner: boolean;
 };
 
 export type Action =
@@ -129,6 +139,15 @@ export type Action =
         acquiredChains: HotelChainName[];
       }
     }
+  | {
+      type: 'HANDLE_MERGER_STOCKS';
+      payload: {
+        acquiredChain: HotelChainName;
+        stockOption: MergerStockOption;
+        quantity?: number;
+      }
+    }
+  | { type: 'HIDE_WINNER_BANNER' }
   | { type: 'END_GAME_MANUALLY' }
   | { type: 'END_GAME' }
   | { 

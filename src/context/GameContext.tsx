@@ -67,11 +67,13 @@ const initialGameState: GameState = {
   setupPhase: 'initial',
   availableHeadquarters: ['luxor', 'tower', 'american', 'festival', 'worldwide', 'continental', 'imperial'],
   mergerInfo: null,
+  currentMerger: undefined,
   tilePool: shuffleArray(generateBoard()),
   gameEnded: false,
   winner: null,
   winners: undefined,
   initialTiles: [],
+  showWinnerBanner: false,
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -484,6 +486,237 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
+    case 'HANDLE_MERGER': {
+      const { coordinate, playerId, survivingChain, acquiredChains } = action.payload;
+      
+      if (acquiredChains.length === 0) {
+        toast.error("No chains to merge!");
+        return state;
+      }
+      
+      const playerIndex = state.players.findIndex(p => p.id === playerId);
+      const player = { ...state.players[playerIndex] };
+      
+      const tileIndex = player.tiles.indexOf(coordinate);
+      if (tileIndex === -1) {
+        toast.error("You don't have this tile!");
+        return state;
+      }
+      player.tiles.splice(tileIndex, 1);
+      
+      const hotelChains = { ...state.hotelChains };
+      const placedTiles = { ...state.placedTiles };
+      
+      placedTiles[coordinate] = { 
+        coordinate, 
+        isPlaced: true,
+        belongsToChain: survivingChain
+      };
+      
+      const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
+      
+      hotelChains[survivingChain] = {
+        ...hotelChains[survivingChain],
+        tiles: [...hotelChains[survivingChain].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)]
+      };
+      
+      connectedFreeTiles.forEach(tile => {
+        if (tile !== coordinate && placedTiles[tile] && !placedTiles[tile].belongsToChain) {
+          placedTiles[tile].belongsToChain = survivingChain;
+        }
+      });
+      
+      let updatedState = { ...state, placedTiles, hotelChains };
+      
+      // Distribute stockholder bonuses for each acquired chain
+      let winnerPlayers: Player[] = [];
+      let currentMergerChain: HotelChainName | null = null;
+      
+      // We now need to handle stocks for each acquired chain separately
+      for (const chainName of acquiredChains) {
+        // Distribute bonuses (and keep track of who got bonuses for the banner)
+        const bonusState = distributeStockholderBonus(updatedState, chainName);
+        updatedState = { ...bonusState };
+        
+        // Find players who received bonuses by comparing money
+        const possibleBonusReceivers = bonusState.players.map((player, idx) => ({
+          player,
+          originalMoney: state.players[idx].money
+        }));
+        
+        const bonusReceivers = possibleBonusReceivers
+          .filter(({ player, originalMoney }) => player.money > originalMoney)
+          .map(({ player }) => player);
+          
+        if (bonusReceivers.length > 0) {
+          winnerPlayers = [...winnerPlayers, ...bonusReceivers];
+        }
+        
+        // We only want to process one chain's stocks at a time
+        // Set up the first chain to be processed
+        if (!currentMergerChain) {
+          currentMergerChain = chainName;
+        }
+        
+        // Add all tiles from acquired chain to surviving chain
+        for (const tile of hotelChains[chainName].tiles) {
+          placedTiles[tile] = {
+            ...placedTiles[tile],
+            belongsToChain: survivingChain
+          };
+          
+          if (!hotelChains[survivingChain].tiles.includes(tile)) {
+            hotelChains[survivingChain].tiles.push(tile);
+          }
+        }
+        
+        // Deactivate the acquired chain
+        hotelChains[chainName] = {
+          ...hotelChains[chainName],
+          tiles: [],
+          isActive: false,
+          isSafe: false
+        };
+        
+        // Make headquarters available again
+        updatedState.availableHeadquarters.push(chainName);
+      }
+      
+      hotelChains[survivingChain].isSafe = hotelChains[survivingChain].tiles.length >= 11;
+      
+      updatedState.availableHeadquarters.sort();
+      
+      const updatedPlayers = [...updatedState.players];
+      updatedPlayers[playerIndex] = player;
+      
+      toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
+      
+      // Check if current player has stocks in the acquired chain
+      const currentPlayerStocks = player.stocks[currentMergerChain as HotelChainName];
+      
+      if (currentMergerChain && currentPlayerStocks > 0) {
+        // If player has stocks, go to merger stock options phase
+        return {
+          ...updatedState,
+          hotelChains,
+          placedTiles,
+          players: updatedPlayers,
+          showWinnerBanner: winnerPlayers.length > 0,
+          winner: winnerPlayers.length === 1 ? winnerPlayers[0] : null,
+          winners: winnerPlayers.length > 1 ? winnerPlayers : undefined,
+          gamePhase: 'mergerStockOptions',
+          currentMerger: {
+            acquiredChain: currentMergerChain,
+            survivingChain,
+            stocksHeld: currentPlayerStocks
+          }
+        };
+      }
+      
+      // If no stocks to handle or all handled, move to buy stock phase
+      return {
+        ...updatedState,
+        hotelChains,
+        placedTiles,
+        players: updatedPlayers,
+        showWinnerBanner: winnerPlayers.length > 0,
+        winner: winnerPlayers.length === 1 ? winnerPlayers[0] : null,
+        winners: winnerPlayers.length > 1 ? winnerPlayers : undefined,
+        gamePhase: 'buyStock'
+      };
+    }
+    
+    case 'HANDLE_MERGER_STOCKS': {
+      const { acquiredChain, stockOption, quantity } = action.payload;
+      
+      if (!state.currentMerger) {
+        return state;
+      }
+      
+      const { survivingChain, stocksHeld } = state.currentMerger;
+      const currentPlayer = { ...state.players[state.currentPlayerIndex] };
+      
+      // Deep copy of state to avoid mutations
+      const updatedPlayers = [...state.players];
+      const stockMarket = { ...state.stockMarket };
+      const acquiredChains = [...state.mergerInfo?.acquired.map(c => c.name) || []].filter(c => c !== acquiredChain);
+      
+      // Handle based on selected option
+      switch (stockOption) {
+        case 'keep':
+          // Do nothing, keep the stocks
+          break;
+          
+        case 'sell':
+          // Sell all stocks at current price
+          const chain = state.hotelChains[acquiredChain];
+          const { sell } = calculateStockPrice(acquiredChain, chain.tiles.length);
+          const totalSale = sell * stocksHeld;
+          
+          currentPlayer.money += totalSale;
+          currentPlayer.stocks[acquiredChain] = 0;
+          stockMarket[acquiredChain] += stocksHeld;
+          
+          toast.success(`Sold ${stocksHeld} shares of ${acquiredChain} for $${totalSale}`);
+          break;
+          
+        case 'trade':
+          // Trade 2:1 for surviving chain stocks
+          if (quantity && quantity % 2 === 0 && quantity <= stocksHeld) {
+            const tradedStocks = Math.floor(quantity / 2);
+            
+            // Check if enough surviving chain stocks are available
+            if (stockMarket[survivingChain] < tradedStocks) {
+              toast.error(`Not enough ${survivingChain} stocks available for trade`);
+              break;
+            }
+            
+            currentPlayer.stocks[acquiredChain] -= quantity;
+            currentPlayer.stocks[survivingChain] += tradedStocks;
+            stockMarket[acquiredChain] += quantity;
+            stockMarket[survivingChain] -= tradedStocks;
+            
+            toast.success(`Traded ${quantity} shares of ${acquiredChain} for ${tradedStocks} shares of ${survivingChain}`);
+          }
+          break;
+      }
+      
+      updatedPlayers[state.currentPlayerIndex] = currentPlayer;
+      
+      // Check if there are more acquired chains to process for this player
+      const nextAcquiredChain = acquiredChains[0];
+      
+      if (nextAcquiredChain && currentPlayer.stocks[nextAcquiredChain] > 0) {
+        // Move to next acquired chain
+        return {
+          ...state,
+          players: updatedPlayers,
+          stockMarket,
+          currentMerger: {
+            acquiredChain: nextAcquiredChain,
+            survivingChain,
+            stocksHeld: currentPlayer.stocks[nextAcquiredChain]
+          }
+        };
+      }
+      
+      // All chains processed, move to next phase
+      return {
+        ...state,
+        players: updatedPlayers,
+        stockMarket,
+        currentMerger: undefined,
+        gamePhase: 'buyStock'
+      };
+    }
+    
+    case 'HIDE_WINNER_BANNER': {
+      return {
+        ...state,
+        showWinnerBanner: false
+      };
+    }
+    
     case 'END_GAME_MANUALLY': {
       clearSavedGame();
       newState = endGame(state);
@@ -551,90 +784,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return {
         ...state,
         players: updatedPlayers
-      };
-    }
-    
-    case 'HANDLE_MERGER': {
-      const { coordinate, playerId, survivingChain, acquiredChains } = action.payload;
-      
-      if (acquiredChains.length === 0) {
-        toast.error("No chains to merge!");
-        return state;
-      }
-      
-      const playerIndex = state.players.findIndex(p => p.id === playerId);
-      const player = { ...state.players[playerIndex] };
-      
-      const tileIndex = player.tiles.indexOf(coordinate);
-      if (tileIndex === -1) {
-        toast.error("You don't have this tile!");
-        return state;
-      }
-      player.tiles.splice(tileIndex, 1);
-      
-      const hotelChains = { ...state.hotelChains };
-      const placedTiles = { ...state.placedTiles };
-      
-      placedTiles[coordinate] = { 
-        coordinate, 
-        isPlaced: true,
-        belongsToChain: survivingChain
-      };
-      
-      const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles);
-      
-      hotelChains[survivingChain] = {
-        ...hotelChains[survivingChain],
-        tiles: [...hotelChains[survivingChain].tiles, coordinate, ...connectedFreeTiles.filter(t => t !== coordinate)]
-      };
-      
-      connectedFreeTiles.forEach(tile => {
-        if (tile !== coordinate && placedTiles[tile] && !placedTiles[tile].belongsToChain) {
-          placedTiles[tile].belongsToChain = survivingChain;
-        }
-      });
-      
-      let updatedState = { ...state, placedTiles, hotelChains };
-      
-      for (const chainName of acquiredChains) {
-        updatedState = distributeStockholderBonus(updatedState, chainName);
-        
-        for (const tile of hotelChains[chainName].tiles) {
-          placedTiles[tile] = {
-            ...placedTiles[tile],
-            belongsToChain: survivingChain
-          };
-          
-          if (!hotelChains[survivingChain].tiles.includes(tile)) {
-            hotelChains[survivingChain].tiles.push(tile);
-          }
-        }
-        
-        hotelChains[chainName] = {
-          ...hotelChains[chainName],
-          tiles: [],
-          isActive: false,
-          isSafe: false
-        };
-        
-        updatedState.availableHeadquarters.push(chainName);
-      }
-      
-      hotelChains[survivingChain].isSafe = hotelChains[survivingChain].tiles.length >= 11;
-      
-      updatedState.availableHeadquarters.sort();
-      
-      const updatedPlayers = [...updatedState.players];
-      updatedPlayers[playerIndex] = player;
-      
-      toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
-      
-      return {
-        ...updatedState,
-        hotelChains,
-        placedTiles,
-        players: updatedPlayers,
-        gamePhase: 'buyStock'
       };
     }
     

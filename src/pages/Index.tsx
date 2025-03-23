@@ -7,6 +7,8 @@ import PlayerInfo from '@/components/PlayerInfo';
 import StockMarket from '@/components/StockMarket';
 import HotelChain from '@/components/HotelChain';
 import SetupScreen from '@/components/SetupScreen';
+import WinnerBanner from '@/components/WinnerBanner';
+import MergerStockOptions from '@/components/MergerStockOptions';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/utils/toast';
@@ -15,7 +17,16 @@ import { Save, ArrowRight } from 'lucide-react';
 
 const GameContent = () => {
   const { state, dispatch, hasSavedGame } = useGame();
-  const { players, currentPlayerIndex, gamePhase, hotelChains, gameEnded, winner, winners } = state;
+  const { 
+    players, 
+    currentPlayerIndex, 
+    gamePhase, 
+    hotelChains, 
+    gameEnded, 
+    winner, 
+    winners,
+    showWinnerBanner 
+  } = state;
   
   const canEndGame = shouldEndGame(state);
   
@@ -43,6 +54,10 @@ const GameContent = () => {
   const handleSaveGame = () => {
     dispatch({ type: 'SAVE_GAME' });
     toast.success("Game saved successfully!");
+  };
+  
+  const handleHideWinnerBanner = () => {
+    dispatch({ type: 'HIDE_WINNER_BANNER' });
   };
   
   const chainNames: HotelChainName[] = [
@@ -122,6 +137,18 @@ const GameContent = () => {
   return (
     <div className="container mx-auto px-4 pb-16">
       <Header />
+      
+      {showWinnerBanner && (
+        <WinnerBanner 
+          winner={winner} 
+          winners={winners} 
+          onClose={handleHideWinnerBanner} 
+        />
+      )}
+      
+      {gamePhase === 'mergerStockOptions' && (
+        <MergerStockOptions />
+      )}
       
       <div className="grid grid-cols-12 gap-6 mt-6">
         <div className="col-span-8">
