@@ -101,20 +101,20 @@ export const calculateStockPrice = (chainName: HotelChainName, chainSize: number
     basePrice = 300;
   } else if (chainSize === 2) {
     basePrice = 200;
-  } else {
-    basePrice = 0;
+  } else if (chainSize === 1) {
+    basePrice = 100;
   }
   
-  const tier = getChainTier(chainName);
-  if (tier === 'medium') {
+  const chainTier = getChainTier(chainName);
+  if (chainTier === 'medium') {
     basePrice += 100;
-  } else if (tier === 'expensive') {
+  } else if (chainTier === 'expensive') {
     basePrice += 200;
   }
   
   return {
     buy: basePrice,
-    sell: Math.floor(basePrice * 0.5),
+    sell: Math.floor(basePrice / 2),
   };
 };
 

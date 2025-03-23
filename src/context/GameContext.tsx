@@ -9,7 +9,12 @@ import {
   Coordinate
 } from '@/types/game';
 import { toast } from '@/utils/toast';
-import { shouldEndGame, endGame } from '@/utils/gameLogic';
+import { 
+  shouldEndGame, 
+  endGame, 
+  getAdjacentTiles, 
+  findPotentialMergers 
+} from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
   const tiles: Coordinate[] = [];
@@ -236,6 +241,33 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           isPlaced: true 
         } 
       };
+      
+      const adjacentTiles = getAdjacentTiles(coordinate, placedTiles);
+      const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles });
+      
+      if (adjacentChains.length === 1) {
+        const chainName = adjacentChains[0];
+        const hotelChains = { ...state.hotelChains };
+        
+        hotelChains[chainName] = {
+          ...hotelChains[chainName],
+          tiles: [...hotelChains[chainName].tiles, coordinate],
+          isSafe: hotelChains[chainName].tiles.length + 1 >= 11,
+        };
+        
+        placedTiles[coordinate].belongsToChain = chainName;
+        
+        const players = [...state.players];
+        players[playerIndex] = player;
+        
+        return {
+          ...state,
+          hotelChains,
+          placedTiles,
+          players,
+          gamePhase: 'buyStock',
+        };
+      }
       
       const players = [...state.players];
       players[playerIndex] = player;
