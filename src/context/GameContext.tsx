@@ -175,12 +175,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       let sortedPlayers = [...players];
       let currentPlayerIndex = state.currentPlayerIndex;
       
-      // Move to the next player or complete initial tile drawing
       if (initialTiles.length < players.length) {
-        // Move to next player for initial tile drawing
         currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
       } else {
-        // All players have drawn initial tiles, sort by distance from origin
         const sortedInitialTiles = [...initialTiles].sort((a, b) => {
           const rowA = parseInt(a.coordinate.charAt(0));
           const colA = a.coordinate.charCodeAt(1) - 65;
@@ -193,12 +190,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           return distanceA - distanceB;
         });
         
-        // Use player IDs from the sorted initial tiles to reorder the players
         sortedPlayers = sortedInitialTiles.map(tile => {
           const player = players.find(p => p.id === tile.playerId);
           if (!player) {
             console.error(`Player with ID ${tile.playerId} not found!`);
-            return players[0]; // Fallback
+            return players[0];
           }
           return player;
         });
@@ -250,15 +246,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       const { playerCount, playerNames, gameMode } = action.payload;
       
-      // Ensure each player gets the correct name
       const validatedNames = playerNames.slice(0, playerCount).map((name, i) => 
         name.trim() ? name.trim() : `Player ${i + 1}`
       );
       
-      // Create players with correct names
       const players: Player[] = Array.from({ length: playerCount }, (_, i) => ({
         id: i,
-        name: validatedNames[i], // Ensure correct name assignment
+        name: validatedNames[i],
         money: 6000,
         stocks: {
           luxor: 0,
@@ -287,7 +281,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER':
+    case 'SET_CURRENT_PLAYER'
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
@@ -446,7 +440,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     }
     
     case 'END_TURN': {
-      // Clear the last founded hotel when the turn ends
       if (shouldEndGame(state)) {
         newState = endGame(state);
         clearSavedGame();
@@ -466,7 +459,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedPlayers = [...state.players];
       updatedPlayers[state.currentPlayerIndex] = player;
       
-      // Log the player change for debugging
       console.log(`Changing from player ${state.currentPlayerIndex} to player ${nextPlayerIndex}`);
       console.log(`Current player name: ${state.players[state.currentPlayerIndex].name}, Next player name: ${state.players[nextPlayerIndex].name}`);
       
@@ -476,7 +468,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers,
         tilePool,
         gamePhase: 'placeTile',
-        lastFoundedHotel: undefined, // Reset the founded hotel tracking
+        lastFoundedHotel: undefined,
       };
       
       saveGameState(newState);
@@ -544,7 +536,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers,
         stockMarket,
         placedTiles,
-        lastFoundedHotel: chainName, // Track the last founded hotel
+        lastFoundedHotel: chainName,
         gamePhase: 'buyStock',
       };
     }
@@ -591,17 +583,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       let updatedState = { ...state, placedTiles, hotelChains };
       
-      // Distribute stockholder bonuses for each acquired chain
       let winnerPlayers: Player[] = [];
       let currentMergerChain: HotelChainName | null = null;
       
-      // We now need to handle stocks for each acquired chain separately
       for (const chainName of acquiredChains) {
-        // Distribute bonuses (and keep track of who got bonuses for the banner)
         const bonusState = distributeStockholderBonus(updatedState, chainName);
         updatedState = { ...bonusState };
         
-        // Find players who received bonuses by comparing money
         const possibleBonusReceivers = bonusState.players.map((player, idx) => ({
           player,
           originalMoney: state.players[idx].money
@@ -615,13 +603,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           winnerPlayers = [...winnerPlayers, ...bonusReceivers];
         }
         
-        // We only want to process one chain's stocks at a time
-        // Set up the first chain to be processed
         if (!currentMergerChain) {
           currentMergerChain = chainName;
         }
         
-        // Add all tiles from acquired chain to surviving chain
         for (const tile of hotelChains[chainName].tiles) {
           placedTiles[tile] = {
             ...placedTiles[tile],
@@ -633,7 +618,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           }
         }
         
-        // Deactivate the acquired chain
         hotelChains[chainName] = {
           ...hotelChains[chainName],
           tiles: [],
@@ -641,7 +625,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           isSafe: false
         };
         
-        // Make headquarters available again
         updatedState.availableHeadquarters.push(chainName);
       }
       
@@ -654,12 +637,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
       
-      // Check if current player has stocks in the acquired chain
       const mergerPlayer = updatedPlayers[playerIndex];
       const currentPlayerStocks = mergerPlayer.stocks[currentMergerChain as HotelChainName];
       
       if (currentMergerChain && currentPlayerStocks > 0) {
-        // If player has stocks, go to merger stock options phase
         return {
           ...updatedState,
           hotelChains,
@@ -680,7 +661,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       }
       
-      // If no stocks to handle or all handled, move to buy stock phase
       return {
         ...updatedState,
         hotelChains,
@@ -703,32 +683,25 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const { survivingChain, stocksHeld, playersWithStocks } = state.currentMerger;
       const currentPlayer = { ...state.players[state.currentPlayerIndex] };
       
-      // Deep copy of state to avoid mutations
       const updatedPlayers = [...state.players];
       const stockMarket = { ...state.stockMarket };
       
-      // Verify total adds up to stocks held
       if (stocksToKeep + stocksToSell + stocksToTrade !== stocksHeld) {
         toast.error("Total stocks don't match stocks held");
         return state;
       }
       
-      // Verify trade count is even
       if (stocksToTrade % 2 !== 0) {
         toast.error("Trade amount must be even");
         return state;
       }
       
-      // Handle keeping stocks
       if (stocksToKeep > 0) {
-        // Player keeps some stocks, no market changes
         currentPlayer.stocks[acquiredChain] = stocksToKeep;
       } else {
-        // Player doesn't keep any stocks
         currentPlayer.stocks[acquiredChain] = 0;
       }
       
-      // Handle selling stocks
       if (stocksToSell > 0) {
         const chain = state.hotelChains[acquiredChain];
         const { sell } = calculateStockPrice(acquiredChain, chain.tiles.length);
@@ -740,11 +713,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         toast.success(`Sold ${stocksToSell} shares of ${acquiredChain} for $${totalSale}`);
       }
       
-      // Handle trading stocks
       if (stocksToTrade > 0) {
         const tradedStocks = Math.floor(stocksToTrade / 2);
         
-        // Check if enough surviving chain stocks are available
         if (stockMarket[survivingChain] < tradedStocks) {
           toast.error(`Not enough ${survivingChain} stocks available for trade`);
           return state;
@@ -759,7 +730,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       updatedPlayers[state.currentPlayerIndex] = currentPlayer;
       
-      // Check if there are more players with stocks to process
       if (playersWithStocks && playersWithStocks.length > 0) {
         const nextPlayerId = playersWithStocks[0];
         const nextPlayerIndex = updatedPlayers.findIndex(p => p.id === nextPlayerId);
@@ -780,17 +750,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       }
       
-      // All stocks processed, move to next chain or buy stock phase
       const allMergedChains = [...state.mergerInfo?.acquired.map(c => c.name) || []].filter(c => c !== acquiredChain);
       const nextChain = allMergedChains[0];
       
-      // Check if there's another chain to process
       if (nextChain && currentPlayer.stocks[nextChain] > 0) {
         return {
           ...state,
           players: updatedPlayers,
           stockMarket,
-          currentPlayerIndex: state.currentPlayerIndex, // Reset to original merger player
+          currentPlayerIndex: state.currentPlayerIndex,
           currentMerger: {
             acquiredChain: nextChain,
             survivingChain,
@@ -802,13 +770,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       }
       
-      // All chains processed, move to next phase
       return {
         ...state,
         players: updatedPlayers,
         stockMarket,
         currentMerger: undefined,
-        currentPlayerIndex: state.currentPlayerIndex, // Reset to original merger player
+        currentPlayerIndex: state.currentPlayerIndex,
         gamePhase: 'buyStock'
       };
     }
@@ -912,24 +879,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const hotelChains = { ...state.hotelChains };
       const placedTiles = { ...state.placedTiles };
       
-      // Place the tile and add it to the specified chain
       placedTiles[coordinate] = {
         coordinate,
         isPlaced: true,
         belongsToChain: chainName
       };
       
-      // Add the tile to the chain
       hotelChains[chainName] = {
         ...hotelChains[chainName],
         tiles: [...hotelChains[chainName].tiles, coordinate]
       };
       
-      // Find any connected free tiles that should also join the chain
       const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles)
         .filter(tile => tile !== coordinate && !placedTiles[tile]?.belongsToChain);
       
-      // Add all connected free tiles to the chain as well
       connectedFreeTiles.forEach(tile => {
         if (placedTiles[tile]) {
           placedTiles[tile].belongsToChain = chainName;
@@ -944,7 +907,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         hotelChains[chainName].tiles.push(tile);
       });
       
-      // Update chain's safe status
       hotelChains[chainName].isSafe = hotelChains[chainName].tiles.length >= 11;
       
       const updatedPlayers = [...state.players];
@@ -955,7 +917,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         hotelChains,
         placedTiles,
         players: updatedPlayers,
-        gamePhase: 'buyStock', // Advance to buy stock phase unless a merger happens
+        gamePhase: 'buyStock',
       };
     }
     
@@ -992,4 +954,4 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useGame = ()
+export const useGame = () => useContext(GameContext);
