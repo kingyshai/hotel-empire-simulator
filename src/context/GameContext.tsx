@@ -365,8 +365,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return endGame(state);
     }
     
-    case 'END_GAME':
-      const players = state.players.map(player => {
+    case 'END_GAME': {
+      const updatedPlayers = state.players.map(player => {
         let totalMoney = player.money;
         
         Object.entries(player.stocks).forEach(([chainName, quantity]) => {
@@ -383,19 +383,20 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         };
       });
       
-      const winner = [...players].sort((a, b) => b.money - a.money)[0];
+      const winner = [...updatedPlayers].sort((a, b) => b.money - a.money)[0];
       
       return {
         ...state,
-        players,
+        players: updatedPlayers,
         gameEnded: true,
         winner,
       };
+    }
     
-    case 'ADD_TILE_TO_PLAYER_HAND':
+    case 'ADD_TILE_TO_PLAYER_HAND': {
       const { playerId, coordinate } = action.payload;
-      const players = [...state.players];
-      const playerIndex = players.findIndex(p => p.id === playerId);
+      const updatedPlayers = [...state.players];
+      const playerIndex = updatedPlayers.findIndex(p => p.id === playerId);
       
       if (playerIndex === -1) {
         toast.error("Player not found!");
@@ -407,22 +408,23 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         return state;
       }
       
-      for (const player of players) {
+      for (const player of updatedPlayers) {
         if (player.tiles.includes(coordinate)) {
           toast.error("This tile is already in a player's hand!");
           return state;
         }
       }
       
-      players[playerIndex] = {
-        ...players[playerIndex],
-        tiles: [...players[playerIndex].tiles, coordinate]
+      updatedPlayers[playerIndex] = {
+        ...updatedPlayers[playerIndex],
+        tiles: [...updatedPlayers[playerIndex].tiles, coordinate]
       };
       
       return {
         ...state,
-        players
+        players: updatedPlayers
       };
+    }
     
     default:
       return state;
