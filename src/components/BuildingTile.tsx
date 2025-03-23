@@ -14,6 +14,7 @@ interface BuildingTileProps {
   isSelectable?: boolean;
   isAvailable?: boolean;  // Prop to indicate available tile
   isUnplayable?: boolean; // New prop for illegal moves
+  isInitialTile?: boolean; // New prop for initial tiles
 }
 
 const BuildingTile: React.FC<BuildingTileProps> = ({ 
@@ -24,7 +25,8 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   disabled = false,
   isSelectable = false,
   isAvailable = false,
-  isUnplayable = false // Default to false
+  isUnplayable = false, // Default to false
+  isInitialTile = false // Default to false
 }) => {
   const { state } = useGame();
   const { hotelChains, gamePhase, setupPhase } = state;
@@ -56,7 +58,8 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
           ? `border-${belongsToChain}` 
           : isPlaced 
             ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" 
-            : "bg-white hover:bg-gray-100" // Changed to white background
+            : "bg-white hover:bg-gray-100", // Changed to white background
+        isInitialTile ? "bg-yellow-200 border-2 border-yellow-500" : ""
       )}
       onClick={!isUnplayable && (isSelectable || isAvailable || isDrawPhase || (!disabled && !isPlaced)) ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
@@ -77,7 +80,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         />
       )}
       
-      {isPlaced && !belongsToChain && (
+      {isPlaced && !belongsToChain && !isInitialTile && (
         <div className="absolute inset-0 opacity-20 rounded-md bg-[#9b87f5]" />
       )}
       
@@ -95,6 +98,10 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       
       {isAvailable && !isUnplayable && !isPlaced && (
         <div className="absolute inset-0 opacity-30 rounded-md bg-gray-200" />
+      )}
+      
+      {isInitialTile && (
+        <div className="absolute inset-0 opacity-30 rounded-md bg-yellow-500" />
       )}
     </motion.button>
   );
