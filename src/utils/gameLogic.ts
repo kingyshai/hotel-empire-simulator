@@ -1,3 +1,4 @@
+
 import { 
   GameState, 
   Player, 
@@ -153,9 +154,13 @@ export const calculateStockholderBonus = (
 ): StockholderBonus => {
   const { buy } = calculateStockPrice(chainName, chainSize);
   
+  // Primary majority stockholder bonus (10x stock price)
   const primary = buy * 10;
+  
+  // Secondary minority stockholder bonus (5x stock price)
   const secondary = buy * 5;
   
+  // In the classic game mode, there's no tertiary bonus
   return {
     primary,
     secondary,
@@ -167,10 +172,12 @@ export const determineStockholders = (
   players: Player[],
   chainName: HotelChainName
 ): { primary: Player[], secondary: Player[], tertiary: Player[] } => {
+  // Create pairs of [player, stockCount] and sort by stock count in descending order
   const playerStocks: [Player, number][] = players.map(player => [player, player.stocks[chainName]]);
   
   playerStocks.sort((a, b) => b[1] - a[1]);
   
+  // Filter out players with no stocks
   const playersWithStocks = playerStocks.filter(([_, count]) => count > 0);
   
   const result = {
@@ -179,8 +186,10 @@ export const determineStockholders = (
     tertiary: [] as Player[],
   };
   
+  // If no players have stocks, return empty arrays
   if (playersWithStocks.length === 0) return result;
   
+  // Find players with the highest stock count (primary stockholders)
   const primaryStockCount = playersWithStocks[0][1];
   const primaryStockholders = playersWithStocks
     .filter(([_, count]) => count === primaryStockCount)
@@ -188,8 +197,10 @@ export const determineStockholders = (
   
   result.primary = primaryStockholders;
   
+  // If all players with stocks are primary stockholders, return
   if (primaryStockholders.length === playersWithStocks.length) return result;
   
+  // Find players with the second highest stock count (secondary stockholders)
   const remainingPlayers = playersWithStocks.filter(([_, count]) => count !== primaryStockCount);
   const secondaryStockCount = remainingPlayers[0][1];
   const secondaryStockholders = remainingPlayers
@@ -198,8 +209,10 @@ export const determineStockholders = (
   
   result.secondary = secondaryStockholders;
   
+  // If all remaining players are secondary stockholders, return
   if (secondaryStockholders.length === remainingPlayers.length) return result;
   
+  // Find players with the third highest stock count (tertiary stockholders)
   const tertiaryPlayers = remainingPlayers.filter(([_, count]) => count !== secondaryStockCount);
   const tertiaryStockCount = tertiaryPlayers[0][1];
   const tertiaryStockholders = tertiaryPlayers
@@ -218,18 +231,22 @@ export const distributeStockholderBonus = (
   const { players, hotelChains, gameMode } = state;
   const chain = hotelChains[chainName];
   
+  // Calculate the bonus amounts based on chain size
   const bonus = calculateStockholderBonus(chainName, chain.tiles.length, gameMode);
   
+  // Determine primary, secondary, and tertiary stockholders
   const { primary, secondary, tertiary } = determineStockholders(players, chainName);
   
   const updatedPlayers = [...players];
   
+  // Special case: If there's only one stockholder, they get both primary and secondary bonuses
   if (primary.length === 1 && secondary.length === 0) {
     const singleStockholder = primary[0];
     const playerIndex = players.findIndex(p => p.id === singleStockholder.id);
     
     const totalBonus = bonus.primary + bonus.secondary;
     
+    // Round to the nearest $100
     updatedPlayers[playerIndex] = {
       ...singleStockholder,
       money: singleStockholder.money + Math.ceil(totalBonus / 100) * 100,
@@ -241,8 +258,10 @@ export const distributeStockholderBonus = (
     };
   }
   
+  // Special case: If there's a tie for primary stockholder, they split the primary and secondary bonuses
   if (primary.length > 1) {
     const splitBonus = (bonus.primary + bonus.secondary) / primary.length;
+    // Round to the nearest $100
     const roundedBonus = Math.ceil(splitBonus / 100) * 100;
     
     primary.forEach(player => {
@@ -259,6 +278,7 @@ export const distributeStockholderBonus = (
     };
   }
   
+  // Normal case: Distribute primary bonus
   if (primary.length === 1) {
     const player = primary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -268,6 +288,7 @@ export const distributeStockholderBonus = (
     };
   }
   
+  // Distribute secondary bonus
   if (secondary.length === 1) {
     const player = secondary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -276,7 +297,9 @@ export const distributeStockholderBonus = (
       money: player.money + bonus.secondary,
     };
   } else if (secondary.length > 1) {
+    // If there's a tie for secondary, they split the secondary bonus
     const splitSecondary = bonus.secondary / secondary.length;
+    // Round to the nearest $100
     const roundedSecondary = Math.ceil(splitSecondary / 100) * 100;
     
     secondary.forEach(player => {
