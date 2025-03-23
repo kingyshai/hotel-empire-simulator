@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Coordinate } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { useGame } from '@/context/GameContext';
@@ -31,18 +31,31 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const { state } = useGame();
   const { hotelChains } = state;
   
-  // Get the chain's color from the hotelChains state
-  const getChainColor = () => {
+  // Use useMemo to prevent unnecessary re-calculations
+  const chainColor = useMemo(() => {
     if (belongsToChain && hotelChains[belongsToChain]) {
       return hotelChains[belongsToChain].color || '#6b7280';
     }
     return '';
-  };
+  }, [belongsToChain, hotelChains]);
   
-  const chainColor = getChainColor();
+  const textColor = useMemo(() => {
+    return chainColor ? getContrastYIQ(chainColor) : '';
+  }, [chainColor]);
+  
+  const isClickable = !isUnplayable && (
+    isSelectable || 
+    isAvailable || 
+    (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || 
+    (!disabled && !isPlaced)
+  );
+
+  // Generate a unique key for the component based on its state
+  const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
   
   return (
     <motion.button
+      key={tileKey}
       className={cn(
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
@@ -53,17 +66,21 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
         !belongsToChain && isPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
       )}
-      style={belongsToChain && chainColor ? {
-        backgroundColor: chainColor,
-        color: getContrastYIQ(chainColor),
-        borderColor: chainColor
-      } : {}}
-      onClick={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!disabled && !isPlaced)) ? onClick : undefined}
+      style={
+        belongsToChain && chainColor 
+          ? {
+              backgroundColor: chainColor,
+              color: textColor,
+              borderColor: chainColor
+            } 
+          : {}
+      }
+      onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!isPlaced && !disabled)) ? { scale: 1.05 } : {}}
-      whileTap={!isUnplayable && (isSelectable || isAvailable || (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') || (!isPlaced && !disabled)) ? { scale: 0.95 } : {}}
+      whileHover={isClickable ? { scale: 1.05 } : {}}
+      whileTap={isClickable ? { scale: 0.95 } : {}}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <span className="text-sm md:text-base font-medium z-10">{coordinate}</span>

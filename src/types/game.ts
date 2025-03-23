@@ -29,6 +29,12 @@ export type GameMode = 'classic';
 export type GamePhase = 'setup' | 'placeTile' | 'foundHotel' | 'buyStock' | 'merger' | 'mergerStockOptions' | 'gameOver';
 export type SetupPhase = 'initial' | 'drawInitialTile' | 'dealTiles' | 'complete';
 
+export interface StockholderBonus {
+  primary: number;
+  secondary: number;
+  tertiary: number;
+}
+
 export interface MergerInfo {
   coordinate: Coordinate;
   playerId: number;
