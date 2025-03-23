@@ -5,7 +5,7 @@ import { toast } from '@/utils/toast';
 import { motion } from 'framer-motion';
 import type { Coordinate, HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { getAdjacentTiles, findPotentialMergers, findConnectedTiles } from '@/utils/gameLogic';
+import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, shouldEndGame } from '@/utils/gameLogic';
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 
@@ -20,6 +20,7 @@ const GameBoard: React.FC = () => {
   } | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
+  const canEndGame = shouldEndGame(state);
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const coords: Coordinate[] = [];
@@ -172,6 +173,10 @@ const GameBoard: React.FC = () => {
     }
 
     dispatch({ type: 'DEAL_STARTING_TILES' });
+  };
+  
+  const handleEndGame = () => {
+    dispatch({ type: 'END_GAME_MANUALLY' });
   };
   
   const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
@@ -341,16 +346,29 @@ const GameBoard: React.FC = () => {
       </div>
       
       <div className="p-3 bg-secondary/10 border-t border-border/50">
-        <h3 className="text-sm font-medium mb-3">Game Status</h3>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex justify-between p-2 bg-background/50 rounded">
-            <span>Phase:</span>
-            <span className="font-medium capitalize">{gamePhase}</span>
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-medium mb-3">Game Status</h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Phase:</span>
+                <span className="font-medium capitalize">{gamePhase}</span>
+              </div>
+              <div className="flex justify-between p-2 bg-background/50 rounded">
+                <span>Current Player:</span>
+                <span className="font-medium">{currentPlayer?.name}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between p-2 bg-background/50 rounded">
-            <span>Current Player:</span>
-            <span className="font-medium">{currentPlayer?.name}</span>
-          </div>
+          
+          <Button 
+            variant="outline"
+            onClick={handleEndGame}
+            disabled={gamePhase === 'setup' || !canEndGame}
+            title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
+          >
+            End Game
+          </Button>
         </div>
       </div>
       

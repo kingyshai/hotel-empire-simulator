@@ -28,8 +28,6 @@ const GameContent = () => {
     showWinnerBanner 
   } = state;
   
-  const canEndGame = shouldEndGame(state);
-  
   const handleEndTurn = () => {
     if (gamePhase !== 'buyStock') {
       toast.error("You must complete your current actions before ending your turn");
@@ -41,10 +39,6 @@ const GameContent = () => {
     if (!shouldEndGame(state)) {
       toast.success(`${players[(currentPlayerIndex + 1) % players.length].name}'s turn`);
     }
-  };
-  
-  const handleEndGame = () => {
-    dispatch({ type: 'END_GAME_MANUALLY' });
   };
   
   const handleLoadGame = () => {
@@ -192,15 +186,6 @@ const GameContent = () => {
               >
                 <Save size={16} />
                 Save Game
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={handleEndGame}
-                disabled={gamePhase === 'setup' || !canEndGame}
-                title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
-              >
-                End Game
               </Button>
               
               <Button 
