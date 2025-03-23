@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
 import { motion } from 'framer-motion';
@@ -40,7 +41,20 @@ const GameBoard = () => {
     open: boolean;
   } | null>(null);
   
+  const [recentlyPlacedTiles, setRecentlyPlacedTiles] = useState<Set<Coordinate>>(new Set());
+  
   const currentPlayer = players[currentPlayerIndex];
+  
+  // Track recently placed tiles
+  useEffect(() => {
+    if (recentlyPlacedTiles.size > 0) {
+      const timer = setTimeout(() => {
+        setRecentlyPlacedTiles(new Set());
+      }, 5000); // Clear recently placed status after 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyPlacedTiles]);
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const tiles: Coordinate[] = [];
@@ -102,6 +116,7 @@ const GameBoard = () => {
                 playerId: currentPlayer.id 
               } 
             });
+            setRecentlyPlacedTiles(new Set([coordinate]));
             return;
           }
         }
@@ -113,6 +128,7 @@ const GameBoard = () => {
             playerId: currentPlayer.id 
           } 
         });
+        setRecentlyPlacedTiles(new Set([coordinate]));
       } else {
         if (isTileBurned(coordinate, state)) {
           toast.error("This tile is burned and cannot be placed. It would create an illegal merger between safe hotel chains.");
@@ -146,6 +162,10 @@ const GameBoard = () => {
       }
     });
     
+    // Mark the founding tile and connected tiles as recently placed
+    const allTiles = new Set([coordinate, ...connectedTiles]);
+    setRecentlyPlacedTiles(allTiles);
+    
     setSelectedFoundingTile(null);
   };
   
@@ -174,6 +194,9 @@ const GameBoard = () => {
       }
     });
     
+    // Mark the merger tile as recently placed
+    setRecentlyPlacedTiles(new Set([tileCoordinate]));
+    
     setMergeDialogInfo(null);
   };
   
@@ -194,6 +217,9 @@ const GameBoard = () => {
         chainName: selectedChain
       }
     });
+    
+    // Mark the placed tile as recently placed
+    setRecentlyPlacedTiles(new Set([coordinate]));
     
     const remainingChains = adjacentChains.filter(chain => chain !== selectedChain);
     
@@ -228,6 +254,10 @@ const GameBoard = () => {
   
   const isInitialTile = (coordinate: Coordinate): boolean => {
     return initialTiles.some(tile => tile.coordinate === coordinate);
+  };
+
+  const isRecentlyPlaced = (coordinate: Coordinate): boolean => {
+    return recentlyPlacedTiles.has(coordinate);
   };
 
   const getInitialTilePlayerName = (coordinate: Coordinate): string | undefined => {
@@ -269,6 +299,7 @@ const GameBoard = () => {
         const isUnplayable = wouldCauseIllegalMerger(coord);
         const isAvailable = currentPlayer?.tiles.includes(coord) && !isPlaced;
         const tileInitial = isInitialTile(coord);
+        const tileRecentlyPlaced = isRecentlyPlaced(coord);
         const playerName = tileInitial ? getInitialTilePlayerName(coord) : undefined;
         
         return (
@@ -287,6 +318,7 @@ const GameBoard = () => {
               isAvailable={isAvailable}
               isUnplayable={isUnplayable}
               isInitialTile={tileInitial}
+              isRecentlyPlaced={tileRecentlyPlaced}
             />
             {playerName && (
               <div className="absolute top-full mt-1 text-xs bg-yellow-100 text-yellow-800 rounded px-1 whitespace-nowrap">
