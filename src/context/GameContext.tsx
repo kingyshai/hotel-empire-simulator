@@ -7,7 +7,8 @@ import {
   GameMode, 
   BuildingTile, 
   Action,
-  Coordinate
+  Coordinate,
+  HotelChain
 } from '@/types/game';
 import { toast } from '@/utils/toast';
 import { 
