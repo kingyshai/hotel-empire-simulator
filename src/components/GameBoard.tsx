@@ -67,39 +67,41 @@ const GameBoard = () => {
   };
   
   const handleTileClick = (coordinate: Coordinate) => {
-    if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
-      dispatch({ 
-        type: 'DRAW_INITIAL_TILE', 
-        payload: { 
-          playerId: currentPlayer.id 
-        } 
-      });
-      return;
-    }
-    
-    if (isTilePlaceable(coordinate)) {
-      const adjacents = getAdjacentTiles(coordinate, placedTiles);
-      const adjacentChains = findPotentialMergers(coordinate, state);
-      
-      if (adjacentChains.length === 0) {
-        // Found new hotel chain
-        const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
-        setSelectedFoundingTile({
-          coordinate,
-          connectedTiles
-        });
+    // This function is no longer needed for the drawInitialTile phase
+    if (gamePhase !== 'setup' || setupPhase !== 'drawInitialTile') {
+      if (isTilePlaceable(coordinate)) {
+        const adjacents = getAdjacentTiles(coordinate, placedTiles);
+        const adjacentChains = findPotentialMergers(coordinate, state);
+        
+        if (adjacentChains.length === 0) {
+          // Found new hotel chain
+          const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
+          setSelectedFoundingTile({
+            coordinate,
+            connectedTiles
+          });
+        } else {
+          dispatch({ 
+            type: 'PLACE_TILE', 
+            payload: { 
+              coordinate, 
+              playerId: currentPlayer.id 
+            } 
+          });
+        }
       } else {
-        dispatch({ 
-          type: 'PLACE_TILE', 
-          payload: { 
-            coordinate, 
-            playerId: currentPlayer.id 
-          } 
-        });
+        toast.error("You can't place a tile here!");
       }
-    } else {
-      toast.error("You can't place a tile here!");
     }
+  };
+  
+  const handleDrawInitialTile = () => {
+    dispatch({ 
+      type: 'DRAW_INITIAL_TILE', 
+      payload: { 
+        playerId: currentPlayer.id 
+      } 
+    });
   };
   
   const handleHotelSelection = (chainName: HotelChainName) => {
@@ -173,22 +175,29 @@ const GameBoard = () => {
         
         <div className="p-6 text-center">
           <p className="mb-4 text-lg">
-            {currentPlayer?.name}, click anywhere on the board to draw your initial tile
+            {currentPlayer?.name}, click the button below to draw your initial tile
           </p>
+          
+          <Button 
+            onClick={handleDrawInitialTile}
+            size="lg"
+            className="mb-8 w-full max-w-lg mx-auto py-6 text-lg bg-primary/80 hover:bg-primary"
+          >
+            Draw Initial Tile
+          </Button>
           
           <div className="grid grid-cols-12 gap-1 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
             {generateAllBoardCoordinates().map((coord, index) => (
               <motion.div
                 key={`draw-${coord}-${index}`}
                 className="relative aspect-square flex items-center justify-center"
-                onClick={() => handleTileClick(coord)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
                 <BuildingTile
                   coordinate={coord}
-                  isSelectable={true}
-                  isAvailable={true}
+                  isSelectable={false}
+                  isAvailable={false}
                 />
               </motion.div>
             ))}
