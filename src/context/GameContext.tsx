@@ -860,6 +860,75 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         players: updatedPlayers
       };
     }
+
+    case 'PLACE_TILE_AND_ADD_TO_CHAIN': {
+      const { coordinate, playerId, chainName } = action.payload;
+      const playerIndex = state.players.findIndex(p => p.id === playerId);
+      
+      if (playerIndex !== state.currentPlayerIndex) {
+        toast.error("It's not your turn!");
+        return state;
+      }
+      
+      const player = { ...state.players[playerIndex] };
+      
+      const tileIndex = player.tiles.indexOf(coordinate);
+      if (tileIndex === -1) {
+        toast.error("You don't have this tile!");
+        return state;
+      }
+      
+      player.tiles.splice(tileIndex, 1);
+      
+      const hotelChains = { ...state.hotelChains };
+      const placedTiles = { ...state.placedTiles };
+      
+      // Place the tile and add it to the specified chain
+      placedTiles[coordinate] = {
+        coordinate,
+        isPlaced: true,
+        belongsToChain: chainName
+      };
+      
+      // Add the tile to the chain
+      hotelChains[chainName] = {
+        ...hotelChains[chainName],
+        tiles: [...hotelChains[chainName].tiles, coordinate]
+      };
+      
+      // Find any connected free tiles that should also join the chain
+      const connectedFreeTiles = findConnectedTiles(coordinate, placedTiles)
+        .filter(tile => tile !== coordinate && !placedTiles[tile]?.belongsToChain);
+      
+      // Add all connected free tiles to the chain as well
+      connectedFreeTiles.forEach(tile => {
+        if (placedTiles[tile]) {
+          placedTiles[tile].belongsToChain = chainName;
+        } else {
+          placedTiles[tile] = {
+            coordinate: tile,
+            isPlaced: true,
+            belongsToChain: chainName
+          };
+        }
+        
+        hotelChains[chainName].tiles.push(tile);
+      });
+      
+      // Update chain's safe status
+      hotelChains[chainName].isSafe = hotelChains[chainName].tiles.length >= 11;
+      
+      const updatedPlayers = [...state.players];
+      updatedPlayers[playerIndex] = player;
+      
+      return {
+        ...state,
+        hotelChains,
+        placedTiles,
+        players: updatedPlayers,
+        gamePhase: 'buyStock', // Advance to buy stock phase unless a merger happens
+      };
+    }
     
     default:
       return state;

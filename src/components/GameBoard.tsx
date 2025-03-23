@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -8,6 +9,7 @@ import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, shouldEndGa
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 import { toast } from '@/utils/toast';
+import TileDestinationDialog from './TileDestinationDialog';
 
 const GameBoard = () => {
   const { state, dispatch } = useGame();
@@ -25,6 +27,18 @@ const GameBoard = () => {
   const [selectedFoundingTile, setSelectedFoundingTile] = useState<{
     coordinate: Coordinate;
     connectedTiles: Coordinate[];
+  } | null>(null);
+  
+  const [mergeDialogInfo, setMergeDialogInfo] = useState<{
+    potentialMergers: HotelChainName[];
+    tileCoordinate: Coordinate;
+    open: boolean;
+  } | null>(null);
+  
+  const [tileDestinationInfo, setTileDestinationInfo] = useState<{
+    adjacentChains: HotelChainName[];
+    coordinate: Coordinate;
+    open: boolean;
   } | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
@@ -70,6 +84,17 @@ const GameBoard = () => {
         const adjacents = getAdjacentTiles(coordinate, placedTiles);
         const adjacentChains = findPotentialMergers(coordinate, state);
         
+        // If adjacent to multiple chains, prompt user to select which chain to add the tile to
+        if (adjacentChains.length > 1) {
+          setTileDestinationInfo({
+            adjacentChains,
+            coordinate,
+            open: true
+          });
+          return;
+        }
+        
+        // If no adjacent chains but there are adjacent tiles (potential to found a hotel)
         if (adjacentChains.length === 0 && adjacents.length > 0) {
           const connectedTiles = findConnectedTiles(coordinate, state.placedTiles);
           
@@ -82,6 +107,7 @@ const GameBoard = () => {
           }
         }
         
+        // Standard tile placement (adjacent to one chain or no chains)
         dispatch({ 
           type: 'PLACE_TILE', 
           payload: { 
@@ -127,6 +153,81 @@ const GameBoard = () => {
   
   const handleDealStartingTiles = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
+  };
+  
+  const handleMergerComplete = (survivingChain: HotelChainName) => {
+    if (!mergeDialogInfo) return;
+    
+    const { tileCoordinate, potentialMergers } = mergeDialogInfo;
+    
+    // Get chains to be acquired (all chains except the surviving one)
+    const acquiredChains = potentialMergers.filter(chain => chain !== survivingChain);
+    
+    dispatch({
+      type: 'HANDLE_MERGER',
+      payload: {
+        coordinate: tileCoordinate,
+        playerId: currentPlayer.id,
+        survivingChain,
+        acquiredChains
+      }
+    });
+    
+    setMergeDialogInfo(null);
+  };
+  
+  const handleMergerCancel = () => {
+    setMergeDialogInfo(null);
+  };
+  
+  const handleTileDestinationSelect = (selectedChain: HotelChainName) => {
+    if (!tileDestinationInfo) return;
+    
+    const { coordinate, adjacentChains } = tileDestinationInfo;
+    
+    // First place the tile and add it to the selected chain
+    // We need a special action for this
+    dispatch({
+      type: 'PLACE_TILE_AND_ADD_TO_CHAIN',
+      payload: {
+        coordinate,
+        playerId: currentPlayer.id,
+        chainName: selectedChain
+      }
+    });
+    
+    // Now check if we need to handle mergers
+    const remainingChains = adjacentChains.filter(chain => chain !== selectedChain);
+    
+    // If there are chains that might need to be merged, check their sizes
+    if (remainingChains.length > 0) {
+      // Get the updated chain sizes after adding the tile
+      const selectedChainSize = hotelChains[selectedChain].tiles.length + 1; // +1 for the tile just added
+      
+      // Filter chains that need to be merged (those with the same or smaller size)
+      const chainsToMerge = remainingChains.filter(chain => 
+        hotelChains[chain].tiles.length <= selectedChainSize
+      );
+      
+      if (chainsToMerge.length > 0) {
+        // Open merger dialog for user to decide surviving chain
+        setMergeDialogInfo({
+          potentialMergers: [selectedChain, ...chainsToMerge],
+          tileCoordinate: coordinate,
+          open: true
+        });
+      } else {
+        // No mergers needed, close the dialog
+        setTileDestinationInfo(null);
+      }
+    } else {
+      // No other chains to consider, close the dialog
+      setTileDestinationInfo(null);
+    }
+  };
+  
+  const handleTileDestinationCancel = () => {
+    setTileDestinationInfo(null);
   };
   
   const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
@@ -274,6 +375,28 @@ const GameBoard = () => {
             Deal Starting Tiles to All Players
           </Button>
         </div>
+      )}
+      
+      {/* Merger Dialog */}
+      {mergeDialogInfo && (
+        <MergerDialog
+          potentialMergers={mergeDialogInfo.potentialMergers}
+          tileCoordinate={mergeDialogInfo.tileCoordinate}
+          onComplete={handleMergerComplete}
+          onCancel={handleMergerCancel}
+          open={mergeDialogInfo.open}
+        />
+      )}
+      
+      {/* Tile Destination Dialog */}
+      {tileDestinationInfo && (
+        <TileDestinationDialog
+          adjacentChains={tileDestinationInfo.adjacentChains}
+          coordinate={tileDestinationInfo.coordinate}
+          onSelect={handleTileDestinationSelect}
+          onCancel={handleTileDestinationCancel}
+          open={tileDestinationInfo.open}
+        />
       )}
     </div>
   );
