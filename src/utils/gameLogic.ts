@@ -1,3 +1,4 @@
+
 import { 
   GameState, 
   Player, 
@@ -336,7 +337,7 @@ export const distributeStockholderBonus = (
 };
 
 export const shouldEndGame = (state: GameState): boolean => {
-  const { hotelChains, placedTiles, availableHeadquarters } = state;
+  const { hotelChains, placedTiles } = state;
   
   // Rule 1: A chain has grown to 41 or more tiles
   for (const chainName in hotelChains) {
@@ -352,17 +353,10 @@ export const shouldEndGame = (state: GameState): boolean => {
     return true;
   }
   
-  // Check if there's potential for a new hotel chain to be formed
-  // This is the key rule correction: game ends when no NEW hotels can be built
-  // (not when there are no headquarters left)
+  // Check if there's potential for a new hotel chain to be formed or 
+  // if existing chains can grow through mergers
   
-  // If all headquarters are already used, no new hotel can be built
-  if (availableHeadquarters.length === 0) {
-    return true;
-  }
-  
-  // If we have available headquarters, check if there are at least 2 unattached tiles
-  // that could potentially form a new chain
+  // Check if there are at least 2 unattached tiles that could potentially form a new chain
   let freeStandingTiles = 0;
   for (const key in placedTiles) {
     const tile = placedTiles[key as Coordinate];
@@ -375,12 +369,32 @@ export const shouldEndGame = (state: GameState): boolean => {
     }
   }
   
-  // If we have less than 2 free-standing tiles, and we have headquarters,
-  // check if there are enough tiles in players' hands to potentially form a chain
+  // If we have less than 2 free-standing tiles, check if there are enough 
+  // tiles in players' hands to potentially form a chain
   const totalPlayerTiles = state.players.reduce((total, player) => total + player.tiles.length, 0);
   if (freeStandingTiles + totalPlayerTiles < 2) {
-    // Not enough tiles to form a new chain
-    return true;
+    // Not enough tiles available to form any new chains through placement
+    
+    // Check if there are any potential mergers that could free up hotel chains
+    let potentialMergers = false;
+    
+    // First, check for any tiles in players' hands that could cause mergers
+    for (const player of state.players) {
+      for (const tile of player.tiles) {
+        const mergerCandidates = findPotentialMergers(tile, state);
+        if (mergerCandidates.length >= 2) {
+          // This tile could cause a merger between two or more chains
+          potentialMergers = true;
+          break;
+        }
+      }
+      if (potentialMergers) break;
+    }
+    
+    // If no potential mergers from player tiles, the game should end
+    if (!potentialMergers) {
+      return true;
+    }
   }
   
   return false;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BuildingTile from './BuildingTile';
 import { useGame } from '@/context/GameContext';
@@ -160,7 +159,6 @@ const GameBoard = () => {
     );
   }
   
-  // Get current player name - important for proper display
   const currentPlayerName = players[currentPlayerIndex]?.name || `Player ${currentPlayerIndex + 1}`;
   
   if (gamePhase === 'setup' && setupPhase === 'drawInitialTile') {
@@ -225,7 +223,7 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 aspect-video overflow-hidden">
+      <div className="grid grid-cols-12 gap-0.5 p-2 bg-accent/30 w-full h-auto overflow-hidden">
         {generateAllBoardCoordinates().map((coord) => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;
@@ -237,7 +235,7 @@ const GameBoard = () => {
           return (
             <div
               key={`board-${coord}-${currentPlayerIndex}`}
-              className="aspect-square w-full h-full"
+              className="aspect-square min-w-0 min-h-0" 
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 

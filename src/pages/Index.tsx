@@ -125,51 +125,51 @@ const GameContent = () => {
       )}
       
       <div className="flex flex-col gap-4 mt-4">
-        {/* Game Board - Now larger and at the top */}
-        <div className="w-full">
+        {/* Game Board - Now larger with better visibility */}
+        <div className="w-full h-auto">
           <GameBoard key={`board-${currentPlayerIndex}`} />
-          
-          <div className="mt-4">
-            <div className="text-sm text-muted-foreground">
-              Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
-              {gamePhase === 'setup' && (
-                <span className="ml-2 text-xs">({state.setupPhase})</span>
-              )}
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <StockMarket key={`stock-market-${currentPlayerIndex}`} />
-          </div>
+        </div>
+        
+        {/* Stock Market - Directly below the board */}
+        <div className="mt-2">
+          <StockMarket key={`stock-market-${currentPlayerIndex}`} />
+        </div>
+        
+        {/* Game phase information */}
+        <div className="text-sm text-muted-foreground">
+          Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
+          {gamePhase === 'setup' && (
+            <span className="ml-2 text-xs">({state.setupPhase})</span>
+          )}
         </div>
         
         {/* Player Info Section - Now at the bottom */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Players */}
-          <div className="glass-panel rounded-xl overflow-hidden">
-            <div className="p-3 bg-secondary/50 border-b border-border/50">
-              <h2 className="text-sm font-medium">Players</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-              {players.map((player, index) => (
-                <PlayerInfo 
-                  key={`player-info-${player.id}-${currentPlayerIndex}`} 
-                  player={player}
-                  isCurrentPlayer={index === currentPlayerIndex}
-                />
-              ))}
-            </div>
-          </div>
-          
+        <div className="grid grid-cols-1 gap-4">
           {/* Hotel Chains */}
           <div className="glass-panel rounded-xl overflow-hidden">
             <div className="p-3 bg-secondary/50 border-b border-border/50">
               <h2 className="text-sm font-medium">Hotel Chains</h2>
             </div>
             
-            <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               {chainNames.map(chainName => (
                 <HotelChain key={chainName} chainName={chainName} />
+              ))}
+            </div>
+          </div>
+          
+          {/* Players */}
+          <div className="glass-panel rounded-xl overflow-hidden">
+            <div className="p-3 bg-secondary/50 border-b border-border/50">
+              <h2 className="text-sm font-medium">Players</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+              {players.map((player, index) => (
+                <PlayerInfo 
+                  key={`player-info-${player.id}-${currentPlayerIndex}`} 
+                  player={player}
+                  isCurrentPlayer={index === currentPlayerIndex}
+                />
               ))}
             </div>
           </div>
