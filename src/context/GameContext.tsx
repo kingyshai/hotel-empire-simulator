@@ -434,6 +434,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const updatedPlayers = [...state.players];
       updatedPlayers[state.currentPlayerIndex] = player;
       
+      // Log the player change for debugging
+      console.log(`Changing from player ${state.currentPlayerIndex} to player ${nextPlayerIndex}`);
+      console.log(`Current player name: ${state.players[state.currentPlayerIndex].name}, Next player name: ${state.players[nextPlayerIndex].name}`);
+      
       newState = {
         ...state,
         currentPlayerIndex: nextPlayerIndex,
