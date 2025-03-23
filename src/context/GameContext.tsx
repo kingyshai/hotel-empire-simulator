@@ -272,7 +272,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
     }
     
-    case 'SET_CURRENT_PLAYER':
+    case 'SET_CURRENT_PLAYER'
       return {
         ...state,
         currentPlayerIndex: action.payload.playerIndex,
@@ -610,7 +610,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       toast.success(`Merged ${acquiredChains.join(', ')} into ${survivingChain}`);
       
       // Check if current player has stocks in the acquired chain
-      const currentPlayerStocks = player.stocks[currentMergerChain as HotelChainName];
+      const mergerPlayer = updatedPlayers[playerIndex];
+      const currentPlayerStocks = mergerPlayer.stocks[currentMergerChain as HotelChainName];
       
       if (currentMergerChain && currentPlayerStocks > 0) {
         // If player has stocks, go to merger stock options phase
@@ -628,7 +629,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
             survivingChain,
             stocksHeld: currentPlayerStocks,
             playersWithStocks: updatedPlayers
-              .filter(p => p.id !== currentPlayer.id && p.stocks[currentMergerChain as HotelChainName] > 0)
+              .filter(p => p.id !== mergerPlayer.id && p.stocks[currentMergerChain as HotelChainName] > 0)
               .map(p => p.id)
           }
         };
@@ -878,3 +879,4 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useGame = () => useContext(GameContext);
+

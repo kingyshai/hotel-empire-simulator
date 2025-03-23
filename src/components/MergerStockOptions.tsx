@@ -4,9 +4,8 @@ import { useGame } from '@/context/GameContext';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
-import { MergerStockOption } from '@/types/game';
 import { calculateStockPrice } from '@/utils/gameLogic';
-import { Check, DollarSign, ArrowRight } from 'lucide-react';
+import { Check, DollarSign, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 const MergerStockOptions: React.FC = () => {
@@ -113,20 +112,24 @@ const MergerStockOptions: React.FC = () => {
       }
     });
   };
+
+  // Calculate what you'll get from each option
+  const sellValue = sellCount * stockPrice.sell;
+  const tradeValue = getTradeableAmount(tradeCount);
   
   return (
     <Dialog open={true}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Merger Stock Options</DialogTitle>
+          <DialogTitle>Stock Options for Merger</DialogTitle>
           <DialogDescription>
-            You own {stocksHeld} shares of {acquiredChain} which has been acquired by {survivingChain}.
-            Decide what to do with your shares.
+            <span className="font-medium">{currentPlayer.name}</span>, decide what to do with your {stocksHeld} shares of {acquiredChain} 
+            which has been acquired by {survivingChain}.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 p-2 bg-secondary/20 rounded-md">
             <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: acquiredChainColor }}></div>
             <span className="font-medium capitalize">{acquiredChain}</span>
             <span className="text-muted-foreground">→</span>
@@ -240,17 +243,19 @@ const MergerStockOptions: React.FC = () => {
             </TableBody>
           </Table>
           
-          <div className="mt-2 flex justify-between items-center text-sm">
-            <div>
-              <span className="font-medium">Total:</span> {calculateTotal()}/{stocksHeld} shares
-            </div>
-            <div>
-              <span className="font-medium">Get:</span> {getTradeableAmount(tradeCount)} {survivingChain} shares
-            </div>
+          <div className="bg-secondary/20 p-3 rounded-md">
+            <div className="text-sm font-medium mb-2">Summary:</div>
+            <ul className="space-y-1 text-sm">
+              <li>Total allocated: {calculateTotal()}/{stocksHeld} shares</li>
+              {keepCount > 0 && <li>Keep {keepCount} shares of {acquiredChain}</li>}
+              {sellCount > 0 && <li>Sell {sellCount} shares for ${sellValue}</li>}
+              {tradeCount > 0 && <li>Trade {tradeCount} shares for {tradeValue} shares of {survivingChain}</li>}
+            </ul>
           </div>
           
           {!isValidDistribution() && (
-            <div className="text-destructive text-sm mt-1">
+            <div className="flex items-center gap-2 text-destructive text-sm">
+              <AlertTriangle size={16} />
               {calculateTotal() !== stocksHeld 
                 ? `Must allocate exactly ${stocksHeld} shares`
                 : "Trade amount must be an even number"}
@@ -263,7 +268,7 @@ const MergerStockOptions: React.FC = () => {
             onClick={handleSubmit} 
             disabled={!isValidDistribution()}
           >
-            Confirm
+            Confirm Choices
           </Button>
         </DialogFooter>
       </DialogContent>

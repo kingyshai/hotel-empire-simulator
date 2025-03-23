@@ -177,6 +177,22 @@ const GameBoard: React.FC = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
   };
   
+  const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
+    const tempPlacedTiles = { 
+      ...placedTiles, 
+      [coordinate]: { coordinate, isPlaced: true } 
+    };
+    
+    const adjacentChains = findPotentialMergers(coordinate, { ...state, placedTiles: tempPlacedTiles });
+    
+    // Check if multiple chains are safe (11+ tiles)
+    const safeChains = adjacentChains.filter(chain => 
+      hotelChains[chain].tiles.length >= 11
+    );
+    
+    return safeChains.length >= 2;
+  };
+
   const generateBoard = () => {
     const rows = [];
     
@@ -186,6 +202,7 @@ const GameBoard: React.FC = () => {
       for (let col = 'A'; col <= 'L'; col = String.fromCharCode(col.charCodeAt(0) + 1)) {
         const coordinate = `${row}${col}` as Coordinate;
         const placedTile = placedTiles[coordinate];
+        const isIllegalMerger = currentPlayer?.tiles.includes(coordinate) && wouldCauseIllegalMerger(coordinate);
         
         cols.push(
           <div key={coordinate} className="aspect-square w-full p-0.5">
@@ -200,6 +217,7 @@ const GameBoard: React.FC = () => {
                 coordinate={coordinate}
                 isPlaced={false}
                 onClick={() => handleTileClick(coordinate)}
+                isUnplayable={isIllegalMerger}
               />
             ) : (
               <motion.div 

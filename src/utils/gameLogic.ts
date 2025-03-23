@@ -167,8 +167,11 @@ export const calculateStockholderBonus = (
 ): StockholderBonus => {
   const { buy } = calculateStockPrice(chainName, chainSize);
   
+  // Primary bonus is 10x the stock price
   const primary = buy * 10;
+  // Secondary bonus is 5x the stock price
   const secondary = buy * 5;
+  // Tertiary bonus (for tycoon mode) is approximately 3x the stock price
   const tertiary = Math.ceil(buy * 3.3);
   
   return {
@@ -239,13 +242,14 @@ export const distributeStockholderBonus = (
   
   const updatedPlayers = [...players];
   
+  // If only one player has stocks and no one has the second most, 
+  // they get both primary and secondary bonuses
   if (primary.length === 1 && secondary.length === 0) {
     const singleStockholder = primary[0];
     const playerIndex = players.findIndex(p => p.id === singleStockholder.id);
     
-    const totalBonus = gameMode === 'classic' 
-      ? bonus.primary + bonus.secondary
-      : bonus.primary + bonus.tertiary;
+    // They get primary + secondary bonuses
+    const totalBonus = bonus.primary + bonus.secondary;
     
     updatedPlayers[playerIndex] = {
       ...singleStockholder,
@@ -258,6 +262,7 @@ export const distributeStockholderBonus = (
     };
   }
   
+  // If multiple players tie for first place, they split the primary and secondary bonuses
   if (primary.length > 1) {
     const splitBonus = (bonus.primary + bonus.secondary) / primary.length;
     const roundedBonus = Math.ceil(splitBonus / 100) * 100;
@@ -270,6 +275,7 @@ export const distributeStockholderBonus = (
       };
     });
     
+    // In tycoon mode, tertiary stockholders still get a bonus
     if (gameMode === 'tycoon' && tertiary.length > 0) {
       const tertiaryBonus = Math.ceil(bonus.tertiary / tertiary.length / 100) * 100;
       
@@ -288,31 +294,7 @@ export const distributeStockholderBonus = (
     };
   }
   
-  if (secondary.length > 1) {
-    const primaryPlayer = primary[0];
-    const primaryIndex = players.findIndex(p => p.id === primaryPlayer.id);
-    updatedPlayers[primaryIndex] = {
-      ...primaryPlayer,
-      money: primaryPlayer.money + bonus.primary,
-    };
-    
-    const splitSecondary = (bonus.secondary + (gameMode === 'tycoon' ? bonus.tertiary : 0)) / secondary.length;
-    const roundedSecondary = Math.ceil(splitSecondary / 100) * 100;
-    
-    secondary.forEach(player => {
-      const playerIndex = players.findIndex(p => p.id === player.id);
-      updatedPlayers[playerIndex] = {
-        ...player,
-        money: player.money + roundedSecondary,
-      };
-    });
-    
-    return {
-      ...state,
-      players: updatedPlayers,
-    };
-  }
-  
+  // Standard case: distribute bonuses normally
   if (primary.length === 1) {
     const player = primary[0];
     const playerIndex = players.findIndex(p => p.id === player.id);
@@ -329,9 +311,22 @@ export const distributeStockholderBonus = (
       ...player,
       money: player.money + bonus.secondary,
     };
+  } else if (secondary.length > 1) {
+    // Multiple players tied for second, split the secondary bonus
+    const splitSecondary = bonus.secondary / secondary.length;
+    const roundedSecondary = Math.ceil(splitSecondary / 100) * 100;
+    
+    secondary.forEach(player => {
+      const playerIndex = players.findIndex(p => p.id === player.id);
+      updatedPlayers[playerIndex] = {
+        ...player,
+        money: player.money + roundedSecondary,
+      };
+    });
   }
   
   if (gameMode === 'tycoon' && tertiary.length > 0) {
+    // For tycoon mode, distribute tertiary bonuses
     const tertiaryBonus = Math.ceil(bonus.tertiary / tertiary.length / 100) * 100;
     
     tertiary.forEach(player => {

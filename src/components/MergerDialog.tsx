@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { HotelChainName } from '@/types/game';
 import { useGame } from '@/context/GameContext';
+import { calculateStockPrice } from '@/utils/gameLogic';
 
 interface MergerDialogProps {
   potentialMergers: HotelChainName[];
@@ -64,43 +65,49 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
     <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Hotel Chain Merger</DialogTitle>
+          <DialogTitle>Select Surviving Hotel Chain</DialogTitle>
           <DialogDescription>
             The tile at {tileCoordinate} would connect {potentialMergers.length} hotel chains.
             {needsUserSelection 
               ? " Multiple chains have the same size. Please select which one should survive."
-              : " The largest chain will be the survivor."}
+              : " The largest chain will be the survivor. You can choose differently."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="text-sm font-medium mb-2">Available Chains:</div>
           <div className="grid gap-4">
-            {sortedChains.map(chain => (
-              <div key={chain} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-5 h-5 rounded-md"
-                    style={{ backgroundColor: chainColorMap[chain as keyof typeof chainColorMap] || hotelChains[chain].color }}
-                  />
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium capitalize">{chain}</p>
-                    <p className="text-xs text-muted-foreground">{hotelChains[chain].tiles.length} tiles</p>
+            {sortedChains.map(chain => {
+              const stockPrice = calculateStockPrice(chain, hotelChains[chain].tiles.length);
+              return (
+                <div key={chain} className="flex items-center justify-between border p-3 rounded-md">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-5 h-5 rounded-md"
+                      style={{ backgroundColor: chainColorMap[chain as keyof typeof chainColorMap] || hotelChains[chain].color }}
+                    />
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium capitalize">{chain}</p>
+                      <p className="text-xs text-muted-foreground">{hotelChains[chain].tiles.length} tiles</p>
+                      <p className="text-xs text-muted-foreground">Stock price: ${stockPrice.buy}</p>
+                    </div>
                   </div>
+                  
+                  <Button
+                    variant={selectedChain === chain ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedChain(chain)}
+                  >
+                    {selectedChain === chain ? "Selected as Survivor" : "Select as Survivor"}
+                  </Button>
                 </div>
-                
-                <Button
-                  variant={selectedChain === chain ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedChain(chain)}
-                >
-                  {selectedChain === chain ? "Selected" : "Select"}
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="text-sm text-muted-foreground mt-4">
-            The selected chain will survive, and the others will be merged into it.
+            <p><strong>Important:</strong> The selected chain will survive, and the others will be merged into it.</p>
+            <p>This decision impacts stock values and bonuses for all players.</p>
           </div>
         </div>
 

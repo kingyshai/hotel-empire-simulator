@@ -1,9 +1,10 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from '@/context/GameContext';
 import { Player } from '@/types/game';
+import { Button } from './ui/button';
 
 interface WinnerBannerProps {
   winner: Player | null;
@@ -12,14 +13,6 @@ interface WinnerBannerProps {
 }
 
 const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, winners, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  
   return (
     <AnimatePresence>
       <motion.div
@@ -28,7 +21,7 @@ const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, winners, onClose })
         exit={{ y: -100, opacity: 0 }}
         className="fixed top-0 left-0 right-0 z-50 p-4 bg-gradient-to-r from-amber-500 to-amber-300 text-black shadow-lg"
       >
-        <div className="container mx-auto flex items-center justify-center">
+        <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Trophy size={24} className="text-amber-900" />
             {winner ? (
@@ -51,6 +44,14 @@ const WinnerBanner: React.FC<WinnerBannerProps> = ({ winner, winners, onClose })
               </div>
             ) : null}
           </div>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={onClose}
+            className="bg-amber-700 hover:bg-amber-800 text-white"
+          >
+            Acknowledge
+          </Button>
         </div>
       </motion.div>
     </AnimatePresence>
