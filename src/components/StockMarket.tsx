@@ -1,12 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { HotelChainName } from '@/types/game';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/utils/toast';
 
 const StockMarket: React.FC = () => {
-  const { state } = useGame();
-  const { hotelChains, stockMarket, players, currentPlayerIndex } = state;
+  const { state, dispatch } = useGame();
+  const { hotelChains, stockMarket, players, currentPlayerIndex, gamePhase } = state;
+  const [stocksToBuy, setStocksToBuy] = useState<Record<HotelChainName, number>>({
+    luxor: 0,
+    tower: 0,
+    american: 0,
+    festival: 0,
+    worldwide: 0,
+    continental: 0,
+    imperial: 0
+  });
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -16,17 +27,103 @@ const StockMarket: React.FC = () => {
   
   const calculateStockPrice = (chainName: HotelChainName) => {
     const chain = hotelChains[chainName];
-    if (!chain.isActive) return { buy: 0, sell: 0 };
+    if (!chain.isActive) return 0;
     
     // Simplified price calculation based on chain size
     const basePrice = 100;
     const size = chain.tiles.length;
     
-    return {
-      buy: basePrice * size,
-      sell: (basePrice * size) - (basePrice / 2),
-    };
+    return basePrice * size;
   };
+
+  const incrementStock = (chainName: HotelChainName) => {
+    const chain = hotelChains[chainName];
+    if (!chain.isActive) return;
+    
+    const totalStocksBought = Object.values(stocksToBuy).reduce((sum, count) => sum + count, 0);
+    if (totalStocksBought >= 3) {
+      toast.error("You can only buy up to 3 stocks per turn");
+      return;
+    }
+    
+    if (stockMarket[chainName] <= 0) {
+      toast.error("No more stocks available for this chain");
+      return;
+    }
+    
+    setStocksToBuy({
+      ...stocksToBuy,
+      [chainName]: stocksToBuy[chainName] + 1
+    });
+  };
+  
+  const decrementStock = (chainName: HotelChainName) => {
+    if (stocksToBuy[chainName] <= 0) return;
+    
+    setStocksToBuy({
+      ...stocksToBuy,
+      [chainName]: stocksToBuy[chainName] - 1
+    });
+  };
+  
+  const handleBuyStocks = () => {
+    const totalStocksBought = Object.values(stocksToBuy).reduce((sum, count) => sum + count, 0);
+    if (totalStocksBought === 0) {
+      toast.error("Select at least one stock to buy");
+      return;
+    }
+    
+    let totalCost = 0;
+    
+    // Calculate total cost and check if player can afford it
+    for (const chainName of chainNames) {
+      if (stocksToBuy[chainName] > 0) {
+        const price = calculateStockPrice(chainName);
+        totalCost += price * stocksToBuy[chainName];
+      }
+    }
+    
+    if (currentPlayer.money < totalCost) {
+      toast.error("You don't have enough money");
+      return;
+    }
+    
+    // Buy stocks for each chain
+    for (const chainName of chainNames) {
+      if (stocksToBuy[chainName] > 0) {
+        dispatch({
+          type: 'BUY_STOCK',
+          payload: {
+            chainName,
+            playerId: currentPlayer.id,
+            quantity: stocksToBuy[chainName]
+          }
+        });
+      }
+    }
+    
+    // Reset stocks to buy
+    setStocksToBuy({
+      luxor: 0,
+      tower: 0,
+      american: 0,
+      festival: 0,
+      worldwide: 0,
+      continental: 0,
+      imperial: 0
+    });
+    
+    toast.success(`Bought ${totalStocksBought} stocks for $${totalCost}`);
+  };
+  
+  const totalStocksBought = Object.values(stocksToBuy).reduce((sum, count) => sum + count, 0);
+  const totalCost = chainNames.reduce((sum, chainName) => {
+    if (stocksToBuy[chainName] > 0) {
+      return sum + (calculateStockPrice(chainName) * stocksToBuy[chainName]);
+    }
+    return sum;
+  }, 0);
+  const canAfford = currentPlayer?.money >= totalCost;
   
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
@@ -58,7 +155,7 @@ const StockMarket: React.FC = () => {
             {chainNames.map((chainName) => {
               const chain = hotelChains[chainName];
               const available = stockMarket[chainName];
-              const { buy } = calculateStockPrice(chainName);
+              const price = calculateStockPrice(chainName);
               
               return (
                 <div 
@@ -66,35 +163,76 @@ const StockMarket: React.FC = () => {
                   className={`px-3 py-2 rounded-md text-center border ${chain.isActive ? 'border-border/50' : 'border-border/20 opacity-50'}`}
                 >
                   <div className="text-sm font-semibold mb-1">{available}</div>
-                  <div className="text-xs text-muted-foreground">Available</div>
+                  <div className="text-xs text-muted-foreground mb-1">Available</div>
                   {chain.isActive && (
-                    <div className="mt-2 text-xs font-medium">${buy}</div>
+                    <div className="mt-1 text-xs font-medium">${price}</div>
                   )}
                 </div>
               );
             })}
           </div>
           
-          <div className="grid grid-cols-7 gap-2">
-            {chainNames.map((chainName) => {
-              const chain = hotelChains[chainName];
+          {gamePhase === 'buyStock' && (
+            <>
+              <div className="grid grid-cols-7 gap-2">
+                {chainNames.map((chainName) => {
+                  const chain = hotelChains[chainName];
+                  const disableIncrement = !chain.isActive || 
+                    stockMarket[chainName] === 0 || 
+                    totalStocksBought >= 3 ||
+                    calculateStockPrice(chainName) > currentPlayer?.money;
+                  
+                  return (
+                    <div key={chainName} className="flex flex-col items-center">
+                      <div className="flex items-center justify-between w-full mb-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          disabled={stocksToBuy[chainName] === 0}
+                          onClick={() => decrementStock(chainName)}
+                        >
+                          <span>-</span>
+                        </Button>
+                        
+                        <span className="mx-2 text-sm font-medium">{stocksToBuy[chainName]}</span>
+                        
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-6 w-6"
+                          disabled={disableIncrement}
+                          onClick={() => incrementStock(chainName)}
+                        >
+                          <span>+</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
               
-              return (
-                <motion.button
-                  key={chainName}
-                  disabled={!chain.isActive || stockMarket[chainName] === 0}
-                  className={`px-2 py-1.5 text-xs font-medium rounded-md
-                    ${chain.isActive && stockMarket[chainName] > 0 
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                      : 'bg-secondary text-muted-foreground cursor-not-allowed'}`}
-                  whileHover={{ scale: chain.isActive && stockMarket[chainName] > 0 ? 1.03 : 1 }}
-                  whileTap={{ scale: chain.isActive && stockMarket[chainName] > 0 ? 0.97 : 1 }}
+              <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm">Total Stocks:</span>
+                  <span className="font-medium">{totalStocksBought} / 3</span>
+                </div>
+                
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm">Total Cost:</span>
+                  <span className={`font-medium ${!canAfford ? 'text-red-500' : ''}`}>${totalCost}</span>
+                </div>
+                
+                <Button 
+                  className="w-full"
+                  disabled={totalStocksBought === 0 || !canAfford}
+                  onClick={handleBuyStocks}
                 >
-                  Buy Stock
-                </motion.button>
-              );
-            })}
-          </div>
+                  Buy Stocks
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

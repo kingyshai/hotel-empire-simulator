@@ -14,21 +14,18 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
   
   const chain = hotelChains[chainName];
   
-  // Calculate stock values based on chain size
+  // Calculate stock value based on chain size
   const calculateStockPrice = () => {
-    if (!chain.isActive) return { buy: 0, sell: 0 };
+    if (!chain.isActive) return 0;
     
     // Simplified price calculation
     const basePrice = 100;
     const size = chain.tiles.length;
     
-    return {
-      buy: basePrice * size,
-      sell: (basePrice * size) - (basePrice / 2),
-    };
+    return basePrice * size;
   };
   
-  const { buy, sell } = calculateStockPrice();
+  const price = calculateStockPrice();
   
   return (
     <motion.div 
@@ -68,17 +65,10 @@ const HotelChain: React.FC<HotelChainProps> = ({ chainName }) => {
         </div>
         
         {chain.isActive && (
-          <>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Buy Price</span>
-              <span className="font-medium text-sm">${buy}</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Sell Price</span>
-              <span className="font-medium text-sm">${sell}</span>
-            </div>
-          </>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Stock Price</span>
+            <span className="font-medium text-sm">${price}</span>
+          </div>
         )}
       </div>
     </motion.div>

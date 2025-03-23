@@ -25,10 +25,15 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const { state } = useGame();
   const { hotelChains } = state;
   
+  // Get the first letter of the chain name (uppercase)
+  const getChainInitial = (chainName: string): string => {
+    return chainName.charAt(0).toUpperCase();
+  };
+  
   return (
     <motion.button
       className={cn(
-        "building-tile",
+        "building-tile relative",
         isPlaced ? "cursor-default shadow-md" : isSelectable ? "cursor-pointer ring-2 ring-primary/50" : "cursor-default",
         belongsToChain 
           ? `bg-${belongsToChain}/20 border-${belongsToChain}/50` 
@@ -47,10 +52,22 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       <span className="text-xs font-medium">{coordinate}</span>
       
       {belongsToChain && (
-        <div 
-          className="absolute inset-0 opacity-30 rounded-md"
-          style={{ backgroundColor: hotelChains[belongsToChain].color }}
-        />
+        <>
+          <div 
+            className="absolute inset-0 opacity-30 rounded-md"
+            style={{ backgroundColor: hotelChains[belongsToChain].color }}
+          />
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <span 
+              className="text-xl font-bold"
+              style={{ color: hotelChains[belongsToChain].color }}
+            >
+              {getChainInitial(belongsToChain)}
+            </span>
+          </div>
+        </>
       )}
       
       {isPlaced && !belongsToChain && (
