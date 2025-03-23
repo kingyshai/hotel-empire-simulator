@@ -29,7 +29,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   
   // Safely extract stock purchase info
   const purchasedStocksList = Object.entries(purchaseInfo.stocks || {})
-    .filter(([_, count]) => count > 0)
+    .filter(([chain, count]) => count > 0 && chain !== purchaseInfo.foundedHotel) // Filter out the founded hotel
     .map(([chain, count]) => ({
       chain: chain as HotelChainName,
       count
