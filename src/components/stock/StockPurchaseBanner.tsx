@@ -27,29 +27,28 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   // Early return if purchaseInfo is null
   if (!purchaseInfo) return null;
   
-  // Safely extract stock purchase info
+  // Check if any non-founder stocks were purchased
+  const hasNonFounderStocksPurchased = Object.entries(purchaseInfo.stocks || {})
+    .some(([chain, count]) => {
+      if (chain === purchaseInfo.foundedHotel) {
+        // If this is the founded chain, check if more than just the free stock was purchased
+        return count > 1;
+      }
+      // For other chains, any purchase counts
+      return count > 0;
+    });
+  
+  // Check if a hotel was founded
+  const hasFoundedHotel = !!purchaseInfo.foundedHotel;
+  
+  // Create a list of purchased stocks to display
   const purchasedStocksList = Object.entries(purchaseInfo.stocks || {})
     .filter(([chain, count]) => count > 0)
     .map(([chain, count]) => ({
       chain: chain as HotelChainName,
       count,
-      isFreeFounderStock: chain === purchaseInfo.foundedHotel && count === 1
+      isFounderStock: chain === purchaseInfo.foundedHotel && count === 1
     }));
-  
-  const totalStocks = purchasedStocksList.reduce((sum, { count, isFreeFounderStock }) => 
-    sum + (isFreeFounderStock ? 0 : count), 0);
-  const hasFoundedHotel = !!purchaseInfo.foundedHotel;
-  const hasPurchasedStocks = totalStocks > 0;
-  const onlyReceivedFounderStock = hasFoundedHotel && !hasPurchasedStocks;
-  
-  // Calculate additional purchased stocks for the founded hotel (beyond the free founder stock)
-  let additionalFounderHotelStocks = 0;
-  if (hasFoundedHotel) {
-    const foundedHotelEntry = purchasedStocksList.find(entry => entry.chain === purchaseInfo.foundedHotel);
-    if (foundedHotelEntry && foundedHotelEntry.count > 1) {
-      additionalFounderHotelStocks = foundedHotelEntry.count - 1;
-    }
-  }
   
   return (
     <AnimatePresence>
@@ -69,40 +68,34 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold">
                 <span className="text-blue-900">{purchaseInfo.playerName}</span> 
-                {hasFoundedHotel && hasPurchasedStocks
+                {hasFoundedHotel && hasNonFounderStocksPurchased
                   ? ` founded ${purchaseInfo.foundedHotel} hotel chain and purchased additional stocks!` 
-                  : hasFoundedHotel && !hasPurchasedStocks
+                  : hasFoundedHotel && !hasNonFounderStocksPurchased
                     ? ` founded ${purchaseInfo.foundedHotel} hotel chain and received free founder stock!`
-                    : hasPurchasedStocks 
+                    : hasNonFounderStocksPurchased 
                       ? " purchased stocks!" 
                       : " ended turn without purchasing any stocks!"}
               </h3>
               <div className="text-sm">
+                {/* Display free founder stock if applicable */}
                 {hasFoundedHotel && (
                   <div className="mt-1 font-medium text-white bg-green-500/30 px-2 py-1 rounded-full inline-block mr-2">
                     Received 1 free {purchaseInfo.foundedHotel} founder stock
                   </div>
                 )}
                 
-                {/* Display all purchased stocks (excluding the free founder stock) */}
-                {(() => {
-                  // Create list of purchased stocks excluding the free founder stock
-                  const regularPurchases = Object.entries(purchaseInfo.stocks)
+                {/* Display purchased stocks (excluding the free founder stock) */}
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {Object.entries(purchaseInfo.stocks)
                     .filter(([chain, count]) => {
-                      // Skip if no stocks
-                      if (count <= 0) return false;
-                      
-                      // Skip if this is just the free founder stock
+                      // Skip free founder stock in this section
                       if (chain === purchaseInfo.foundedHotel && count === 1) return false;
-                      
-                      // Include if either:
-                      // 1. This is not the founded hotel chain
-                      // 2. This is the founded hotel chain but has more than 1 stock (beyond the free one)
-                      return true;
+                      // Include all other purchased stocks
+                      return count > 0;
                     })
                     .map(([chain, count]) => {
                       const chainName = chain as HotelChainName;
-                      // Adjust count for founder hotel (subtract 1 for the free stock)
+                      // For the founded hotel, show count minus 1 (for the free stock)
                       const displayCount = chainName === purchaseInfo.foundedHotel ? count - 1 : count;
                       
                       if (displayCount <= 0) return null;
@@ -121,25 +114,18 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                         </div>
                       );
                     })
-                    .filter(Boolean);
-                  
-                  if (regularPurchases.length > 0) {
-                    return (
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {regularPurchases}
-                        {purchaseInfo.totalCost > 0 && (
-                          <div className="bg-white/20 px-2 py-1 rounded-full">
-                            Total: ${purchaseInfo.totalCost}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  } else if (!hasFoundedHotel) {
-                    return <span className="mt-1 inline-block">No stocks purchased during this turn</span>;
-                  }
-                  
-                  return null;
-                })()}
+                    .filter(Boolean)}
+                    
+                  {purchaseInfo.totalCost > 0 && (
+                    <div className="bg-white/20 px-2 py-1 rounded-full">
+                      Total: ${purchaseInfo.totalCost}
+                    </div>
+                  )}
+                </div>
+                
+                {!hasNonFounderStocksPurchased && !hasFoundedHotel && (
+                  <span className="mt-1 inline-block">No stocks purchased during this turn</span>
+                )}
               </div>
             </div>
           </div>

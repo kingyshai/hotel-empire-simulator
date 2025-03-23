@@ -42,51 +42,57 @@ const Header: React.FC = () => {
       // Check if player has initial stocks count in state to compare with current
       const initialPlayerState = state.initialPlayerTurnState?.player;
       
-      // Track purchases for each hotel chain
-      for (const chainName of Object.keys(state.hotelChains) as HotelChainName[]) {
-        const chain = state.hotelChains[chainName];
-        
-        // Get the initial stock count, considering founder stock if applicable
-        let initialStocks = 0;
-        
-        if (initialPlayerState) {
-          // Use initial state from the start of turn if available
-          initialStocks = initialPlayerState.stocks[chainName];
-        } else {
-          // Fallback: assume founder stock is the only difference if no initial state
-          initialStocks = currentPlayer.stocks[chainName] - (foundedHotel === chainName ? 1 : 0);
-        }
+      if (initialPlayerState) {
+        // Track purchases for each hotel chain
+        for (const chainName of Object.keys(state.hotelChains) as HotelChainName[]) {
+          const chain = state.hotelChains[chainName];
           
-        const currentStocks = currentPlayer.stocks[chainName];
-        const purchasedStocks = currentStocks - initialStocks;
-        
-        if (purchasedStocks > 0) {
-          purchases[chainName] = purchasedStocks;
+          // Calculate actual purchased stocks (excluding founder stock)
+          const initialStocks = initialPlayerState.stocks[chainName];
+          const currentStocks = currentPlayer.stocks[chainName];
+          const purchasedStocks = currentStocks - initialStocks;
           
-          // Add to total cost
-          if (chain.isActive) {
-            const stockPrice = 100 * Math.min(Math.max(2, chain.tiles.length), 10);
-            const stockCost = purchasedStocks * stockPrice;
-            totalCost += stockCost;
+          if (purchasedStocks > 0) {
+            purchases[chainName] = purchasedStocks;
+            
+            // Add to total cost (only for actually purchased stocks, not free founder stock)
+            if (chain.isActive) {
+              const stockPrice = 100 * Math.min(Math.max(2, chain.tiles.length), 10);
+              const stockCost = purchasedStocks * stockPrice;
+              totalCost += stockCost;
+            }
           }
         }
+        
+        // If a hotel was founded, add the free founder stock separately 
+        if (foundedHotel) {
+          // Make sure to include the free founder stock in the display, but not in the cost calculation
+          purchases[foundedHotel] = Math.max(purchases[foundedHotel], 1);
+        }
+        
+        // Always show the banner at the end of turn, regardless of stock activity
+        dispatch({ 
+          type: 'RECORD_STOCK_PURCHASE', 
+          payload: { 
+            playerName: currentPlayer.name, 
+            stocks: purchases,
+            totalCost,
+            foundedHotel: state.lastFoundedHotel
+          } 
+        });
+      } else {
+        // Fallback behavior if no initial state available
+        // Always show the banner at the end of turn with default values
+        dispatch({ 
+          type: 'RECORD_STOCK_PURCHASE', 
+          payload: { 
+            playerName: currentPlayer.name, 
+            stocks: purchases,
+            totalCost: 0,
+            foundedHotel: state.lastFoundedHotel
+          } 
+        });
       }
-      
-      // If a hotel was founded, ensure the free stock is reflected
-      if (foundedHotel) {
-        purchases[foundedHotel] = Math.max(purchases[foundedHotel], 1);
-      }
-      
-      // Always show the banner at the end of turn, regardless of stock activity
-      dispatch({ 
-        type: 'RECORD_STOCK_PURCHASE', 
-        payload: { 
-          playerName: currentPlayer.name, 
-          stocks: purchases,
-          totalCost,
-          foundedHotel: state.lastFoundedHotel
-        } 
-      });
     }
     
     dispatch({ type: 'END_TURN' });
