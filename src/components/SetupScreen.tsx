@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,7 @@ const SetupScreen: React.FC = () => {
             <label className="text-sm font-medium">Player Names</label>
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: playerCount }).map((_, index) => (
-                <motion.div key={index} variants={item}>
+                <motion.div key={`player-input-${index}`} variants={item}>
                   <Input
                     placeholder={`Player ${index + 1}`}
                     value={playerNames[index] || ''}

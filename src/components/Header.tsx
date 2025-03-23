@@ -6,7 +6,7 @@ const Header: React.FC = () => {
   const { state } = useGame();
   const { gamePhase, players, currentPlayerIndex } = state;
   
-  const currentPlayer = players[currentPlayerIndex];
+  const currentPlayer = players.length > 0 ? players[currentPlayerIndex] : null;
   
   return (
     <header className="w-full py-6 px-8 flex items-center justify-between animate-fade-in">
