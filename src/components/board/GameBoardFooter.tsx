@@ -2,14 +2,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { GamePhase } from '@/types/game';
+import { GamePhase, Coordinate } from '@/types/game';
 import AvailableTiles from './AvailableTiles';
 
 interface GameBoardFooterProps {
-  tiles: string[];
+  tiles: Coordinate[];
   gamePhase: GamePhase;
-  onTileClick: (coordinate: string) => void;
-  isTilePlaceable: (coordinate: string) => boolean;
+  onTileClick: (coordinate: Coordinate) => void;
+  isTilePlaceable: (coordinate: Coordinate) => boolean;
   onEndTurn: () => void;
 }
 
