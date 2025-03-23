@@ -11,8 +11,7 @@ import WinnerBanner from '@/components/WinnerBanner';
 import MergerStockOptions from '@/components/MergerStockOptions';
 import { HotelChainName } from '@/types/game';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/utils/toast';
-import { Save, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const GameContent = () => {
   const { state, dispatch, hasSavedGame } = useGame();
@@ -29,11 +28,6 @@ const GameContent = () => {
   
   const handleLoadGame = () => {
     dispatch({ type: 'LOAD_SAVED_GAME' });
-  };
-  
-  const handleSaveGame = () => {
-    dispatch({ type: 'SAVE_GAME' });
-    toast.success("Game saved successfully!");
   };
   
   const handleHideWinnerBanner = () => {
@@ -135,23 +129,13 @@ const GameContent = () => {
         <div className="w-full">
           <GameBoard key={`board-${currentPlayerIndex}`} />
           
-          <div className="mt-4 flex justify-between items-center">
+          <div className="mt-4">
             <div className="text-sm text-muted-foreground">
               Game Phase: <span className="font-medium text-foreground capitalize">{gamePhase}</span>
               {gamePhase === 'setup' && (
                 <span className="ml-2 text-xs">({state.setupPhase})</span>
               )}
             </div>
-            
-            <Button 
-              variant="outline"
-              onClick={handleSaveGame}
-              disabled={gamePhase === 'setup' || gameEnded}
-              className="flex items-center gap-1"
-            >
-              <Save size={16} />
-              Save Game
-            </Button>
           </div>
           
           <div className="mt-4">

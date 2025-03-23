@@ -9,7 +9,6 @@ import { getAdjacentTiles, findPotentialMergers, findConnectedTiles, shouldEndGa
 import HotelChainSelector from './HotelChainSelector';
 import MergerDialog from './MergerDialog';
 import { toast } from '@/utils/toast';
-import { ArrowRight } from 'lucide-react';
 
 const GameBoard = () => {
   const { state, dispatch } = useGame();
@@ -30,7 +29,6 @@ const GameBoard = () => {
   } | null>(null);
   
   const currentPlayer = players[currentPlayerIndex];
-  const canEndGame = shouldEndGame(state);
   
   const generateAllBoardCoordinates = (): Coordinate[] => {
     const tiles: Coordinate[] = [];
@@ -130,24 +128,6 @@ const GameBoard = () => {
   
   const handleDealStartingTiles = () => {
     dispatch({ type: 'DEAL_STARTING_TILES' });
-  };
-  
-  const handleEndGame = () => {
-    dispatch({ type: 'END_GAME_MANUALLY' });
-  };
-  
-  const handleEndTurn = () => {
-    if (gamePhase !== 'buyStock') {
-      toast.error("You must complete your current actions before ending your turn");
-      return;
-    }
-    
-    dispatch({ type: 'END_TURN' });
-    
-    if (!shouldEndGame(state)) {
-      const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-      toast.success(`${players[nextPlayerIndex].name}'s turn`);
-    }
   };
   
   const wouldCauseIllegalMerger = (coordinate: Coordinate): boolean => {
@@ -277,38 +257,24 @@ const GameBoard = () => {
       <div className="p-3 bg-secondary/10 border-t border-border/50">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h3 className="text-sm font-medium mb-3">Game Status</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Phase:</span>
-                <span className="font-medium capitalize">{gamePhase}</span>
-              </div>
-              <div className="flex justify-between p-2 bg-background/50 rounded">
-                <span>Current Player:</span>
-                <span className="font-medium">{currentPlayer?.name}</span>
-              </div>
+            <h3 className="text-sm font-medium mb-3">Your Available Tiles</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {currentPlayer?.tiles.map((tile) => (
+                <div 
+                  key={`available-${tile}`}
+                  className={`
+                    text-xs font-mono px-1.5 py-0.5 rounded border 
+                    ${isTilePlaceable(tile) 
+                      ? 'bg-primary/10 border-primary/30 text-primary cursor-pointer hover:bg-primary/20' 
+                      : 'bg-muted/30 border-muted/20 text-muted-foreground'
+                    }
+                  `}
+                  onClick={() => isTilePlaceable(tile) && handleTileClick(tile)}
+                >
+                  {tile}
+                </div>
+              ))}
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={handleEndGame}
-              disabled={gamePhase === 'setup' || !canEndGame}
-              title={!canEndGame ? "End game conditions not met yet" : "End the game now"}
-            >
-              End Game
-            </Button>
-            
-            <Button 
-              size="lg"
-              onClick={handleEndTurn}
-              disabled={gamePhase !== 'buyStock'}
-              className="flex items-center gap-1"
-            >
-              End Turn
-              <ArrowRight size={16} />
-            </Button>
           </div>
         </div>
       </div>
