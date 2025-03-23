@@ -25,7 +25,7 @@ export interface BuildingTile {
   belongsToChain?: HotelChainName;
 }
 
-export type GameMode = 'classic' | 'tycoon';
+export type GameMode = 'classic';
 export type GamePhase = 'setup' | 'placeTile' | 'foundHotel' | 'buyStock' | 'merger' | 'mergerStockOptions' | 'gameOver';
 export type SetupPhase = 'initial' | 'drawInitialTile' | 'dealTiles' | 'complete';
 

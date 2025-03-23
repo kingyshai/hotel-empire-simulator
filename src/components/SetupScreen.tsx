@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { toast } from '@/utils/toast';
@@ -12,7 +11,7 @@ const SetupScreen: React.FC = () => {
   const { state, dispatch } = useGame();
   const [playerCount, setPlayerCount] = useState(3);
   const [playerNames, setPlayerNames] = useState<string[]>(Array(6).fill(''));
-  const [gameMode, setGameMode] = useState<'classic' | 'tycoon'>(state.gameMode);
+  const gameMode: 'classic' = 'classic';
   
   const handleStartGame = () => {
     // Create array of filled names (or default names if not provided)
@@ -114,21 +113,8 @@ const SetupScreen: React.FC = () => {
             </div>
           </motion.div>
           
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="tycoon-mode"
-                checked={gameMode === 'tycoon'}
-                onCheckedChange={(checked) => setGameMode(checked ? 'tycoon' : 'classic')}
-              />
-              <Label htmlFor="tycoon-mode">Tycoon Mode</Label>
-            </div>
-            
-            <div className="text-xs text-muted-foreground">
-              {gameMode === 'tycoon' 
-                ? 'Pays bonuses to top THREE stockholders' 
-                : 'Pays bonuses to top TWO stockholders'}
-            </div>
+          <div className="text-xs text-muted-foreground">
+            <p>Classic mode: Pays bonuses to top TWO stockholders</p>
           </div>
           
           <Button 
