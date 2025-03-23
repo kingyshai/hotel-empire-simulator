@@ -224,7 +224,7 @@ const GameBoard = () => {
         <h2 className="text-sm font-medium">Game Board</h2>
       </div>
       
-      <div className="grid grid-cols-12 gap-0.25 p-1 bg-accent/30 w-full h-auto overflow-hidden">
+      <div className="grid grid-cols-12 gap-0.5 max-w-5xl mx-auto p-2 bg-accent/30 rounded-lg aspect-[2/1]">
         {generateAllBoardCoordinates().map((coord) => {
           const isPlaced = !!placedTiles[coord];
           const belongsToChain = placedTiles[coord]?.belongsToChain;
@@ -234,9 +234,11 @@ const GameBoard = () => {
           const tileInitial = isInitialTile(coord);
           
           return (
-            <div
+            <motion.div
               key={`board-${coord}-${currentPlayerIndex}`}
-              className="aspect-square min-w-0 min-h-0 scale-[0.65] transform-origin-center" 
+              className="relative aspect-square flex items-center justify-center scale-95"
+              whileHover={{ isSelectable ? { scale: 1.0 } : {} }}
+              whileTap={{ isSelectable ? { scale: 0.9 } : {} }}
               onClick={() => handleTileClick(coord)}
             >
               <BuildingTile 
@@ -248,7 +250,7 @@ const GameBoard = () => {
                 isUnplayable={isUnplayable}
                 isInitialTile={tileInitial}
               />
-            </div>
+            </motion.div>
           );
         })}
       </div>
