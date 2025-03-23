@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { HotelChainName } from '@/types/game';
 import { useGame } from '@/context/GameContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface MergerDialogProps {
   potentialMergers: HotelChainName[];
@@ -89,24 +88,20 @@ const MergerDialog: React.FC<MergerDialogProps> = ({
                   </div>
                 </div>
                 
-                {needsUserSelection && (
-                  <Button
-                    variant={selectedChain === chain ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedChain(chain)}
-                  >
-                    {selectedChain === chain ? "Selected" : "Select"}
-                  </Button>
-                )}
+                <Button
+                  variant={selectedChain === chain ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedChain(chain)}
+                >
+                  {selectedChain === chain ? "Selected" : "Select"}
+                </Button>
               </div>
             ))}
           </div>
 
-          {needsUserSelection && (
-            <div className="text-sm text-muted-foreground mt-4">
-              The selected chain will survive, and the others will be merged into it.
-            </div>
-          )}
+          <div className="text-sm text-muted-foreground mt-4">
+            The selected chain will survive, and the others will be merged into it.
+          </div>
         </div>
 
         <DialogFooter>

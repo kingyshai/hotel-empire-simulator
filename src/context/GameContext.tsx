@@ -15,7 +15,8 @@ import {
   getAdjacentTiles, 
   findPotentialMergers,
   findConnectedTiles,
-  distributeStockholderBonus
+  distributeStockholderBonus,
+  calculateStockPrice
 } from '@/utils/gameLogic';
 
 const generateBoard = (): Coordinate[] => {
