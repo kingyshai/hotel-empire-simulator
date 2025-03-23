@@ -37,6 +37,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
   
   const totalStocks = purchasedStocksList.reduce((sum, { count }) => sum + count, 0);
   const hasFoundedHotel = !!purchaseInfo.foundedHotel;
+  const hasPurchasedStocks = totalStocks > 0;
   
   return (
     <AnimatePresence>
@@ -56,11 +57,20 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
             <div className="flex flex-col">
               <h3 className="text-lg font-semibold">
                 <span className="text-blue-900">{purchaseInfo.playerName}</span> 
-                {hasFoundedHotel 
-                  ? ` founded ${purchaseInfo.foundedHotel} hotel chain!` 
-                  : (totalStocks > 0 ? " purchased stocks!" : " ended turn without purchasing stocks.")}
+                {hasFoundedHotel
+                  ? ` founded ${purchaseInfo.foundedHotel} hotel chain` 
+                  : (hasPurchasedStocks 
+                    ? " purchased stocks" 
+                    : " ended turn without purchasing stocks")}
+                {hasFoundedHotel && hasPurchasedStocks ? " and purchased stocks!" : "!"}
               </h3>
               <div className="text-sm">
+                {hasFoundedHotel && (
+                  <div className="mt-1 font-medium text-white bg-green-500/30 px-2 py-1 rounded-full inline-block mr-2">
+                    Received 1 free {purchaseInfo.foundedHotel} founder stock
+                  </div>
+                )}
+                
                 {purchasedStocksList.length > 0 ? (
                   <div className="flex flex-wrap gap-2 mt-1">
                     {purchasedStocksList.map(({ chain, count }) => (
@@ -74,9 +84,6 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                         />
                         <span className="capitalize">{chain}</span>
                         <span className="font-bold">×{count}</span>
-                        {hasFoundedHotel && chain === purchaseInfo.foundedHotel && (
-                          <span className="text-xs ml-1">(Free founder stock)</span>
-                        )}
                       </div>
                     ))}
                     {purchaseInfo.totalCost > 0 && (
@@ -86,12 +93,7 @@ const StockPurchaseBanner: React.FC<StockPurchaseBannerProps> = ({
                     )}
                   </div>
                 ) : (
-                  !hasFoundedHotel && <span>No stocks purchased</span>
-                )}
-                {hasFoundedHotel && (
-                  <div className="mt-1 font-medium text-white bg-green-500/30 px-2 py-1 rounded-full inline-block">
-                    Received 1 free founder stock!
-                  </div>
+                  !hasFoundedHotel && <span className="mt-1 inline-block">No stocks purchased</span>
                 )}
               </div>
             </div>
