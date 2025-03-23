@@ -79,6 +79,7 @@ const initialGameState: GameState = {
   showStockPurchaseBanner: false,
   lastFoundedHotel: undefined,
   initialPlayerTurnState: null,
+  
 };
 
 const loadSavedGame = (): GameState | null => {
@@ -534,6 +535,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const availableHeadquarters = state.availableHeadquarters.filter(hq => hq !== chainName);
       
       const player = { ...state.players[state.currentPlayerIndex] };
+      // Add the free founder stock without charging the player
       player.stocks[chainName] += 1;
       
       const stockMarket = { ...state.stockMarket };
@@ -999,18 +1001,4 @@ const GameContext = createContext<GameContextType>({
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasSavedGame, setHasSavedGame] = React.useState(false);
-  const [state, dispatch] = useReducer(gameReducer, initialGameState);
-  
-  useEffect(() => {
-    const savedGame = loadSavedGame();
-    setHasSavedGame(!!savedGame);
-  }, []);
-  
-  return (
-    <GameContext.Provider value={{ state, dispatch, hasSavedGame }}>
-      {children}
-    </GameContext.Provider>
-  );
-};
-
-export const useGame = () => useContext(GameContext);
+  const [

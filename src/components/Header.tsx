@@ -56,10 +56,16 @@ const Header: React.FC = () => {
             purchases[chainName] = purchasedStocks;
             
             // Add to total cost (only for actually purchased stocks, not free founder stock)
-            if (chain.isActive) {
+            if (chain.isActive && !(foundedHotel === chainName && purchasedStocks === 1)) {
               const stockPrice = 100 * Math.min(Math.max(2, chain.tiles.length), 10);
-              const stockCost = purchasedStocks * stockPrice;
-              totalCost += stockCost;
+              
+              // If this is the founded hotel and we purchased more than just the free stock
+              const stocksToCharge = foundedHotel === chainName ? purchasedStocks - 1 : purchasedStocks;
+              
+              if (stocksToCharge > 0) {
+                const stockCost = stocksToCharge * stockPrice;
+                totalCost += stockCost;
+              }
             }
           }
         }
