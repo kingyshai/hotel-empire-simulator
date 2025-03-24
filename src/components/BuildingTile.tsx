@@ -52,17 +52,84 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
     (!disabled && !isPlaced)
   );
 
-  // Generate a unique key for the component based on its state
-  const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
+  // Define explicit color constants
+  const PURPLE = "#8B5CF6";         // Vivid purple for standalone/initial tiles
+  const PURPLE_BORDER = "#7C3AED";  // Darker purple for borders
+  const BLUE = "#3B82F6";           // Bright blue for available tiles
+  const BLUE_BORDER = "#2563EB";    // Darker blue for borders
   
-  // Define colors for different tile states with increased vibrancy
-  const STANDALONE_PURPLE = "#8B5CF6"; // Purple for standalone/initial tiles
-  const AVAILABLE_BLUE = "#3B82F6";    // Blue for available tiles
-  const DARK_BLUE = "#2563EB";         // Darker blue for borders
-  
+  // Determine tile style based on its state
+  const getTileStyle = () => {
+    // Case 1: Tile belongs to a hotel chain
+    if (belongsToChain && chainColor) {
+      return {
+        backgroundColor: chainColor,
+        color: textColor,
+        borderColor: chainColor,
+        boxShadow: `0 0 0 2px ${chainColor}`
+      };
+    }
+    
+    // Case 2: Available tile (in player's hand)
+    if (isAvailable) {
+      return {
+        backgroundColor: BLUE,
+        color: "#FFFFFF",
+        borderColor: BLUE_BORDER,
+        boxShadow: `0 0 0 2px ${BLUE_BORDER}`,
+        opacity: 1
+      };
+    }
+    
+    // Case 3: Initial tile from setup phase
+    if (isInitialTile) {
+      return {
+        backgroundColor: PURPLE,
+        color: "#FFFFFF",
+        borderColor: PURPLE_BORDER,
+        boxShadow: `0 0 0 2px ${PURPLE_BORDER}`,
+        opacity: 1
+      };
+    }
+    
+    // Case 4: Recently placed tile (not an initial tile)
+    if (isRecentlyPlaced && !isInitialTile) {
+      return {
+        backgroundColor: "#212121",
+        color: "#FFFFFF",
+        borderColor: "#000000",
+        boxShadow: "0 0 0 2px #000000"
+      };
+    }
+    
+    // Case 5: Standalone tile (placed but not in a chain)
+    if (!belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced) {
+      return {
+        backgroundColor: PURPLE,
+        color: "#FFFFFF",
+        borderColor: PURPLE_BORDER,
+        boxShadow: `0 0 0 2px ${PURPLE_BORDER}`
+      };
+    }
+    
+    // Case 6: Default tile during setup phase
+    if (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') {
+      return {
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB"
+      };
+    }
+    
+    // Case 7: Default white tile
+    return {
+      backgroundColor: "#FFFFFF",
+      borderColor: "#E5E7EB"
+    };
+  };
+
   return (
     <motion.button
-      key={tileKey}
+      key={`tile-${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`}
       className={cn(
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
@@ -71,53 +138,10 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer" :
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
-        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : ""
+        isAvailable && "available-tile",
+        (!belongsToChain && isPlaced) || isInitialTile ? "standalone-tile" : ""
       )}
-      style={
-        belongsToChain && chainColor 
-          ? {
-              backgroundColor: chainColor,
-              color: textColor,
-              borderColor: chainColor
-            } 
-          : isAvailable
-            ? {
-                backgroundColor: AVAILABLE_BLUE,
-                color: "#FFFFFF",
-                borderColor: DARK_BLUE,
-                boxShadow: `0 0 0 2px ${DARK_BLUE}`,
-                opacity: 1 // Ensure full opacity
-              }
-          : isInitialTile
-            ? {
-                backgroundColor: STANDALONE_PURPLE,
-                color: "#FFFFFF",
-                borderColor: "#7C3AED",
-                boxShadow: `0 0 0 2px #7C3AED`,
-                opacity: 1 // Ensure full opacity
-              }
-            : isRecentlyPlaced && !isInitialTile
-              ? {
-                  backgroundColor: "#212121",
-                  color: "#FFFFFF",
-                  borderColor: "#000000",
-                  boxShadow: "0 0 0 2px #000000"
-                }
-              : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
-                ? {
-                    backgroundColor: STANDALONE_PURPLE,
-                    color: "#FFFFFF",
-                    borderColor: "#7C3AED"
-                  }
-                : (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile')
-                  ? {
-                      backgroundColor: "#FFFFFF",
-                      borderColor: "#E5E7EB"
-                    }
-                  : {
-                      backgroundColor: "#FFFFFF"
-                    }
-      }
+      style={getTileStyle()}
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
       initial={{ opacity: 0, scale: 0.9 }}

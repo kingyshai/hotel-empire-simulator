@@ -51,7 +51,9 @@
     
     /* Custom game colors */
     --standalone-purple: 262 83% 63%;
+    --standalone-purple-border: 262 83% 58%;
     --available-blue: 217 91% 60%;
+    --available-blue-border: 217 91% 55%;
   }
 
   .dark {
@@ -111,11 +113,11 @@
   }
   
   .standalone-tile {
-    @apply bg-purple-500 text-white border-purple-600;
+    @apply bg-[#8B5CF6] text-white border-[#7C3AED];
   }
   
   .available-tile {
-    @apply bg-blue-500 text-white border-blue-600;
+    @apply bg-[#3B82F6] text-white border-[#2563EB];
   }
 
   .fade-mask {
