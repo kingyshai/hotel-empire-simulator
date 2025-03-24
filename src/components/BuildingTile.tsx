@@ -58,6 +58,39 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const BLUE = "#3B82F6";           // Bright blue for available tiles
   const BLUE_BORDER = "#2563EB";    // Darker blue for borders
   
+  // Determine tile class names based on state
+  const getTileClasses = () => {
+    const classes = ["building-tile"];
+    
+    if (isAvailable) {
+      classes.push("available-tile");
+    } else if (!belongsToChain && isPlaced && !isRecentlyPlaced) {
+      classes.push("standalone-tile");
+    } else if (isInitialTile) {
+      classes.push("standalone-tile");
+    }
+    
+    if (isSelectable) {
+      classes.push("cursor-pointer ring-2 ring-primary/50");
+    } else if (isAvailable) {
+      classes.push("cursor-pointer");
+    } else if (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile') {
+      classes.push("cursor-pointer");
+    } else {
+      classes.push("cursor-default");
+    }
+    
+    if (isPlaced) {
+      classes.push("shadow-md");
+    }
+    
+    if (isUnplayable) {
+      classes.push("bg-red-200 cursor-not-allowed");
+    }
+    
+    return classes.join(" ");
+  };
+  
   // Determine tile style based on its state
   const getTileStyle = () => {
     // Case 1: Tile belongs to a hotel chain
@@ -130,17 +163,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   return (
     <motion.button
       key={`tile-${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`}
-      className={cn(
-        "building-tile relative w-full h-full flex items-center justify-center rounded-md",
-        isPlaced ? "cursor-default shadow-md" : 
-        isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
-        isAvailable ? "cursor-pointer" : 
-        state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer" :
-        "cursor-default",
-        isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
-        isAvailable && "available-tile",
-        (!belongsToChain && isPlaced) || isInitialTile ? "standalone-tile" : ""
-      )}
+      className={cn(getTileClasses())}
       style={getTileStyle()}
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
