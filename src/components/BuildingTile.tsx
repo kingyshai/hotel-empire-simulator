@@ -55,6 +55,10 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   // Generate a unique key for the component based on its state
   const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
   
+  // Define constant for purple color to use in multiple places
+  const HIGHLIGHT_PURPLE = "#8B5CF6"; // Consistent purple color
+  const DARK_PURPLE = "#7C3AED";      // Darker purple for borders
+  
   return (
     <motion.button
       key={tileKey}
@@ -62,13 +66,11 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
-        isAvailable ? "bg-white cursor-pointer hover:bg-gray-100" : 
+        isAvailable ? "cursor-pointer hover:bg-gray-100" : 
         state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer hover:bg-primary/20" :
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
-        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100",
-        isInitialTile ? "bg-yellow-200 border-yellow-400" : "",
-        isRecentlyPlaced && !isInitialTile ? "bg-emerald-100 border-emerald-300" : ""
+        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100"
       )}
       style={
         belongsToChain && chainColor 
@@ -77,19 +79,19 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
               color: textColor,
               borderColor: chainColor
             } 
-          : isInitialTile 
+          : isInitialTile || isAvailable
             ? {
-                backgroundColor: "#FFEB3B",  // Bright vibrant yellow
-                color: "#000000",  // Black text for maximum contrast
-                borderColor: "#FBC02D",  // Darker yellow border
-                boxShadow: "0 0 0 2px #FBC02D",  // Add an extra outer glow
+                backgroundColor: HIGHLIGHT_PURPLE,  // Consistent purple for both initial and available tiles
+                color: "#FFFFFF",  // White text for contrast
+                borderColor: DARK_PURPLE,  // Darker purple border
+                boxShadow: `0 0 0 2px ${DARK_PURPLE}`  // Purple glow
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
                   backgroundColor: "#212121",  // Very dark gray, almost black
                   color: "#FFFFFF",  // White text
                   borderColor: "#000000",  // Black border
-                  boxShadow: "0 0 0 2px #000000",  // Add an extra outer glow
+                  boxShadow: "0 0 0 2px #000000"  // Add an extra outer glow
                 }
               : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
                 ? {
@@ -109,7 +111,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
     >
       <span className={cn(
         "text-sm md:text-base font-medium z-10",
-        isInitialTile ? "text-black font-bold" : "",
+        (isInitialTile || isAvailable) ? "text-white font-bold" : "",
         isRecentlyPlaced && !isInitialTile ? "text-white font-bold" : "",
         !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "text-white font-bold" : ""
       )}>
@@ -128,12 +130,12 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         <div className="absolute inset-0 opacity-40 rounded-md bg-green-500" />
       )}
       
-      {isAvailable && !isUnplayable && !isPlaced && (
-        <div className="absolute inset-0 opacity-30 rounded-md bg-gray-200" />
+      {isAvailable && !isUnplayable && !isPlaced && !isInitialTile && (
+        <div className="absolute inset-0 opacity-30 rounded-md bg-purple-500" />
       )}
       
       {isInitialTile && (
-        <div className="absolute w-6 h-6 top-0 right-0 rounded-full bg-yellow-500 -mt-2 -mr-2 shadow-md border-2 border-yellow-600 flex items-center justify-center z-20">
+        <div className="absolute w-6 h-6 top-0 right-0 rounded-full bg-purple-700 -mt-2 -mr-2 shadow-md border-2 border-purple-900 flex items-center justify-center z-20">
           <span className="text-[10px] text-white font-bold">★</span>
         </div>
       )}
