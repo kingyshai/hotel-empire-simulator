@@ -55,8 +55,8 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   // Generate a unique key for the component based on its state
   const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
   
-  // Define colors for different tile states
-  const STANDALONE_PURPLE = "#8B5CF6"; // Purple for standalone tiles (placed but not in chain)
+  // Define colors for different tile states with increased vibrancy
+  const STANDALONE_PURPLE = "#8B5CF6"; // Purple for standalone/initial tiles
   const AVAILABLE_BLUE = "#3B82F6";    // Blue for available tiles
   const DARK_BLUE = "#2563EB";         // Darker blue for borders
   
@@ -85,14 +85,16 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
                 backgroundColor: AVAILABLE_BLUE,
                 color: "#FFFFFF",
                 borderColor: DARK_BLUE,
-                boxShadow: `0 0 0 2px ${DARK_BLUE}`
+                boxShadow: `0 0 0 2px ${DARK_BLUE}`,
+                opacity: 1 // Ensure full opacity
               }
           : isInitialTile
             ? {
                 backgroundColor: STANDALONE_PURPLE,
                 color: "#FFFFFF",
                 borderColor: "#7C3AED",
-                boxShadow: `0 0 0 2px #7C3AED`
+                boxShadow: `0 0 0 2px #7C3AED`,
+                opacity: 1 // Ensure full opacity
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
@@ -107,9 +109,14 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
                     color: "#FFFFFF",
                     borderColor: "#7C3AED"
                   }
-                : {
-                    backgroundColor: "#FFFFFF",
-                  }
+                : (state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile')
+                  ? {
+                      backgroundColor: "#FFFFFF",
+                      borderColor: "#E5E7EB"
+                    }
+                  : {
+                      backgroundColor: "#FFFFFF"
+                    }
       }
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}

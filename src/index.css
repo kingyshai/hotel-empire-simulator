@@ -48,6 +48,10 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom game colors */
+    --standalone-purple: 262 83% 63%;
+    --available-blue: 217 91% 60%;
   }
 
   .dark {
@@ -104,6 +108,14 @@
     @apply relative w-full h-full rounded-md bg-white border border-border shadow-sm 
            transition-all duration-300 flex items-center justify-center font-medium text-sm
            hover:shadow-md active:scale-95 transform;
+  }
+  
+  .standalone-tile {
+    @apply bg-purple-500 text-white border-purple-600;
+  }
+  
+  .available-tile {
+    @apply bg-blue-500 text-white border-blue-600;
   }
 
   .fade-mask {
