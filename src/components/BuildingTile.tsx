@@ -56,8 +56,8 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
   
   // Define constant for purple color to use in multiple places
-  const HIGHLIGHT_PURPLE = "#8B5CF6"; // Consistent purple color
-  const DARK_PURPLE = "#7C3AED";      // Darker purple for borders
+  const HIGHLIGHT_PURPLE = "#7C3AED"; // Vibrant purple (Violet-600)
+  const DARK_PURPLE = "#6D28D9";      // Darker purple for borders (Violet-700)
   
   return (
     <motion.button
@@ -66,11 +66,11 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
         "building-tile relative w-full h-full flex items-center justify-center rounded-md",
         isPlaced ? "cursor-default shadow-md" : 
         isSelectable ? "cursor-pointer ring-2 ring-primary/50" : 
-        isAvailable ? "cursor-pointer hover:bg-gray-100" : 
-        state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer hover:bg-primary/20" :
+        isAvailable ? "cursor-pointer" : 
+        state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' ? "cursor-pointer" :
         "cursor-default",
         isUnplayable ? "bg-red-200 cursor-not-allowed" : "", 
-        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : "bg-white hover:bg-gray-100"
+        !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced ? "bg-[#9b87f5]/30 border-[#9b87f5]/50" : ""
       )}
       style={
         belongsToChain && chainColor 
@@ -81,25 +81,27 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
             } 
           : isInitialTile || isAvailable
             ? {
-                backgroundColor: HIGHLIGHT_PURPLE,  // Consistent purple for both initial and available tiles
-                color: "#FFFFFF",  // White text for contrast
-                borderColor: DARK_PURPLE,  // Darker purple border
-                boxShadow: `0 0 0 2px ${DARK_PURPLE}`  // Purple glow
+                backgroundColor: HIGHLIGHT_PURPLE,
+                color: "#FFFFFF",
+                borderColor: DARK_PURPLE,
+                boxShadow: `0 0 0 2px ${DARK_PURPLE}`
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
-                  backgroundColor: "#212121",  // Very dark gray, almost black
-                  color: "#FFFFFF",  // White text
-                  borderColor: "#000000",  // Black border
-                  boxShadow: "0 0 0 2px #000000"  // Add an extra outer glow
+                  backgroundColor: "#212121",
+                  color: "#FFFFFF",
+                  borderColor: "#000000",
+                  boxShadow: "0 0 0 2px #000000"
                 }
               : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
                 ? {
-                    backgroundColor: "#8B5CF6",  // Full opacity purple for placed tiles
-                    color: "#FFFFFF",  // White text
-                    borderColor: "#7C3AED"  // violet-600
+                    backgroundColor: "#8B5CF6",
+                    color: "#FFFFFF",
+                    borderColor: "#7C3AED"
                   }
-                : {}
+                : {
+                    backgroundColor: "#FFFFFF",
+                  }
       }
       onClick={isClickable ? onClick : undefined}
       disabled={disabled || isUnplayable || (isPlaced && !isSelectable)}
@@ -123,20 +125,16 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       )}
       
       {state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' && (
-        <div className="absolute inset-0 opacity-20 rounded-md bg-primary hover:opacity-30 transition-opacity" />
+        <div className="absolute inset-0 rounded-md bg-purple-600" />
       )}
       
       {isSelectable && (
         <div className="absolute inset-0 opacity-40 rounded-md bg-green-500" />
       )}
       
-      {isAvailable && !isUnplayable && !isPlaced && !isInitialTile && (
-        <div className="absolute inset-0 opacity-30 rounded-md bg-purple-500" />
-      )}
-      
       {isInitialTile && (
-        <div className="absolute w-6 h-6 top-0 right-0 rounded-full bg-purple-700 -mt-2 -mr-2 shadow-md border-2 border-purple-900 flex items-center justify-center z-20">
-          <span className="text-[10px] text-white font-bold">★</span>
+        <div className="absolute w-8 h-8 top-0 right-0 rounded-full bg-purple-800 -mt-3 -mr-3 shadow-md border-2 border-purple-900 flex items-center justify-center z-20">
+          <span className="text-[12px] text-white font-bold">★</span>
         </div>
       )}
       
