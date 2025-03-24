@@ -55,9 +55,10 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
   // Generate a unique key for the component based on its state
   const tileKey = `${coordinate}-${belongsToChain || 'none'}-${isPlaced ? 'placed' : 'unplaced'}`;
   
-  // Define constant for purple color to use in multiple places
-  const HIGHLIGHT_PURPLE = "#7C3AED"; // Vibrant purple (Violet-600)
-  const DARK_PURPLE = "#6D28D9";      // Darker purple for borders (Violet-700)
+  // Define colors for different tile states
+  const STANDALONE_PURPLE = "#8B5CF6"; // Purple for standalone tiles (placed but not in chain)
+  const AVAILABLE_BLUE = "#3B82F6";    // Blue for available tiles
+  const DARK_BLUE = "#2563EB";         // Darker blue for borders
   
   return (
     <motion.button
@@ -79,12 +80,19 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
               color: textColor,
               borderColor: chainColor
             } 
-          : isInitialTile || isAvailable
+          : isAvailable
             ? {
-                backgroundColor: HIGHLIGHT_PURPLE,
+                backgroundColor: AVAILABLE_BLUE,
                 color: "#FFFFFF",
-                borderColor: DARK_PURPLE,
-                boxShadow: `0 0 0 2px ${DARK_PURPLE}`
+                borderColor: DARK_BLUE,
+                boxShadow: `0 0 0 2px ${DARK_BLUE}`
+              }
+          : isInitialTile
+            ? {
+                backgroundColor: STANDALONE_PURPLE,
+                color: "#FFFFFF",
+                borderColor: "#7C3AED",
+                boxShadow: `0 0 0 2px #7C3AED`
               }
             : isRecentlyPlaced && !isInitialTile
               ? {
@@ -95,7 +103,7 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
                 }
               : !belongsToChain && isPlaced && !isInitialTile && !isRecentlyPlaced
                 ? {
-                    backgroundColor: "#8B5CF6",
+                    backgroundColor: STANDALONE_PURPLE,
                     color: "#FFFFFF",
                     borderColor: "#7C3AED"
                   }
@@ -122,10 +130,6 @@ const BuildingTile: React.FC<BuildingTileProps> = ({
       
       {isUnplayable && (
         <div className="absolute inset-0 opacity-70 rounded-md bg-red-500" />
-      )}
-      
-      {state.gamePhase === 'setup' && state.setupPhase === 'drawInitialTile' && (
-        <div className="absolute inset-0 rounded-md bg-purple-600" />
       )}
       
       {isSelectable && (
